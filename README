@@ -1,5 +1,17 @@
 = Corvus PHP Static Analyzer =
 
+This is a fast, lightweight PHP static analyzer with few dependencies.
+Its purpose is to catch programming errors by statically analyzing the
+source code, without running it.
+
+== Requires ==
+
+ * [http://llvm.org LLVM] 3.0+
+ * [http://boost.org Boost] 1.38+ (only headers required, no libraries)
+ * [http://cmake.org CMake] 2.6+
+ * [http://icu-project.org ICU] 4.2+
+ * [http://gmplib.org GMP] 4.3.1+
+
 == Source ==
 
 Browse the source at:
