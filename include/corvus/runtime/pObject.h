@@ -1,7 +1,7 @@
 /* ***** BEGIN LICENSE BLOCK *****
  * Roadsend PHP Compiler Runtime Libraries
  *
- * Copyright (c) 2008 Shannon Weyrick <weyrick@roadsend.com>
+ * Copyright (c) 2008 Shannon Weyrick <weyrick@mozek.us>
  *               2008 Thomas Moenicke <tm@php-qt.org>
  *
  * This program is free software; you can redistribute it and/or

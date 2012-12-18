@@ -1,7 +1,7 @@
 /* ***** BEGIN LICENSE BLOCK *****
 ;; Roadsend PHP Compiler
 ;;
-;; Copyright (c) 2009 Shannon Weyrick <weyrick@roadsend.com>
+;; Copyright (c) 2009 Shannon Weyrick <weyrick@mozek.us>
 ;; Copyright (c) 2010 Cornelius Riemenschneider <c.r1@gmx.de>
 ;;
 ;; This program is free software; you can redistribute it and/or
