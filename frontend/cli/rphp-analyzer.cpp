@@ -34,17 +34,17 @@
 #include "rphp/analysis/pSourceFile.h"
 #include "rphp/analysis/pLexer.h"
 
-#include "rphp/analysis/passes/CheckMemoryManagement.h"
-#include "rphp/analysis/passes/Desugar.h"
+//#include "rphp/analysis/passes/CheckMemoryManagement.h"
+//#include "rphp/analysis/passes/Desugar.h"
 #include "rphp/analysis/passes/DumpAST.h"
 #include "rphp/analysis/passes/DumpStats.h"
-#include "rphp/analysis/passes/SimplifyStrings.h"
+/*#include "rphp/analysis/passes/SimplifyStrings.h"
 #include "rphp/analysis/passes/Split_Builtins.h"
 #include "rphp/analysis/passes/Early_Lower_Loops.h"
 #include "rphp/analysis/passes/Lower_Binary_Op.h"
 #include "rphp/analysis/passes/Lower_Conditional_Expr.h"
 #include "rphp/analysis/passes/Lower_Control_Flow.h"
-#include "rphp/analysis/passes/MainFunction.h"
+#include "rphp/analysis/passes/MainFunction.h"*/
 
 
 using namespace llvm;
@@ -99,17 +99,17 @@ int main( int argc, char* argv[] )
         pPassManager passManager(unit);
 
         if (dumpAST) {
-            passManager.addPass<AST::Pass::SimplifyStrings>();
+            //passManager.addPass<AST::Pass::SimplifyStrings>();
             passManager.addPass<AST::Pass::DumpAST>();
             passManager.addPass<AST::Pass::DumpStats>();
         }
         else if(runPasses) {
             // make all variables etc in strings accessible to passes which need them
-            passManager.addPass<AST::Pass::SimplifyStrings>();
+            //passManager.addPass<AST::Pass::SimplifyStrings>();
             
             // TODO: get variable names here or use variable names which the zend engine
             // doesn't allow for internal variables.
-            
+            /*
             //TODO: take care of conditional function definitions.
             passManager.addPass<AST::Pass::MainFunction>();
 
@@ -126,7 +126,7 @@ int main( int argc, char* argv[] )
             passManager.addPass<AST::Pass::Desugar>();
             
             passManager.addPass<AST::Pass::Lower_Control_Flow>();
-
+*/
             // debug output
             passManager.addPass<AST::Pass::DumpAST>();
             passManager.addPass<AST::Pass::DumpStats>();
@@ -141,7 +141,7 @@ int main( int argc, char* argv[] )
                 if (*i == "dump-ast") {
                     passManager.addPass<AST::Pass::DumpAST>();
                     passManager.addPass<AST::Pass::DumpStats>();
-                }
+                }/*
                 else if (*i == "simplify-strings") {
                     passManager.addPass<AST::Pass::SimplifyStrings>();
                 }
@@ -165,7 +165,7 @@ int main( int argc, char* argv[] )
                 }
                 else if (*i == "add-main-function") {
                     passManager.addPass<AST::Pass::MainFunction>();
-                }
+                }*/
             }
         }
         else {

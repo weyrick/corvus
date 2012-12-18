@@ -64,7 +64,7 @@ ENDIF( LLVM_VERSION LESS ${LLVM_MIN_VERSION} )
 add_definitions(-DLLVM_VERSION=${LLVM_VERSION})
 
 add_subdirectory(3rdparty)
-add_subdirectory(runtime)
+#add_subdirectory(runtime)
 add_subdirectory(compiler)
 add_subdirectory(frontend/cli)
 

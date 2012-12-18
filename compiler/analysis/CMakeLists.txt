@@ -81,17 +81,17 @@ set(PARSER_SRC_FILES
   pPass.cpp
   pPassManager.cpp
   # passes
-  passes/CheckMemoryManagement.cpp
-  passes/SimplifyStrings.cpp
-  passes/Desugar.cpp
+  #passes/CheckMemoryManagement.cpp
+  #passes/SimplifyStrings.cpp
+  #passes/Desugar.cpp
   passes/DumpAST.cpp
   passes/DumpStats.cpp
-  passes/Split_Builtins.cpp
-  passes/Early_Lower_Loops.cpp
-  passes/Lower_Binary_Op.cpp
-  passes/Lower_Conditional_Expr.cpp
-  passes/Lower_Control_Flow.cpp
-  passes/MainFunction.cpp
+  #passes/Split_Builtins.cpp
+  #passes/Early_Lower_Loops.cpp
+  #passes/Lower_Binary_Op.cpp
+  #passes/Lower_Conditional_Expr.cpp
+  #passes/Lower_Control_Flow.cpp
+  #passes/MainFunction.cpp
 )
 
 # PASSES
@@ -103,5 +103,6 @@ set_source_files_properties( ${PARSER_SRC_FILES}
 
 # STATIC
 add_library( rphp-analysis ${PARSER_SRC_FILES} )
-target_link_libraries (rphp-analysis rphp-runtime)
+#target_link_libraries (rphp-analysis rphp-runtime)
+target_link_libraries (rphp-analysis gmp)
 
