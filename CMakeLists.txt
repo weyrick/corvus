@@ -65,15 +65,8 @@ add_definitions(-DLLVM_VERSION=${LLVM_VERSION})
 
 add_subdirectory(3rdparty)
 add_subdirectory(runtime)
-add_subdirectory(c-runtime)
 add_subdirectory(compiler)
 add_subdirectory(frontend/cli)
-add_subdirectory(frontend/http)
-
-# check whether to include the sandbox
-IF(${CMAKE_BUILD_TYPE} MATCHES "Debug")
-add_subdirectory(sandbox)
-ENDIF(${CMAKE_BUILD_TYPE} MATCHES "Debug")
 
 IF(CPPUNIT_FOUND)
   ENABLE_TESTING()
