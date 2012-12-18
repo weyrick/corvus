@@ -1,5 +1,5 @@
 /* ***** BEGIN LICENSE BLOCK *****
-;; Roadsend PHP Compiler
+;; corvus analyzer
 ;;
 ;; Copyright (c) 2009-2010 Shannon Weyrick <weyrick@mozek.us>
 ;; Copyright (c) 2010 Cornelius Riemenschneider <c.r1@gmx.de>
@@ -34,24 +34,14 @@
 #include "corvus/analysis/pSourceFile.h"
 #include "corvus/analysis/pLexer.h"
 
-//#include "corvus/analysis/passes/CheckMemoryManagement.h"
-//#include "corvus/analysis/passes/Desugar.h"
 #include "corvus/analysis/passes/DumpAST.h"
 #include "corvus/analysis/passes/DumpStats.h"
-/*#include "corvus/analysis/passes/SimplifyStrings.h"
-#include "corvus/analysis/passes/Split_Builtins.h"
-#include "corvus/analysis/passes/Early_Lower_Loops.h"
-#include "corvus/analysis/passes/Lower_Binary_Op.h"
-#include "corvus/analysis/passes/Lower_Conditional_Expr.h"
-#include "corvus/analysis/passes/Lower_Control_Flow.h"
-#include "corvus/analysis/passes/MainFunction.h"*/
-
 
 using namespace llvm;
 using namespace corvus;
 
 void corvusVersion(void) {
-    std::cout << "Roadsend PHP Source Analyzer" << std::endl;
+    std::cout << "corvus PHP source analyzer" << std::endl;
 }
 
 
@@ -64,14 +54,13 @@ int main( int argc, char* argv[] )
     cl::opt<bool> dumpToks ("dump-toks", cl::desc("Dump tokens from lexer"));
     cl::opt<bool> dumpAST ("dump-ast", cl::desc("Dump AST"));
     cl::opt<bool> debugParse ("debug-parse", cl::desc("Debug output from parser"));
-    cl::opt<bool> runPasses ("lower", cl::desc("Lowers the AST and dumps it after lowering"));
 
     cl::opt<std::string> passListText ("passes", cl::desc("List of passes to run"));
 
     cl::opt<std::string> encoding ("encoding",cl::desc("Character encoding of the source file"), cl::init("UTF-8"));
 
     cl::SetVersionPrinter(&corvusVersion);
-    cl::ParseCommandLineOptions(argc, argv, "Roadsend PHP Analyzer");
+    cl::ParseCommandLineOptions(argc, argv, "corvus analyzer");
 
     pSourceModule* unit(0);
 
@@ -99,35 +88,6 @@ int main( int argc, char* argv[] )
         pPassManager passManager(unit);
 
         if (dumpAST) {
-            //passManager.addPass<AST::Pass::SimplifyStrings>();
-            passManager.addPass<AST::Pass::DumpAST>();
-            passManager.addPass<AST::Pass::DumpStats>();
-        }
-        else if(runPasses) {
-            // make all variables etc in strings accessible to passes which need them
-            //passManager.addPass<AST::Pass::SimplifyStrings>();
-            
-            // TODO: get variable names here or use variable names which the zend engine
-            // doesn't allow for internal variables.
-            /*
-            //TODO: take care of conditional function definitions.
-            passManager.addPass<AST::Pass::MainFunction>();
-
-            // uses boolean && and ||
-            passManager.addPass<AST::Pass::Split_Builtins>();
-            // uses boolean !
-            passManager.addPass<AST::Pass::Early_Lower_Loops>();
-            // uses conditionals
-            passManager.addPass<AST::Pass::Lower_Binary_Op>();
-
-            passManager.addPass<AST::Pass::Lower_Conditional_Expr>();
-            
-            // do this one late in case other passes are creating return's for whatever reason...
-            passManager.addPass<AST::Pass::Desugar>();
-            
-            passManager.addPass<AST::Pass::Lower_Control_Flow>();
-*/
-            // debug output
             passManager.addPass<AST::Pass::DumpAST>();
             passManager.addPass<AST::Pass::DumpStats>();
         }
@@ -141,31 +101,7 @@ int main( int argc, char* argv[] )
                 if (*i == "dump-ast") {
                     passManager.addPass<AST::Pass::DumpAST>();
                     passManager.addPass<AST::Pass::DumpStats>();
-                }/*
-                else if (*i == "simplify-strings") {
-                    passManager.addPass<AST::Pass::SimplifyStrings>();
                 }
-                else if (*i == "split-builtins") {
-                    passManager.addPass<AST::Pass::Split_Builtins>();
-                }
-                else if (*i == "early-lower-loops") {
-                    passManager.addPass<AST::Pass::Early_Lower_Loops>();
-                }
-                else if (*i == "lower-binary-ops") {
-                    passManager.addPass<AST::Pass::Lower_Binary_Op>();
-                }
-                else if (*i == "lower-conditional-exprs") {
-                    passManager.addPass<AST::Pass::Lower_Conditional_Expr>();
-                }
-                else if (*i == "desugar") {
-                    passManager.addPass<AST::Pass::Desugar>();
-                }
-                else if (*i == "lower-control-flow") {
-                    passManager.addPass<AST::Pass::Lower_Control_Flow>();
-                }
-                else if (*i == "add-main-function") {
-                    passManager.addPass<AST::Pass::MainFunction>();
-                }*/
             }
         }
         else {

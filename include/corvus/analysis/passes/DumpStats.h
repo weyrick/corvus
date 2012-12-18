@@ -1,5 +1,5 @@
 /* ***** BEGIN LICENSE BLOCK *****
-;; Roadsend PHP Compiler
+;; corvus analyzer
 ;;
 ;; Copyright (c) 2008-2010 Shannon Weyrick <weyrick@mozek.us>
 ;;

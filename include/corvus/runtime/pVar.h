@@ -1,5 +1,5 @@
 /* ***** BEGIN LICENSE BLOCK *****
- * Roadsend PHP Compiler Runtime Libraries
+ * corvus analyzer Runtime Libraries
  *
  * Copyright (c) 2008-2009 Shannon Weyrick <weyrick@mozek.us>
  *
@@ -102,11 +102,11 @@ namespace corvus {
  pVar itself hides the details of working with data on the heap: there is no difference from general user code.
 
  PHP "references", where more than one symbol in the runtime references the same variable data, are not supported
- in Roadsend PHP. Any circumstance that requires reference semantics can be rewritten using a PHP object.
+ in corvus. Any circumstance that requires reference semantics can be rewritten using a PHP object.
 
  [future] pVar has operator overloading to support the basic arithmetic operators + - * / %, which adjust type as necessary
- according to PHP semantics for these operations. One difference between Zend and Roadsend PHP is with integer overflows:
- in Roadsend PHP, an hardware integer will overflow to an arbitrary precision integer.
+ according to PHP semantics for these operations. One difference between Zend and corvus is with integer overflows:
+ in corvus, an hardware integer will overflow to an arbitrary precision integer.
 
  The current active type is available through getType() or the type predicates isInt(), etc. Once the type is known,
  a reference to the correctly typed data is available through the getInt(), et al. methods (available const and nonconst)

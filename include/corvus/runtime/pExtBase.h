@@ -1,5 +1,5 @@
 /* ***** BEGIN LICENSE BLOCK *****
- * Roadsend PHP Compiler Runtime Libraries
+ * corvus analyzer Runtime Libraries
  *
  * Copyright (c) 2008-2009 Shannon Weyrick <weyrick@mozek.us>
  *
