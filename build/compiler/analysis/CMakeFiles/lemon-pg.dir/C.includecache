@@ -1,0 +1,24 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/weyrick/workspace/corvus/compiler/analysis/grammar_src/lemon.c
+stdio.h
+-
+stdarg.h
+-
+string.h
+-
+ctype.h
+-
+stdlib.h
+-
+assert.h
+-
+unistd.h
+-
+

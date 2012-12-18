@@ -1,0 +1,2 @@
+/usr/bin/ar cr librphp-llvm-ir.a  CMakeFiles/rphp-llvm-ir.dir/pGenerator.cpp.o CMakeFiles/rphp-llvm-ir.dir/pGenSupport.cpp.o CMakeFiles/rphp-llvm-ir.dir/pIRHelper.cpp.o CMakeFiles/rphp-llvm-ir.dir/pCodeGen.cpp.o CMakeFiles/rphp-llvm-ir.dir/pDeclare.cpp.o CMakeFiles/rphp-llvm-ir.dir/pDumpTarget.cpp.o
+/usr/bin/ranlib librphp-llvm-ir.a

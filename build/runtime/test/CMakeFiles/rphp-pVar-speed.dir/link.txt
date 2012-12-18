@@ -1,0 +1,1 @@
+/usr/bin/c++       CMakeFiles/rphp-pVar-speed.dir/rphp-pVar-speed.cpp.o  -o rphp-pVar-speed -rdynamic ../librphp-runtime.so -licui18n -licuuc -licudata -licuio -lgmp -lgmpxx -Wl,-rpath,/home/weyrick/workspace/corvus/build/runtime 

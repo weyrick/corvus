@@ -1,0 +1,92 @@
+/* ***** BEGIN LICENSE BLOCK *****
+;; Roadsend PHP Compiler
+;;
+;; Copyright (c) 2009-2010 Shannon Weyrick <weyrick@roadsend.com>
+;; Copyright (c) 2010 Cornelius Riemenschneider <c.r1@gmx.de>
+;;
+;; This program is free software; you can redistribute it and/or
+;; modify it under the terms of the GNU General Public License
+;; as published by the Free Software Foundation; either version 2
+;; of the License, or (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this program; if not, write to the Free Software
+;; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
+   ***** END LICENSE BLOCK *****
+*/
+
+// This is another trick from the clang handbook for defining the AST nodes and order consistently
+#ifndef EXPR
+#  define EXPR(Type, Base) STMT(Type, Base)
+#endif
+
+STMT(block,        stmt)
+STMT(emptyStmt,    stmt)
+STMT(ifStmt,       stmt)
+STMT(returnStmt,   stmt)
+STMT(breakStmt,    stmt)
+STMT(continueStmt, stmt)
+STMT(doStmt,       stmt)
+STMT(whileStmt,    stmt)
+STMT(forStmt,      stmt)
+STMT(forEach,      stmt)
+STMT(switchCase,   stmt)
+STMT(switchStmt,   stmt)
+STMT(catchStmt,    stmt)
+STMT(tryStmt,      stmt)
+STMT(globalDecl,   stmt)
+
+// decl (see decl::first and last kind constants)
+// FIRST DECL
+STMT(formalParam,     stmt)
+STMT(signature,       stmt)
+STMT(staticDecl,      stmt)
+STMT(classDecl,       stmt)
+STMT(methodDecl,      stmt)
+STMT(propertyDecl,    stmt)
+STMT(functionDecl,    stmt)
+// LAST DECL
+
+//FIRST MIR NODE
+STMT(label,           stmt)
+STMT(branch,          stmt)
+//LAST MIR NODE
+
+
+// expr (see expr::first and last kind constants)
+// FIRST EXPR
+EXPR(exprReduce,     expr)
+EXPR(assignment,     expr)
+EXPR(builtin,        expr)
+EXPR(opAssignment,   expr)
+EXPR(listAssignment, expr)
+EXPR(literalID,      expr)
+EXPR(dynamicID,      expr)
+EXPR(var,            expr)
+EXPR(functionInvoke, expr)
+EXPR(typeCast,       expr)
+EXPR(binaryOp,       expr)
+EXPR(preOp,          expr)
+EXPR(postOp,         expr)
+EXPR(conditionalExpr,expr)
+EXPR(unaryOp,        expr)
+
+// literal (see literalExpr::first and last kind constants)
+// FIRST LITERALEXPR
+EXPR(literalString, expr)
+EXPR(literalInt,    expr)
+EXPR(literalFloat,  expr)
+EXPR(literalNull,   expr)
+EXPR(literalBool,   expr)
+EXPR(literalArray,  expr)
+EXPR(literalConstant, expr)
+EXPR(inlineHtml,    expr)
+// LAST LITERALEXPR
+// LAST EXPR
+
+#undef STMT
