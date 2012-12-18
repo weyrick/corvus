@@ -19,25 +19,25 @@
    ***** END LICENSE BLOCK *****
 */
 
-#include "rphp/analysis/pBaseTransformer.h"
-#include "rphp/analysis/pSourceModule.h"
+#include "corvus/analysis/pBaseTransformer.h"
+#include "corvus/analysis/pSourceModule.h"
 
 #include <iostream>
 #include <unicode/ustream.h>
 
-namespace rphp { namespace AST {
+namespace corvus { namespace AST {
 
 pBaseTransformer::dispatchFunction pBaseTransformer::preDispatchTable_[] = {
 
 #define STMT(CLASS, PARENT) reinterpret_cast<dispatchFunction>( &pBaseTransformer::transform_pre_##CLASS ),
-#include "rphp/analysis/astNodes.def"
+#include "corvus/analysis/astNodes.def"
 
 };
 
 pBaseTransformer::dispatchFunction pBaseTransformer::postDispatchTable_[] = {
 
 #define STMT(CLASS, PARENT) reinterpret_cast<dispatchFunction>( &pBaseTransformer::transform_post_##CLASS ),
-#include "rphp/analysis/astNodes.def"
+#include "corvus/analysis/astNodes.def"
 
 };
 

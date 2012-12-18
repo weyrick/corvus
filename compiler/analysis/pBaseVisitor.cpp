@@ -19,33 +19,33 @@
    ***** END LICENSE BLOCK *****
 */
 
-#include "rphp/analysis/pBaseVisitor.h"
-#include "rphp/analysis/pSourceModule.h"
+#include "corvus/analysis/pBaseVisitor.h"
+#include "corvus/analysis/pSourceModule.h"
 
 
 #include <iostream>
 #include <unicode/ustream.h>
 
-namespace rphp { namespace AST {
+namespace corvus { namespace AST {
 
 pBaseVisitor::dispatchFunction pBaseVisitor::preDispatchTable_[] = {
 
 #define STMT(CLASS, PARENT) reinterpret_cast<dispatchFunction>( &pBaseVisitor::visit_pre_##CLASS ),
-#include "rphp/analysis/astNodes.def"
+#include "corvus/analysis/astNodes.def"
 
 };
 
 pBaseVisitor::dispatchFunction pBaseVisitor::postDispatchTable_[] = {
 
 #define STMT(CLASS, PARENT) reinterpret_cast<dispatchFunction>( &pBaseVisitor::visit_post_##CLASS ),
-#include "rphp/analysis/astNodes.def"
+#include "corvus/analysis/astNodes.def"
 
 };
 
 pBaseVisitor::childDispatchFunction pBaseVisitor::childrenDispatchTable_[] = {
 
 #define STMT(CLASS, PARENT) reinterpret_cast<childDispatchFunction>( &pBaseVisitor::visit_children_##CLASS ),
-#include "rphp/analysis/astNodes.def"
+#include "corvus/analysis/astNodes.def"
 
 };
 

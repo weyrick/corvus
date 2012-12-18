@@ -19,8 +19,8 @@
    ***** END LICENSE BLOCK *****
 */
 
-#include "rphp/analysis/pLexer.h"
-#include "rphp/analysis/pSourceFile.h"
+#include "corvus/analysis/pLexer.h"
+#include "corvus/analysis/pSourceFile.h"
 
 #include <iostream>
 #include <iomanip>
@@ -28,7 +28,7 @@
 #include <string>
 #include <sstream>
 
-namespace rphp { namespace lexer {
+namespace corvus { namespace lexer {
 
 pLexer::pLexer(const pSourceFile* s):
     source_(s),
@@ -57,7 +57,7 @@ void pLexer::dumpTokens(void) {
     std::size_t state(0), newState(0), uniqueID(0);
     pSourceCharIterator tokStart(sourceBegin_);
     pSourceCharIterator tokEnd(sourceBegin_);
-    while ( (curID = rphp_nextLangToken(newState, tokEnd, sourceEnd_, uniqueID)) )
+    while ( (curID = corvus_nextLangToken(newState, tokEnd, sourceEnd_, uniqueID)) )
     {
 
         if (curID == 0) {

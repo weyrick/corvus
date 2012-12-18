@@ -19,12 +19,12 @@
    ***** END LICENSE BLOCK *****
 */
 
-#include "rphp/analysis/passes/DumpStats.h"
-#include "rphp/analysis/pSourceModule.h"
+#include "corvus/analysis/passes/DumpStats.h"
+#include "corvus/analysis/pSourceModule.h"
 
 #include <iostream>
 
-namespace rphp { namespace AST { namespace Pass {
+namespace corvus { namespace AST { namespace Pass {
 
 
 void DumpStats::post_run(void) {

@@ -19,9 +19,9 @@
    ***** END LICENSE BLOCK *****
 */
 
-#include "rphp/analysis/pAST.h"
+#include "corvus/analysis/pAST.h"
 
-namespace rphp { namespace AST {
+namespace corvus { namespace AST {
 
 void stmt::destroyChildren(pParseContext &C) {
     for (child_iterator i = child_begin(), e = child_end(); i != e; ) {

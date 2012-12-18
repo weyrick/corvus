@@ -19,14 +19,14 @@
    ***** END LICENSE BLOCK *****
 */
 
-#include "rphp/analysis/pSourceModule.h"
-#include "rphp/analysis/pSourceFile.h"
+#include "corvus/analysis/pSourceModule.h"
+#include "corvus/analysis/pSourceFile.h"
 
-#include "rphp/analysis/pBaseVisitor.h"
-#include "rphp/analysis/pBaseTransformer.h"
-#include "rphp/analysis/pParser.h"
+#include "corvus/analysis/pBaseVisitor.h"
+#include "corvus/analysis/pBaseTransformer.h"
+#include "corvus/analysis/pParser.h"
 
-namespace rphp {
+namespace corvus {
 
 pSourceModule::pSourceModule(const pSourceFileDesc& file):
     source_(new pSourceFile(file)),

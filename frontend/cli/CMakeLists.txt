@@ -5,60 +5,60 @@ add_definitions(${LLVM_COMPILE_FLAGS})
 
 include_directories (${CMAKE_SOURCE_DIR} 
                      ${CMAKE_BINARY_DIR} 
-                     # this one is for rphp_grammar generated files
+                     # this one is for corvus_grammar generated files
                      ${PROJECT_BINARY_DIR}/compiler/analysis
                     )
 
-#set(RPHP_SRC_FILES
-#  rphp.cpp
+#set(COR_SRC_FILES
+#  corvus.cpp
 #  ${LLVM_LIBS_JIT_OBJECTS}
 #   )
 
-#set(RPHPI_SRC_FILES
-#  rphpi.cpp
+#set(CORI_SRC_FILES
+#  corvusi.cpp
 #  ${LLVM_LIBS_JIT_OBJECTS}
 #)
 
-set(RPHP_ANALYSIS_FILES
-    rphp-analyzer.cpp)
+set(COR_ANALYSIS_FILES
+    corvus-analyzer.cpp)
 
-#add_executable( rphp ${RPHP_SRC_FILES} )
-#add_executable( rphpi ${RPHPI_SRC_FILES} )
-add_executable( rphp-analyzer ${RPHP_ANALYSIS_FILES} )
+#add_executable( corvus ${COR_SRC_FILES} )
+#add_executable( corvusi ${CORI_SRC_FILES} )
+add_executable( corvus-analyzer ${COR_ANALYSIS_FILES} )
 
-#set_target_properties( rphp
+#set_target_properties( corvus
 #                       PROPERTIES LINK_FLAGS ${LLVM_LDFLAGS}
 #                     )
                      
-#set_target_properties( rphpi
+#set_target_properties( corvusi
 #                       PROPERTIES LINK_FLAGS ${LLVM_LDFLAGS}
 #                     )
 
-set_target_properties( rphp-analyzer
+set_target_properties( corvus-analyzer
                        PROPERTIES LINK_FLAGS ${LLVM_LDFLAGS}
                      )
 
-#target_link_libraries( rphp
-#                       rphp-llvm-jit
-#                       rphp-llvm-ir
-#                       rphp-analysis
-#                       rphp-runtime
+#target_link_libraries( corvus
+#                       corvus-llvm-jit
+#                       corvus-llvm-ir
+#                       corvus-analysis
+#                       corvus-runtime
 #                       ${LLVM_LIBS_CORE}
 #                       ${LLVM_LIBS_JIT}
 #                       ${ICU_LIBRARIES}
 #                        dl pthread
 #                      )
-#target_link_libraries( rphpi
-#                       rphp-llvm-jit
-#                       rphp-llvm-ir
-#                       rphp-analysis
-#                       rphp-runtime
+#target_link_libraries( corvusi
+#                       corvus-llvm-jit
+#                       corvus-llvm-ir
+#                       corvus-analysis
+#                       corvus-runtime
 #                       ${LLVM_LIBS_JIT}
 #                       ${ICU_LIBRARIES}
 #                       )                       
 
-target_link_libraries ( rphp-analyzer
-                        rphp-analysis
+target_link_libraries ( corvus-analyzer
+                        corvus-analysis
                         tinyxml
                        ${LLVM_LIBS_SUPPORT} 
                        ${ICU_LIBRARIES}

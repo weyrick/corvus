@@ -7,7 +7,7 @@ if(COMMAND cmake_policy)
     cmake_policy(SET CMP0003 NEW)
 endif(COMMAND cmake_policy)
 
-project (rphp)
+project (corvus)
 
 set(LLVM_MIN_VERSION       "2006000")
 set(LLVM_MIN_VERSION_TEXT  "2.6")
@@ -16,20 +16,20 @@ set(BOOST_MIN_VERSION_TEXT "1.38")
 set(ICU_MIN_VERSION        "4002000")
 set(ICU_MIN_VERSION_TEXT   "4.2")
 
-set(RPHP_SHARED_LIBS       0)
+set(COR_SHARED_LIBS       0)
 
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/modules )
-set(RPHP_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
+set(COR_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
 set(ASIO_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include/asio)
-set(RPHP_LIB_DIR ${PROJECT_SOURCE_DIR}/lib)
+set(COR_LIB_DIR ${PROJECT_SOURCE_DIR}/lib)
 
 set(CMAKE_CXX_FLAGS_DEBUG "-fexceptions -g -Wall -Winline -W -Wwrite-strings -Wno-unused")
 
 MESSAGE( STATUS "PROJECT_SOURCE_DIR: " ${PROJECT_SOURCE_DIR} )
 MESSAGE( STATUS "CMAKE_MODULE_PATH: " ${CMAKE_MODULE_PATH} )
 
-MESSAGE( STATUS "RPHP_INCLUDE_DIR: " ${RPHP_INCLUDE_DIR} )
-MESSAGE( STATUS "RPHP_LIB_DIR: " ${RPHP_LIB_DIR} )
+MESSAGE( STATUS "COR_INCLUDE_DIR: " ${COR_INCLUDE_DIR} )
+MESSAGE( STATUS "COR_LIB_DIR: " ${COR_LIB_DIR} )
 MESSAGE( STATUS "CMAKE_SYSTEM_PROCESSOR: " ${CMAKE_SYSTEM_PROCESSOR} )
 
 Find_Package(Boost REQUIRED)
@@ -45,10 +45,10 @@ Find_Package(GMP REQUIRED)
 Find_Package(CppUnit) # optional
 Find_Package(Doxygen) # optional
 
-#set(RPHP_INCLUDE_FULL ${RPHP_INCLUDE_DIR} ${Boost_INCLUDE_DIR} ${ICU_INCLUDE_DIRS} ${GMP_INCLUDE_DIR} ${LLVM_INCLUDE_DIR})
-#Message(STATUS "Includes: ${RPHP_INCLUDE_FULL}")
+#set(COR_INCLUDE_FULL ${COR_INCLUDE_DIR} ${Boost_INCLUDE_DIR} ${ICU_INCLUDE_DIRS} ${GMP_INCLUDE_DIR} ${LLVM_INCLUDE_DIR})
+#Message(STATUS "Includes: ${COR_INCLUDE_FULL}")
 
-include_directories(${RPHP_INCLUDE_DIR} ${Boost_INCLUDE_DIR} ${ICU_INCLUDE_DIRS} ${GMP_INCLUDE_DIR} ${LLVM_INCLUDE_DIR})
+include_directories(${COR_INCLUDE_DIR} ${Boost_INCLUDE_DIR} ${ICU_INCLUDE_DIRS} ${GMP_INCLUDE_DIR} ${LLVM_INCLUDE_DIR})
 link_directories(${ICU_LIB_DIRS})
 
 set(TINYXML_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/3rdparty/tinyxml")
@@ -70,12 +70,12 @@ add_subdirectory(frontend/cli)
 
 IF(CPPUNIT_FOUND)
   ENABLE_TESTING()
-  ADD_TEST(rphp-runtime-suite runtime/test/rphp-runtime-suite)
-  ADD_TEST(rphp-sizes runtime/test/rphp-sizes)
+  ADD_TEST(corvus-runtime-suite runtime/test/corvus-runtime-suite)
+  ADD_TEST(corvus-sizes runtime/test/corvus-sizes)
 ENDIF(CPPUNIT_FOUND)
 
 IF(DOXYGEN_FOUND)
-  SET(DOXYFILE doc/Doxyfile.rphp)
+  SET(DOXYFILE doc/Doxyfile.corvus)
   ADD_CUSTOM_TARGET(doc ${DOXYGEN_EXECUTABLE} ${DOXYFILE} WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 ENDIF(DOXYGEN_FOUND)
 

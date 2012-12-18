@@ -19,12 +19,12 @@
    ***** END LICENSE BLOCK *****
 */
 
-#include "rphp/analysis/pPassManager.h"
-#include "rphp/analysis/pPass.h"
-#include "rphp/analysis/pSourceModule.h"
-#include "rphp/analysis/passes/CheckMemoryManagement.h"
+#include "corvus/analysis/pPassManager.h"
+#include "corvus/analysis/pPass.h"
+#include "corvus/analysis/pSourceModule.h"
+#include "corvus/analysis/passes/CheckMemoryManagement.h"
 
-namespace rphp {
+namespace corvus {
 
 pPassManager::~pPassManager(void) {
 

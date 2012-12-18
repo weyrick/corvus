@@ -19,9 +19,9 @@
    ***** END LICENSE BLOCK *****
 */
 
-#include "rphp/analysis/pSourceFile.h"
+#include "corvus/analysis/pSourceFile.h"
 
-#include "rphp/analysis/pParseError.h"
+#include "corvus/analysis/pParseError.h"
 
 #include <iostream>
 #include <iomanip>
@@ -34,7 +34,7 @@
 #include <unicode/schriter.h>
 #include <stdio.h>
 
-namespace rphp { 
+namespace corvus { 
 
 pSourceFile::pSourceFile(const pSourceFileDesc& file):
     file_(file)

@@ -19,35 +19,35 @@
    ***** END LICENSE BLOCK *****
 */
 
-#include "rphp/analysis/pParser.h"
+#include "corvus/analysis/pParser.h"
 
-#include "rphp/analysis/pLexer.h"
-#include "rphp/analysis/pSourceModule.h"
-#include "rphp/analysis/pParseContext.h"
+#include "corvus/analysis/pLexer.h"
+#include "corvus/analysis/pSourceModule.h"
+#include "corvus/analysis/pParseContext.h"
 
 #include <boost/pool/object_pool.hpp>
 
 #include <iostream>
 
-/* generated rphp_grammar parser interface */
-void* rphpParseAlloc(void *(*)(size_t));
-void  rphpParse(void *, int, rphp::pSourceRange*, rphp::pSourceModule*);
-void  rphpParseFree(void *, void (*)(void*));
-void  rphpParseTrace(FILE *, char *);
+/* generated corvus_grammar parser interface */
+void* corvusParseAlloc(void *(*)(size_t));
+void  corvusParse(void *, int, corvus::pSourceRange*, corvus::pSourceModule*);
+void  corvusParseFree(void *, void (*)(void*));
+void  corvusParseTrace(FILE *, char *);
 
-namespace rphp { namespace parser {
+namespace corvus { namespace parser {
 
 void parseSourceFile(pSourceModule* pMod, bool debug=false) {
 
     boost::object_pool<pSourceRange> tokenPool;
     lexer::pLexer lexer(pMod->source());
 
-    void* pParser = rphpParseAlloc(malloc);
+    void* pParser = corvusParseAlloc(malloc);
 
 #ifndef NDEBUG
     // DEBUG
     if (debug)
-        rphpParseTrace(stderr, (char*)"trace: ");
+        corvusParseTrace(stderr, (char*)"trace: ");
 #endif
 
     // start at begining of source file
@@ -66,7 +66,7 @@ void parseSourceFile(pSourceModule* pMod, bool debug=false) {
     pSourceCharIterator tokStart(lexer.sourceBegin());
     pSourceCharIterator tokEnd(lexer.sourceBegin());
 
-    while ( (curID = rphp_nextLangToken(newState, tokEnd, sourceEnd, uniqueID)) ) {
+    while ( (curID = corvus_nextLangToken(newState, tokEnd, sourceEnd, uniqueID)) ) {
 
         // always make a range unless the scanner didn't match, in which case
         // we handle separately below
@@ -127,12 +127,12 @@ void parseSourceFile(pSourceModule* pMod, bool debug=false) {
                 }
                 // only actually parse T_INLINE_HTML, not whitespace
                 if (curID == T_INLINE_HTML) {
-                    rphpParse(pParser, curID, curRange, pMod);
+                    corvusParse(pParser, curID, curRange, pMod);
                 }
                 break;
             default:
                 // parse
-                rphpParse(pParser, curID, curRange, pMod);
+                corvusParse(pParser, curID, curRange, pMod);
                 break;
         }
 
@@ -145,9 +145,9 @@ void parseSourceFile(pSourceModule* pMod, bool debug=false) {
     }
 
     // finish parse
-    rphpParse(pParser, 0, 0, pMod); // note, this may generate a parse error still
+    corvusParse(pParser, 0, 0, pMod); // note, this may generate a parse error still
     context.finishParse(); // so don't finish until here
-    rphpParseFree(pParser, free);
+    corvusParseFree(pParser, free);
 
 }
 

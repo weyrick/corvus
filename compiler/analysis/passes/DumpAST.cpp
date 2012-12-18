@@ -19,15 +19,15 @@
    ***** END LICENSE BLOCK *****
 */
 
-#include "rphp/analysis/passes/DumpAST.h"
-#include "rphp/analysis/pSourceModule.h"
+#include "corvus/analysis/passes/DumpAST.h"
+#include "corvus/analysis/pSourceModule.h"
 
 #include "tinyxml.h"
 
 #include <iostream>
 #include <unicode/ustream.h>
 
-namespace rphp { namespace AST { namespace Pass {
+namespace corvus { namespace AST { namespace Pass {
 
 void DumpAST::pre_run(void) {
     doc_ = new TiXmlDocument();

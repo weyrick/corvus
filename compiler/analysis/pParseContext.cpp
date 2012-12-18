@@ -20,15 +20,15 @@
 */
 
 
-#include "rphp/analysis/pParseContext.h"
-#include "rphp/analysis/pSourceModule.h"
-#include "rphp/analysis/pSourceFile.h"
-#include "rphp/analysis/pParseError.h"
+#include "corvus/analysis/pParseContext.h"
+#include "corvus/analysis/pSourceModule.h"
+#include "corvus/analysis/pSourceFile.h"
+#include "corvus/analysis/pParseError.h"
 
 #include <iostream>
 #include <sstream>
 
-namespace rphp {
+namespace corvus {
 
 namespace AST {
 

@@ -19,13 +19,13 @@
    ***** END LICENSE BLOCK *****
 */
 
-#include "rphp/analysis/pPass.h"
+#include "corvus/analysis/pPass.h"
 
-namespace rphp { namespace AST {
+namespace corvus { namespace AST {
 
 const char* pPass::nodeDescTable_[] = {
 #define STMT(CLASS, PARENT) #CLASS,
-#include "rphp/analysis/astNodes.def"
+#include "corvus/analysis/astNodes.def"
 };
 
 
