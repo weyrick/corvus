@@ -19,8 +19,8 @@
    ***** END LICENSE BLOCK *****
 */
 
-#ifndef RPHP_PRUNTIMEERROR_H_
-#define RPHP_PRUNTIMEERROR_H_
+#ifndef COR_PRUNTIMEERROR_H_
+#define COR_PRUNTIMEERROR_H_
 
 #include <string>
 #include <stdexcept>
@@ -52,4 +52,4 @@ public:
 
 } // namespace
 
-#endif /* RPHP_PRUNTIMEERROR_H_ */
+#endif /* COR_PRUNTIMEERROR_H_ */

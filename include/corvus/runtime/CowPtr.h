@@ -23,7 +23,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-#ifdef RPHP_PVAR_DEBUG
+#ifdef COR_PVAR_DEBUG
 #include <iostream>
 #endif
 
@@ -48,7 +48,7 @@ private:
     void detach() {
         T* tmp = sPtr_.get();
         if( !( tmp == 0 || sPtr_.unique() ) ) {
-#ifdef RPHP_PVAR_DEBUG
+#ifdef COR_PVAR_DEBUG
             std::cerr << "COW: detach, full copy" << std::endl;
 #endif
             sPtr_ = RefPtr( new T( *tmp ) );
@@ -58,25 +58,25 @@ private:
 public:
     CowPtr(T* t)
         :   sPtr_(t) {
-#ifdef RPHP_PVAR_DEBUG
+#ifdef COR_PVAR_DEBUG
         std::cerr << "COW: create from T*" << std::endl;
 #endif
     }
     CowPtr(const RefPtr& refptr)
         :   sPtr_(refptr) {
-#ifdef RPHP_PVAR_DEBUG
+#ifdef COR_PVAR_DEBUG
         std::cerr << "COW: create from shared_ptr<T>" << std::endl;
 #endif
     }
     CowPtr(const CowPtr& cowptr)
         :   sPtr_(cowptr.sPtr_)  {
-#ifdef RPHP_PVAR_DEBUG
+#ifdef COR_PVAR_DEBUG
         std::cerr << "COW: copy construct" << std::endl;
 #endif
     }
 
     CowPtr& operator=(const CowPtr& rhs) {
-#ifdef RPHP_PVAR_DEBUG
+#ifdef COR_PVAR_DEBUG
         std::cerr << "COW: shallow assign" << std::endl;
 #endif
         sPtr_ = rhs.sPtr_; // no need to check for self-assignment with boost::shared_ptr

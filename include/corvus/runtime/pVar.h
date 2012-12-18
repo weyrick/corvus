@@ -18,12 +18,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  * ***** END LICENSE BLOCK ***** */
 
-#ifndef RPHP_PVAR_H_
-#define RPHP_PVAR_H_
+#ifndef COR_PVAR_H_
+#define COR_PVAR_H_
 
 #include "corvus/runtime/pRuntimeTypes.h"
 
-#ifdef RPHP_PVAR_DEBUG
+#ifdef COR_PVAR_DEBUG
 #include <iostream>
 #endif
 
@@ -145,7 +145,7 @@ public:
 
     /// default constructor holds a pNull
     pVar(void): pVarData_(pNull) {
-#ifdef RPHP_PVAR_DEBUG
+#ifdef COR_PVAR_DEBUG
         std::cout << "pVar [" << this << "]: default construct (pNull)" << std::endl;
 #endif
     }
@@ -153,7 +153,7 @@ public:
     /// generic constructor will accept any type that is valid for the pVar variant (see pVarDataType)
     template <typename T>
     pVar(const T& v): pVarData_(v) {
-#ifdef RPHP_PVAR_DEBUG
+#ifdef COR_PVAR_DEBUG
         std::cout << "pVar [" << this << "]: generic construct to: " << pVarData_.which() << std::endl;
 #endif
     }
@@ -162,28 +162,28 @@ public:
 
     /// construction from char* defaults to a binary strings
     pVar(const char* str): pVarData_(pBString(str)) {
-#ifdef RPHP_PVAR_DEBUG
+#ifdef COR_PVAR_DEBUG
         std::cout << "pVar [" << this << "]: binary string construct" << std::endl;
 #endif
     }
 
     /// construction from int creates pInt
     pVar(int i): pVarData_(pInt(i)) {
-#ifdef RPHP_PVAR_DEBUG
+#ifdef COR_PVAR_DEBUG
         std::cout << "pVar [" << this << "]: int construct: " << i << std::endl;
 #endif
     }
 
     /// construction from float creates pFloat
     pVar(float f): pVarData_(pFloatP(new pFloat(f))) {
-#ifdef RPHP_PVAR_DEBUG
+#ifdef COR_PVAR_DEBUG
         std::cout << "pVar [" << this << "]: float construct: " << i << std::endl;
 #endif
     }
 
     /// construction from double creates pFloat
     pVar(double d): pVarData_(pFloatP(new pFloat(d))) {
-#ifdef RPHP_PVAR_DEBUG
+#ifdef COR_PVAR_DEBUG
         std::cout << "pVar [" << this << "]: double construct: " << i << std::endl;
 #endif
     }
@@ -193,7 +193,7 @@ public:
     void newEmptyHash(void);
 
     /* default copy constructor */
-#ifdef RPHP_PVAR_DEBUG
+#ifdef COR_PVAR_DEBUG
     pVar(const pVar& v) {
         std::cout << "pVar [" << this << "]: copy construct from [" << &v << "] type: " << v.getType() << std::endl;
         pVarData_ = v.pVarData_;
@@ -201,7 +201,7 @@ public:
 #endif
 
     /* default destructor */
-#ifdef RPHP_PVAR_DEBUG
+#ifdef COR_PVAR_DEBUG
     ~pVar(void) {
         std::cout << "pVar [" << this << "]: destruct" << std::endl;
     }
@@ -491,4 +491,4 @@ public:
 
 } /* namespace corvus */
 
-#endif /* RPHP_PVAR_H_ */
+#endif /* COR_PVAR_H_ */

@@ -20,8 +20,8 @@
    ***** END LICENSE BLOCK *****
 */
 
-#ifndef RPHP_PTRANSFORMHELPER_H_
-#define RPHP_PTRANSFORMHELPER_H_
+#ifndef COR_PTRANSFORMHELPER_H_
+#define COR_PTRANSFORMHELPER_H_
 
 #include "corvus/analysis/pAST.h"
 #include "corvus/analysis/pParseContext.h"
@@ -78,4 +78,4 @@ public:
 
 } } // namespace
 
-#endif /* RPHP_PTRANSFORMHELPER_H_ */
+#endif /* COR_PTRANSFORMHELPER_H_ */

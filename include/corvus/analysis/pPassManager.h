@@ -19,8 +19,8 @@
    ***** END LICENSE BLOCK *****
 */
 
-#ifndef RPHP_PPASSMANAGER_H_
-#define RPHP_PPASSMANAGER_H_
+#ifndef COR_PPASSMANAGER_H_
+#define COR_PPASSMANAGER_H_
 
 #include <vector>
 
@@ -64,4 +64,4 @@ public:
 
 } // namespace
 
-#endif /* RPHP_PPASSMANAGER_H_ */
+#endif /* COR_PPASSMANAGER_H_ */

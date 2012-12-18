@@ -19,8 +19,8 @@
    ***** END LICENSE BLOCK *****
 */
 
-#ifndef RPHP_PPARSECONTEXT_H_
-#define RPHP_PPARSECONTEXT_H_
+#ifndef COR_PPARSECONTEXT_H_
+#define COR_PPARSECONTEXT_H_
 
 #include "corvus/pSourceTypes.h"
 
@@ -133,4 +133,4 @@ inline void operator delete[](void *p, corvus::AST::pParseContext& C) throw () {
   C.deallocate(p);
 }
 
-#endif /* RPHP_PPARSECONTEXT_H_ */
+#endif /* COR_PPARSECONTEXT_H_ */

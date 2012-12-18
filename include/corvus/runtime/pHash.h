@@ -18,8 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  * ***** END LICENSE BLOCK ***** */
 
-#ifndef RPHP_PHASH_H_
-#define RPHP_PHASH_H_
+#ifndef COR_PHASH_H_
+#define COR_PHASH_H_
 
 #include "corvus/runtime/pVar.h"
 #include "corvus/runtime/pOutputBuffer.h"
@@ -116,14 +116,14 @@ public:
 
     /// construct an empty hash
     pHash() : maxIntKey_(0) {
-#ifdef RPHP_PVAR_DEBUG
+#ifdef COR_PVAR_DEBUG
     std::cerr << "pHash(): create" << std::endl;
 #endif
     }
 
     // NOTE: default copy constructor, destructor
 
-#ifdef RPHP_PVAR_DEBUG
+#ifdef COR_PVAR_DEBUG
     pHash(pHash const& p) : maxIntKey_(p.maxIntKey_), hashData_(p.hashData_) {
         std::cerr << "pHash(): copy construct (full data copy)" << std::endl;
     }
@@ -172,4 +172,4 @@ std::ostream& operator << (std::ostream& os, const corvus::pHash& h);
 
 } /* namespace corvus */
 
-#endif /* RPHP_PHASH_H_ */
+#endif /* COR_PHASH_H_ */

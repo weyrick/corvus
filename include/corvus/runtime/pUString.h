@@ -18,8 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  * ***** END LICENSE BLOCK ***** */
 
-#ifndef RPHP_PUSTRING_H_
-#define RPHP_PUSTRING_H_
+#ifndef COR_PUSTRING_H_
+#define COR_PUSTRING_H_
 
 #include "corvus/runtime/CowPtr.h"
 
@@ -182,4 +182,4 @@ public:
 } 
 */
 
-#endif /* RPHP_PUSTRING_H_ */
+#endif /* COR_PUSTRING_H_ */

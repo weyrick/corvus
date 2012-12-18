@@ -18,8 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  * ***** END LICENSE BLOCK ***** */
 
-#ifndef RPHP_PCLASSMANAGER
-#define RPHP_PCLASSMANAGER
+#ifndef COR_PCLASSMANAGER
+#define COR_PCLASSMANAGER
 
 #include "corvus/runtime/pRuntimeTypes.h"
 
@@ -56,4 +56,4 @@ public:
 
 }
 
-#endif /* RPHP_PCLASSMANAGER_ */
+#endif /* COR_PCLASSMANAGER_ */

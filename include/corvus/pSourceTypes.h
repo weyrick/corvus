@@ -19,8 +19,8 @@
    ***** END LICENSE BLOCK *****
 */
 
-#ifndef RPHP_PSOURCETYPES_H_
-#define RPHP_PSOURCETYPES_H_
+#ifndef COR_PSOURCETYPES_H_
+#define COR_PSOURCETYPES_H_
 
 #include "pTypes.h"
 
@@ -61,4 +61,4 @@ public:
 
 } // namespace
 
-#endif /* RPHP_PSOURCETYPES_H_ */
+#endif /* COR_PSOURCETYPES_H_ */

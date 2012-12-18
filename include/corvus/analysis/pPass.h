@@ -20,8 +20,8 @@
    ***** END LICENSE BLOCK *****
 */
 
-#ifndef RPHP_PPASS_H_
-#define RPHP_PPASS_H_
+#ifndef COR_PPASS_H_
+#define COR_PPASS_H_
 
 #include <string>
 #include <corvus/analysis/pSourceModule.h>
@@ -61,4 +61,4 @@ public:
 
 } } // namespace
 
-#endif /* RPHP_PPASS_H_ */
+#endif /* COR_PPASS_H_ */

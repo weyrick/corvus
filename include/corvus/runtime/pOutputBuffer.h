@@ -18,8 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  * ***** END LICENSE BLOCK ***** */
 
-#ifndef RPHP_POUTPUTBUFFER_H_
-#define RPHP_POUTPUTBUFFER_H_
+#ifndef COR_POUTPUTBUFFER_H_
+#define COR_POUTPUTBUFFER_H_
 
 #include "corvus/runtime/pRuntimeTypes.h"
 
@@ -139,4 +139,4 @@ pOutputBuffer& operator<< (pOutputBuffer& ob, const pUString& str);
 
 }
 
-#endif /* RPHP_POUTPUTBUFFER_H_ */
+#endif /* COR_POUTPUTBUFFER_H_ */

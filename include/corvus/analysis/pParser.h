@@ -19,8 +19,8 @@
    ***** END LICENSE BLOCK *****
 */
 
-#ifndef RPHP_PPARSER_H_
-#define RPHP_PPARSER_H_
+#ifndef COR_PPARSER_H_
+#define COR_PPARSER_H_
 
 #include "corvus/analysis/pSourceFile.h"
 
@@ -34,4 +34,4 @@ void parseSourceFile(pSourceModule* pMod, bool debug);
 
 } } // namespace
 
-#endif /* RPHP_PPARSER_H_ */
+#endif /* COR_PPARSER_H_ */

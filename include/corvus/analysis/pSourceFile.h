@@ -19,8 +19,8 @@
    ***** END LICENSE BLOCK *****
 */
 
-#ifndef RPHP_PSOURCEFILE_H_
-#define RPHP_PSOURCEFILE_H_
+#ifndef COR_PSOURCEFILE_H_
+#define COR_PSOURCEFILE_H_
 
 #include <string>
 #include "corvus/pTypes.h"
@@ -46,4 +46,4 @@ public:
 
 } // namespace
 
-#endif /* RPHP_PSOURCEFILE_H_ */
+#endif /* COR_PSOURCEFILE_H_ */

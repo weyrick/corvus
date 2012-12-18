@@ -18,8 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  * ***** END LICENSE BLOCK ***** */
 
-#ifndef RPHP_PRUNTIMETYPES_H_
-#define RPHP_PRUNTIMETYPES_H_
+#ifndef COR_PRUNTIMETYPES_H_
+#define COR_PRUNTIMETYPES_H_
 
 #include "corvus/pTypes.h"
 #include "corvus/pSourceTypes.h"
@@ -118,38 +118,38 @@ typedef enum {
 
 class pRuntimeEngine;
 
-#define RPHP_STDFUNC_ARGS   pVar* retVal, pRuntimeEngine* runtime
-#define RPHP_STDMETHOD_ARGS pVar* retVal, pRuntimeEngine* runtime, pObjectP pThis
+#define COR_STDFUNC_ARGS   pVar* retVal, pRuntimeEngine* runtime
+#define COR_STDMETHOD_ARGS pVar* retVal, pRuntimeEngine* runtime, pObjectP pThis
 
 /// php function signature: no arguments
-typedef void (*pFunPointer0)(RPHP_STDFUNC_ARGS);
+typedef void (*pFunPointer0)(COR_STDFUNC_ARGS);
 /// php function signature: one argument
-typedef void (*pFunPointer1)(RPHP_STDFUNC_ARGS, const pVar&);
+typedef void (*pFunPointer1)(COR_STDFUNC_ARGS, const pVar&);
 /// php function signature: two arguments
-typedef void (*pFunPointer2)(RPHP_STDFUNC_ARGS, const pVar&, const pVar&);
+typedef void (*pFunPointer2)(COR_STDFUNC_ARGS, const pVar&, const pVar&);
 /// php function signature: three arguments
-typedef void (*pFunPointer3)(RPHP_STDFUNC_ARGS, const pVar&, const pVar&, const pVar&);
+typedef void (*pFunPointer3)(COR_STDFUNC_ARGS, const pVar&, const pVar&, const pVar&);
 /// php function signature: four arguments
-typedef void (*pFunPointer4)(RPHP_STDFUNC_ARGS, const pVar&, const pVar&, const pVar&, const pVar&);
+typedef void (*pFunPointer4)(COR_STDFUNC_ARGS, const pVar&, const pVar&, const pVar&, const pVar&);
 /// php function signature: five arguments
-typedef void (*pFunPointer5)(RPHP_STDFUNC_ARGS, const pVar&, const pVar&, const pVar&, const pVar&, const pVar&);
+typedef void (*pFunPointer5)(COR_STDFUNC_ARGS, const pVar&, const pVar&, const pVar&, const pVar&, const pVar&);
 /// php function signature: n arguments
-typedef void (*pFunPointerN)(RPHP_STDFUNC_ARGS, std::vector<const pVar&>);
+typedef void (*pFunPointerN)(COR_STDFUNC_ARGS, std::vector<const pVar&>);
 
 /// php method signature: no arguments
-typedef void (*pMethodPointer0)(RPHP_STDMETHOD_ARGS);
+typedef void (*pMethodPointer0)(COR_STDMETHOD_ARGS);
 /// php method signature: one argument
-typedef void (*pMethodPointer1)(RPHP_STDMETHOD_ARGS, const pVar&);
+typedef void (*pMethodPointer1)(COR_STDMETHOD_ARGS, const pVar&);
 /// php method signature: two arguments
-typedef void (*pMethodPointer2)(RPHP_STDMETHOD_ARGS, const pVar&, const pVar&);
+typedef void (*pMethodPointer2)(COR_STDMETHOD_ARGS, const pVar&, const pVar&);
 /// php method signature: three arguments
-typedef void (*pMethodPointer3)(RPHP_STDMETHOD_ARGS, const pVar&, const pVar&, const pVar&);
+typedef void (*pMethodPointer3)(COR_STDMETHOD_ARGS, const pVar&, const pVar&, const pVar&);
 /// php method signature: four arguments
-typedef void (*pMethodPointer4)(RPHP_STDMETHOD_ARGS, const pVar&, const pVar&, const pVar&, const pVar&);
+typedef void (*pMethodPointer4)(COR_STDMETHOD_ARGS, const pVar&, const pVar&, const pVar&, const pVar&);
 /// php method signature: five arguments
-typedef void (*pMethodPointer5)(RPHP_STDMETHOD_ARGS, const pVar&, const pVar&, const pVar&, const pVar&, const pVar&);
+typedef void (*pMethodPointer5)(COR_STDMETHOD_ARGS, const pVar&, const pVar&, const pVar&, const pVar&, const pVar&);
 /// php method signature: n arguments
-typedef void (*pMethodPointerN)(RPHP_STDMETHOD_ARGS, std::vector<const pVar&>);
+typedef void (*pMethodPointerN)(COR_STDMETHOD_ARGS, std::vector<const pVar&>);
 
 // runtime handlers
 typedef void (*pIncludeHandlerFun)(pFileNameString file);
@@ -158,4 +158,4 @@ typedef void (*pEvalHandlerFun)(pSourceString code);
 } /* namespace corvus */
 
 
-#endif /* RPHP_PRUNTIMETYPES_H_ */
+#endif /* COR_PRUNTIMETYPES_H_ */

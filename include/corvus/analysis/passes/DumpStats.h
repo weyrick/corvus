@@ -19,8 +19,8 @@
    ***** END LICENSE BLOCK *****
 */
 
-#ifndef RPHP_DUMPSTATS_H_
-#define RPHP_DUMPSTATS_H_
+#ifndef COR_DUMPSTATS_H_
+#define COR_DUMPSTATS_H_
 
 #include "corvus/analysis/pAST.h"
 #include "corvus/analysis/pBaseVisitor.h"
@@ -40,4 +40,4 @@ public:
 
 } } } // namespace
 
-#endif /* RPHP_DUMPAST_H_ */
+#endif /* COR_DUMPAST_H_ */

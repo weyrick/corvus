@@ -19,8 +19,8 @@
    ***** END LICENSE BLOCK *****
 */
 
-#ifndef RPHP_PSOURCEMODULE_H_
-#define RPHP_PSOURCEMODULE_H_
+#ifndef COR_PSOURCEMODULE_H_
+#define COR_PSOURCEMODULE_H_
 
 #include "corvus/pSourceTypes.h"
 #include "corvus/analysis/pAST.h"
@@ -71,4 +71,4 @@ public:
 
 } // namespace
 
-#endif /* RPHP_PSOURCEMODULE_H_ */
+#endif /* COR_PSOURCEMODULE_H_ */

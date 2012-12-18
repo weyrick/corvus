@@ -19,8 +19,8 @@
    ***** END LICENSE BLOCK *****
 */
 
-#ifndef RPHP_PBASEVISITOR_H_
-#define RPHP_PBASEVISITOR_H_
+#ifndef COR_PBASEVISITOR_H_
+#define COR_PBASEVISITOR_H_
 
 #include "corvus/analysis/pAST.h"
 #include "corvus/analysis/pPass.h"
@@ -73,4 +73,4 @@ public:
 
 } } // namespace
 
-#endif /* RPHP_PBASEVISITOR_H_ */
+#endif /* COR_PBASEVISITOR_H_ */

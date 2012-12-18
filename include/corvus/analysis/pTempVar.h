@@ -19,8 +19,8 @@
    ***** END LICENSE BLOCK *****
 */
 
-#ifndef RPHP_PTEMPVAR_H_
-#define RPHP_PTEMPVAR_H_
+#ifndef COR_PTEMPVAR_H_
+#define COR_PTEMPVAR_H_
 
 #include "corvus/analysis/pAST.h"
 
@@ -49,4 +49,4 @@ public:
 
 } // namespace
 
-#endif /* RPHP_PTEMPVAR_H_ */
+#endif /* COR_PTEMPVAR_H_ */

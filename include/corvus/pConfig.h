@@ -18,8 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  * ***** END LICENSE BLOCK ***** */
 
-#ifndef RPHP_PCONFIG_H_
-#define RPHP_PCONFIG_H_
+#ifndef COR_PCONFIG_H_
+#define COR_PCONFIG_H_
 
 #include <boost/unordered_map.hpp>
 #include <string>
@@ -50,4 +50,4 @@ public:
 } /* namespace corvus */
 
 
-#endif /* RPHP_PCONFIG_H_ */
+#endif /* COR_PCONFIG_H_ */

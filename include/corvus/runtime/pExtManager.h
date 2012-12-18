@@ -18,8 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  * ***** END LICENSE BLOCK ***** */
 
-#ifndef RPHP_PEXTMANAGER
-#define RPHP_PEXTMANAGER
+#ifndef COR_PEXTMANAGER
+#define COR_PEXTMANAGER
 
 #include <deque>
 #include <string>
@@ -53,4 +53,4 @@ public:
 
 }
 
-#endif /* RPHP_PEXTMANAGER_ */
+#endif /* COR_PEXTMANAGER_ */

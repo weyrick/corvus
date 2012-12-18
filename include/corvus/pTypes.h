@@ -18,8 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  * ***** END LICENSE BLOCK ***** */
 
-#ifndef RPHP_PTYPES_H_
-#define RPHP_PTYPES_H_
+#ifndef COR_PTYPES_H_
+#define COR_PTYPES_H_
 
 // llvm JIT doesn't do inline asm, which is used by the atomic locking mechanism
 // in shared_ptr. this forces generic pthreads version instead to avoid it for now.
@@ -48,8 +48,8 @@ typedef llvm::Twine pTwine;
 
 /// signed (fast) integer type (used in pVar)
 typedef signed long pInt;
-#define RPHP_INT_MIN LONG_MIN
-#define RPHP_INT_MAX LONG_MAX
+#define COR_INT_MIN LONG_MIN
+#define COR_INT_MAX LONG_MAX
 
 /// signed (arbitrary precision) integer type (used in pVar)
 typedef mpz_class pBigInt;
@@ -131,4 +131,4 @@ public:
 } /* namespace corvus */
 
 
-#endif /* RPHP_PTYPES_H_ */
+#endif /* COR_PTYPES_H_ */

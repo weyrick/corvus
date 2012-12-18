@@ -19,8 +19,8 @@
    ***** END LICENSE BLOCK *****
 */
 
-#ifndef RPHP_PPARSEERROR_H_
-#define RPHP_PPARSEERROR_H_
+#ifndef COR_PPARSEERROR_H_
+#define COR_PPARSEERROR_H_
 
 #include <string>
 #include <stdexcept>
@@ -50,4 +50,4 @@ public:
 
 } // namespace
 
-#endif /* RPHP_PPARSEERROR_H_ */
+#endif /* COR_PPARSEERROR_H_ */

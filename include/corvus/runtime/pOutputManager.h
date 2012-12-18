@@ -18,8 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  * ***** END LICENSE BLOCK ***** */
 
-#ifndef RPHP_POUTPUTMANAGER_H_
-#define RPHP_POUTPUTMANAGER_H_
+#ifndef COR_POUTPUTMANAGER_H_
+#define COR_POUTPUTMANAGER_H_
 
 #include "corvus/runtime/pRuntimeTypes.h"
 #include "corvus/runtime/pVar.h"
@@ -85,4 +85,4 @@ pOutputManager& operator<< (pOutputManager& om, const pUString& str);
 
 }
 
-#endif /* RPHP_POUTPUTMANAGER_H_ */
+#endif /* COR_POUTPUTMANAGER_H_ */

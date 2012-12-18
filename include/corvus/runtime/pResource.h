@@ -18,8 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  * ***** END LICENSE BLOCK ***** */
 
-#ifndef RPHP_PRESOURCE_H_
-#define RPHP_PRESOURCE_H_
+#ifndef COR_PRESOURCE_H_
+#define COR_PRESOURCE_H_
 
 #include <iostream>
 
@@ -36,4 +36,4 @@ std::ostream& operator << (std::ostream& os, const corvus::pResource& h);
 
 }
 
-#endif /* RPHP_PRESOURCE_H_ */
+#endif /* COR_PRESOURCE_H_ */

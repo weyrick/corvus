@@ -19,8 +19,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  * ***** END LICENSE BLOCK ***** */
 
-#ifndef RPHP_POBJECT_H_
-#define RPHP_POBJECT_H_
+#ifndef COR_POBJECT_H_
+#define COR_POBJECT_H_
 
 #include "corvus/runtime/pHash.h"
 #include "corvus/runtime/pRuntimeTypes.h"
@@ -103,4 +103,4 @@ std::ostream& operator << (std::ostream& os, const corvus::pObject& h);
 
 }
 
-#endif /* RPHP_POBJECT_H_ */
+#endif /* COR_POBJECT_H_ */

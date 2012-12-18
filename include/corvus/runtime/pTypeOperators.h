@@ -18,8 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  * ***** END LICENSE BLOCK ***** */
 
-#ifndef RPHP_PTYPEOPERATIONS_H_
-#define RPHP_PTYPEOPERATIONS_H_
+#ifndef COR_PTYPEOPERATIONS_H_
+#define COR_PTYPEOPERATIONS_H_
 
 #include "corvus/runtime/pRuntimeTypes.h"
 #include "corvus/runtime/pHash.h"
@@ -334,4 +334,4 @@ public:
 } /* namespace corvus */
 
 
-#endif /* RPHP_PTYPEOPERATIONS_H_ */
+#endif /* COR_PTYPEOPERATIONS_H_ */

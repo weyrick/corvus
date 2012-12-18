@@ -29,8 +29,8 @@
 
 */
 
-#ifndef RPHP_PAST_H_
-#define RPHP_PAST_H_
+#ifndef COR_PAST_H_
+#define COR_PAST_H_
 
 #include "corvus/pSourceTypes.h"
 #include "corvus/pTypes.h"
@@ -57,11 +57,11 @@ namespace AST {
 
 // These define how big our SmallVectors are, which means
 // this should be a good average length we expect to parse
-const int RPHP_IDLIST_SIZE = 5; // list of ids, used by extends, implements
-const int RPHP_FORMAL_PARAM_VECTOR_SIZE = 5; // formal parameters in function/method decl
+const int COR_IDLIST_SIZE = 5; // list of ids, used by extends, implements
+const int COR_FORMAL_PARAM_VECTOR_SIZE = 5; // formal parameters in function/method decl
 
 // a list of symbols, used for extends, implements
-typedef llvm::SmallVector<llvm::PooledStringPtr,RPHP_IDLIST_SIZE> idList;
+typedef llvm::SmallVector<llvm::PooledStringPtr,COR_IDLIST_SIZE> idList;
 typedef std::vector<const pSourceRange*> sourceRangeList;
 
 enum nodeKind {
@@ -481,7 +481,7 @@ public:
 
 };
 
-typedef llvm::SmallVector<formalParam*,RPHP_FORMAL_PARAM_VECTOR_SIZE> formalParamList;
+typedef llvm::SmallVector<formalParam*,COR_FORMAL_PARAM_VECTOR_SIZE> formalParamList;
 
 class signature: public decl {
 
@@ -2367,4 +2367,4 @@ public:
 
 } } // namespace
 
-#endif /* RPHP_PAST_H_ */
+#endif /* COR_PAST_H_ */

@@ -19,8 +19,8 @@
    ***** END LICENSE BLOCK *****
 */
 
-#ifndef RPHP_PLEXER_H_
-#define RPHP_PLEXER_H_
+#ifndef COR_PLEXER_H_
+#define COR_PLEXER_H_
 
 #include "corvus/pSourceTypes.h"
 #include "corvus/analysis/lexer/consts.hpp"
@@ -58,4 +58,4 @@ public:
 
 } } // namespace
 
-#endif /* RPHP_PLEXER_H_ */
+#endif /* COR_PLEXER_H_ */

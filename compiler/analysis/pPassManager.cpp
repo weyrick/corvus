@@ -22,7 +22,6 @@
 #include "corvus/analysis/pPassManager.h"
 #include "corvus/analysis/pPass.h"
 #include "corvus/analysis/pSourceModule.h"
-#include "corvus/analysis/passes/CheckMemoryManagement.h"
 
 namespace corvus {
 
@@ -50,9 +49,6 @@ void pPassManager::run(void) {
 
 void pPassManager::addPass(AST::pPass* p) {
     passQueue_.push_back(p);
-#ifdef DEBUG
-    passQueue_.push_back(new AST::Pass::CheckMemoryManagement);
-#endif
 }
 
 
