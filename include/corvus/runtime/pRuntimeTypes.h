@@ -44,7 +44,6 @@ BOOST_TRIBOOL_THIRD_STATE(pNull)
 #define pFalse pTriState(false)
 
 // basic number types defined in pTypes.h
-typedef CowPtr<pBigInt> pBigIntP;
 typedef CowPtr<pFloat> pFloatP;
 
 /// runtime "binary" string type
@@ -70,7 +69,6 @@ typedef boost::shared_ptr<pVar> pVarP;
 /// main pVar variant type
 typedef boost::variant< pTriState,
                         pInt,
-                        pBigIntP,
                         pFloatP,
                         pBString,
                         pHashP,

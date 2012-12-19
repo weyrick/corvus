@@ -99,8 +99,5 @@ set_source_files_properties( ${PARSER_SRC_FILES}
                              PROPERTIES COMPILE_FLAGS ${LLVM_COMPILE_FLAGS}
                             )
 
-# STATIC
 add_library( corvus-analysis ${PARSER_SRC_FILES} )
-#target_link_libraries (corvus-analysis corvus-runtime)
-target_link_libraries (corvus-analysis gmp)
 

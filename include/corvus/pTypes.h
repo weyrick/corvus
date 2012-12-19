@@ -21,8 +21,6 @@
 #ifndef COR_PTYPES_H_
 #define COR_PTYPES_H_
 
-#include <gmpxx.h>
-
 #include <boost/function.hpp>
 #include <boost/cstdint.hpp>
 #include <boost/tuple/tuple.hpp>
@@ -45,11 +43,8 @@ typedef signed long pInt;
 #define COR_INT_MIN LONG_MIN
 #define COR_INT_MAX LONG_MAX
 
-/// signed (arbitrary precision) integer type (used in pVar)
-typedef mpz_class pBigInt;
-
-/// float type (used in pVar). GMP float
-typedef mpf_class pFloat;
+/// float type (used in pVar)
+typedef double pFloat;
 
 /// unsigned integer type (not used in pVar)
 typedef boost::uint_fast32_t pUInt;

@@ -18,7 +18,6 @@ set(COR_SHARED_LIBS       0)
 
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/modules )
 set(COR_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
-set(ASIO_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include/asio)
 set(COR_LIB_DIR ${PROJECT_SOURCE_DIR}/lib)
 
 set(CMAKE_CXX_FLAGS_DEBUG "-fexceptions -g -Wall -Winline -W -Wwrite-strings -Wno-unused")
@@ -38,11 +37,10 @@ IF( Boost_VERSION LESS ${BOOST_MIN_VERSION} )
 ENDIF( Boost_VERSION LESS ${BOOST_MIN_VERSION} )
 
 Find_Package(LLVM REQUIRED)
-Find_Package(GMP REQUIRED)
 Find_Package(CppUnit) # optional
 Find_Package(Doxygen) # optional
 
-include_directories(${COR_INCLUDE_DIR} ${Boost_INCLUDE_DIR} ${GMP_INCLUDE_DIR} ${LLVM_INCLUDE_DIR})
+include_directories(${COR_INCLUDE_DIR} ${Boost_INCLUDE_DIR} ${LLVM_INCLUDE_DIR})
 
 # XXX remove this dependency, no libs
 link_directories(${Boost_LIBRARY_DIRS})

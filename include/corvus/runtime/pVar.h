@@ -382,16 +382,6 @@ public:
         return boost::get<const pInt&>(PVAR_DATA);
     }
 
-    /// pBigInt accessor. throws exception if pVar is wrong type
-    pBigIntP& getBigIntP() {
-        return boost::get<pBigIntP&>(PVAR_DATA);
-    }
-
-    /// pBigInt accessor. throws exception if pVar is wrong type
-    const pBigIntP& getBigIntP() const {
-        return boost::get<const pBigIntP&>(PVAR_DATA);
-    }
-
     /// pFloat accessor. throws exception if pVar is wrong type
     pFloatP& getFloatP() {
         return boost::get<pFloatP&>(PVAR_DATA);

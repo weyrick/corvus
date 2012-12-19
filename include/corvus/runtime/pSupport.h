@@ -33,8 +33,6 @@ namespace corvus {
 // case conversion
 pBString toLowerCopy(const pBString& v);
 
-pBigInt convertStringLiteralToBigInt(pSourceString& s);
-
 
 }
 
