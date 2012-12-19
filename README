@@ -19,7 +19,7 @@ https://github.com/weyrick/corvus
 
 corvus uses the CMake build system. Basic *nix instructions:
 
- * create "build" directory inside of rphp
+ * create "build" directory inside of corvus/
  * in the build directory, type "cmake .."
  * make
 

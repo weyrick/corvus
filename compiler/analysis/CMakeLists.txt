@@ -62,7 +62,6 @@ SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/corvus_dq_lexer.h OBJECT
 
 # pLexer depends on generated lexer
 SET_SOURCE_FILES_PROPERTIES(pLexer.cpp OBJECT_DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/corvus_lang_lexer.h)
-SET_SOURCE_FILES_PROPERTIES(passes/SimplifyStrings.cpp OBJECT_DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/corvus_dq_lexer.h)
 
 ####
 
@@ -79,17 +78,8 @@ set(PARSER_SRC_FILES
   pPass.cpp
   pPassManager.cpp
   # passes
-  #passes/CheckMemoryManagement.cpp
-  #passes/SimplifyStrings.cpp
-  #passes/Desugar.cpp
   passes/DumpAST.cpp
   passes/DumpStats.cpp
-  #passes/Split_Builtins.cpp
-  #passes/Early_Lower_Loops.cpp
-  #passes/Lower_Binary_Op.cpp
-  #passes/Lower_Conditional_Expr.cpp
-  #passes/Lower_Control_Flow.cpp
-  #passes/MainFunction.cpp
 )
 
 # PASSES

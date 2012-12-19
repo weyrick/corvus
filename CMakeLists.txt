@@ -14,8 +14,6 @@ set(LLVM_MIN_VERSION_TEXT  "2.6")
 set(BOOST_MIN_VERSION      "103800")
 set(BOOST_MIN_VERSION_TEXT "1.38")
 
-set(COR_SHARED_LIBS       0)
-
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/modules )
 set(COR_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
 set(COR_LIB_DIR ${PROJECT_SOURCE_DIR}/lib)
@@ -30,7 +28,6 @@ MESSAGE( STATUS "COR_LIB_DIR: " ${COR_LIB_DIR} )
 MESSAGE( STATUS "CMAKE_SYSTEM_PROCESSOR: " ${CMAKE_SYSTEM_PROCESSOR} )
 
 Find_Package(Boost REQUIRED)
-
 
 IF( Boost_VERSION LESS ${BOOST_MIN_VERSION} )
   MESSAGE(FATAL_ERROR "Boost version ${Boost_VERSION} too old, please install ${BOOST_MIN_VERSION_TEXT} or greater!")
@@ -56,11 +53,9 @@ add_subdirectory(3rdparty)
 add_subdirectory(compiler)
 add_subdirectory(frontend/cli)
 
-IF(CPPUNIT_FOUND)
-  ENABLE_TESTING()
-  ADD_TEST(corvus-runtime-suite runtime/test/corvus-runtime-suite)
-  ADD_TEST(corvus-sizes runtime/test/corvus-sizes)
-ENDIF(CPPUNIT_FOUND)
+#IF(CPPUNIT_FOUND)
+#  ENABLE_TESTING()
+#ENDIF(CPPUNIT_FOUND)
 
 IF(DOXYGEN_FOUND)
   SET(DOXYFILE doc/Doxyfile.corvus)
