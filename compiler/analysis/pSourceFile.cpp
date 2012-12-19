@@ -29,9 +29,6 @@
 #include <string>
 #include <sstream>
 
-#include <unicode/ustring.h>
-#include <unicode/unistr.h>
-#include <unicode/schriter.h>
 #include <stdio.h>
 
 namespace corvus { 
@@ -49,39 +46,7 @@ pSourceFile::pSourceFile(const pSourceFileDesc& file):
     std::istreambuf_iterator<std::string::value_type> startPos(instream.rdbuf());
     std::istreambuf_iterator<std::string::value_type> endPos;
 
-    // note this fuzzy matches on encoding aliases
-    if (file_.encoding().is88591OrUTF8()) {
-
-        // basic case: already iso-8859-1 or utf8
-        // skip possible UTF8 byte-order mark (BOM)
-        if (((unsigned char)*startPos++ == 0xEF) &&
-            ((unsigned char)*startPos++ == 0xBB) &&
-            ((unsigned char)*startPos++ == 0xBF)) {
-            /* noop */
-        }
-        else {
-            // no BOM: start from beginning
-            instream.seekg(0);
-        }
-
-        contents_.assign(startPos, endPos);
-
-    }
-    else {    
-
-        // charset conversion from arbitrary to utf8
-        std::string rawBuffer(startPos, endPos);
-
-        // charset conversion we leave to UnicodeString
-        // note this "pivots" through a 16 bit UChar, but so does the C ucnv_ interface
-        UnicodeString ubuffer(rawBuffer.data(), rawBuffer.length(), file_.encoding().value().c_str());
-        if (ubuffer.isBogus()) {
-            throw pParseError("could not perform character conversion in file [" + file_.fileName() + "] from codepage [" + file_.encoding().value() + "]");
-        }
-
-        ubuffer.toUTF8String(contents_);
-        
-    }
+    contents_.assign(startPos, endPos);
     
 }
 

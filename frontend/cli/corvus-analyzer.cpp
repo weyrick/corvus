@@ -57,8 +57,6 @@ int main( int argc, char* argv[] )
 
     cl::opt<std::string> passListText ("passes", cl::desc("List of passes to run"));
 
-    cl::opt<std::string> encoding ("encoding",cl::desc("Character encoding of the source file"), cl::init("UTF-8"));
-
     cl::SetVersionPrinter(&corvusVersion);
     cl::ParseCommandLineOptions(argc, argv, "corvus analyzer");
 
@@ -66,7 +64,7 @@ int main( int argc, char* argv[] )
 
     for (unsigned i = 0; i != inputFiles.size(); ++i) {
 
-        pSourceFileDesc inFile(inputFiles[i], encoding);
+        pSourceFileDesc inFile(inputFiles[i]);
 
         if (dumpToks) {
             // no pass, just a token dump

@@ -39,7 +39,6 @@ public:
     pSourceFile(const pSourceFileDesc& file);
 
     const pFileNameString& fileName(void) const { return file_.fileName(); }
-    const pEncoding& encoding(void) const { return file_.encoding(); }
     const pSourceString& contents(void) const { return contents_; }
 
 };

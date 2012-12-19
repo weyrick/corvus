@@ -13,8 +13,6 @@ set(LLVM_MIN_VERSION       "2006000")
 set(LLVM_MIN_VERSION_TEXT  "2.6")
 set(BOOST_MIN_VERSION      "103800")
 set(BOOST_MIN_VERSION_TEXT "1.38")
-set(ICU_MIN_VERSION        "4002000")
-set(ICU_MIN_VERSION_TEXT   "4.2")
 
 set(COR_SHARED_LIBS       0)
 
@@ -39,24 +37,17 @@ IF( Boost_VERSION LESS ${BOOST_MIN_VERSION} )
   MESSAGE(FATAL_ERROR "Boost version ${Boost_VERSION} too old, please install ${BOOST_MIN_VERSION_TEXT} or greater!")
 ENDIF( Boost_VERSION LESS ${BOOST_MIN_VERSION} )
 
-Find_Package(ICU REQUIRED)
 Find_Package(LLVM REQUIRED)
 Find_Package(GMP REQUIRED)
 Find_Package(CppUnit) # optional
 Find_Package(Doxygen) # optional
 
-#set(COR_INCLUDE_FULL ${COR_INCLUDE_DIR} ${Boost_INCLUDE_DIR} ${ICU_INCLUDE_DIRS} ${GMP_INCLUDE_DIR} ${LLVM_INCLUDE_DIR})
-#Message(STATUS "Includes: ${COR_INCLUDE_FULL}")
+include_directories(${COR_INCLUDE_DIR} ${Boost_INCLUDE_DIR} ${GMP_INCLUDE_DIR} ${LLVM_INCLUDE_DIR})
 
-include_directories(${COR_INCLUDE_DIR} ${Boost_INCLUDE_DIR} ${ICU_INCLUDE_DIRS} ${GMP_INCLUDE_DIR} ${LLVM_INCLUDE_DIR})
-link_directories(${ICU_LIB_DIRS})
+# XXX remove this dependency, no libs
+link_directories(${Boost_LIBRARY_DIRS})
 
 set(TINYXML_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/3rdparty/tinyxml")
-
-# require ICU 4.2
-IF(ICU_VERSION LESS ${ICU_MIN_VERSION})
-  MESSAGE(FATAL_ERROR "ICU version ${ICU_STRING_VERSION} is too old, please install ${ICU_MIN_VERSION_TEXT} or greater!")
-ENDIF(ICU_VERSION LESS ${ICU_MIN_VERSION})
 
 IF( LLVM_VERSION LESS ${LLVM_MIN_VERSION} )
   MESSAGE(FATAL_ERROR "LLVM version ${LLVM_STRING_VERSION} is too old, please install ${LLVM_MIN_VERSION_TEXT} of greater!")
@@ -64,7 +55,6 @@ ENDIF( LLVM_VERSION LESS ${LLVM_MIN_VERSION} )
 add_definitions(-DLLVM_VERSION=${LLVM_VERSION})
 
 add_subdirectory(3rdparty)
-#add_subdirectory(runtime)
 add_subdirectory(compiler)
 add_subdirectory(frontend/cli)
 

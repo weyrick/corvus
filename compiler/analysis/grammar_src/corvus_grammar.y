@@ -29,7 +29,6 @@
 #include <string>
 #include <cctype> // for toupper
 #include <algorithm>
-#include <unicode/unistr.h>
 
 using namespace corvus;
 

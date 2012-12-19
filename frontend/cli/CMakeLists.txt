@@ -21,7 +21,7 @@ set_target_properties( corvus
 target_link_libraries ( corvus
                         corvus-analysis
                         tinyxml
-                       ${LLVM_LIBS_SUPPORT} 
-                       ${ICU_LIBRARIES}
+                        boost_system-mt
+                       ${LLVM_LIBS_SUPPORT}
                         dl pthread
 			)

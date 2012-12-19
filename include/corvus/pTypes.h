@@ -21,17 +21,11 @@
 #ifndef COR_PTYPES_H_
 #define COR_PTYPES_H_
 
-// llvm JIT doesn't do inline asm, which is used by the atomic locking mechanism
-// in shared_ptr. this forces generic pthreads version instead to avoid it for now.
-#define BOOST_SP_USE_PTHREADS
-
 #include <gmpxx.h>
 
 #include <boost/function.hpp>
 #include <boost/cstdint.hpp>
 #include <boost/tuple/tuple.hpp>
-
-#include <unicode/ucnv.h>
 
 #include <string>
 
@@ -71,41 +65,6 @@ typedef std::string pMsgString;
 
 // notifier emit function callback
 typedef boost::function<void (pUInt level, pMsgString msg)> pNotifyEmitFun;
-
-// lightweight character encoding wrapper
-class pEncoding {
-
-    std::string value_;
-
-public:
-    pEncoding(const pStringRef& e):value_(e) { }
-
-    const std::string& value(void) const { return value_; }
-
-    // this matches on aliases, e.g. utf8 == UTF8 and iso-8859-1==latin1
-    bool matches(const pStringRef& e) const {
-        return (ucnv_compareNames(value_.c_str(), e.data()) == 0);
-    }
-
-    bool is88591OrUTF8() const {
-        return (matches("ISO-8859-1") || matches("UTF-8"));
-    }
-
-    // native format stored by libicu
-    bool isNativeICU() const {
-        return (matches("UTF-16"));
-    }
-
-    bool operator==(const pStringRef& e) const {
-        return matches(e);
-    }
-
-    bool operator!=(const pStringRef& e) const {
-        return !matches(e);
-    }
-
-};
-
 
 // notifier log levels
 #define E_ERROR             0x00000001

@@ -30,17 +30,9 @@
 
 namespace corvus {
 
-// boost compatible hash function for pUString
-std::size_t hash_value(const pUString &v);
-
 // case conversion
 pBString toLowerCopy(const pBString& v);
-pUString toLowerCopy(const pUString& v);
 
-// codepage conversion. convert unicode string in s to arbitrary codepage.
-// this will allocate using new[], and returns the allocated buffer which
-// the caller is responsible for deleteing
-char* convertCodepage(const pUString& s, const char* codepage);
 pBigInt convertStringLiteralToBigInt(pSourceString& s);
 
 

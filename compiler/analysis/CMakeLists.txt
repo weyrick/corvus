@@ -2,8 +2,6 @@
 MESSAGE( STATUS "compiler: analysis check" )
 
 include_directories (
-                     ${ICU_INCLUDE_DIRS}/unicode
-                     ${ICU_INCLUDE_DIRS}
                      ${COR_INCLUDE_DIR}
                      ${Boost_INCLUDE_DIRS}
                      ${LLVM_INCLUDE_DIR}

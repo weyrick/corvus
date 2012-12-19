@@ -24,7 +24,6 @@
 #include "corvus/pTypes.h"
 #include "corvus/pSourceTypes.h"
 #include "corvus/runtime/CowPtr.h"
-#include "corvus/runtime/pUString.h"
 
 #include <boost/logic/tribool.hpp>
 #include <boost/variant.hpp>
@@ -52,8 +51,6 @@ typedef CowPtr<pFloat> pFloatP;
 /// these are simple byte-wide character arrays
 typedef std::string pBString;
 
-// see pUString.h for unicode string
-
 class pHash;
 /// copy-on-write auto shared hash table type
 typedef CowPtr<pHash> pHashP;
@@ -76,7 +73,6 @@ typedef boost::variant< pTriState,
                         pBigIntP,
                         pFloatP,
                         pBString,
-                        pUStringP,
                         pHashP,
                         pObjectP,
                         pResourceP,

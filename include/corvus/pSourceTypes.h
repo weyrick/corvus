@@ -47,14 +47,12 @@ typedef boost::tuple<const pFileNameString, const pUInt, const pUInt> pSourceSta
 class pSourceFileDesc {
 
     pFileNameString fileName_;
-    pEncoding encoding_;
 
 public:
-    pSourceFileDesc(const pStringRef& n, const pStringRef& e):
-    fileName_(n),encoding_(e) { }
+    pSourceFileDesc(const pStringRef& n):
+    fileName_(n) { }
 
     const pFileNameString& fileName(void) const { return fileName_; }
-    const pEncoding& encoding(void) const { return encoding_; }
 
 };
 

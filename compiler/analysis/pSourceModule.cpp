@@ -53,10 +53,6 @@ const pFileNameString& pSourceModule::fileName() const {
     return source_->fileName();
 }
 
-const char* pSourceModule::encoding(void) const {
-    return source_->encoding().value().c_str();
-}
-
 void pSourceModule::setAST(const AST::statementList* list) {
     if (ast_)
         ast_->destroy(context_);

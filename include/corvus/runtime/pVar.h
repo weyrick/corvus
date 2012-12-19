@@ -343,8 +343,6 @@ public:
     void convertToString(const pRuntimeEngine* r);
     /// force convertion to a binary string. if it was a unicode string, the conversion is lossy
     pBString& convertToBString();
-    // ustring
-    pUStringP& convertToUString();
     // object
     // resource
 
@@ -412,16 +410,6 @@ public:
     /// const pBString accessor. throws exception if pVar is wrong type
     const pBString& getBString() const {
         return boost::get<const pBString&>(PVAR_DATA);
-    }
-
-    /// pUString accessor. throws exception if pVar is wrong type
-    pUStringP& getUStringP() {
-        return boost::get<pUStringP&>(PVAR_DATA);
-    }
-
-    /// const pUString accessor. throws exception if pVar is wrong type
-    const pUStringP& getUStringP() const {
-        return boost::get<const pUStringP&>(PVAR_DATA);
     }
 
     /// pHash accessor. throws exception if pVar is wrong type
