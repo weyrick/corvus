@@ -28,6 +28,7 @@
 #include <boost/pool/object_pool.hpp>
 
 #include <iostream>
+#include <stdio.h>
 
 /* generated corvus_grammar parser interface */
 void* corvusParseAlloc(void *(*)(size_t));
