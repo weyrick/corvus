@@ -35,7 +35,6 @@
 #include "corvus/pSourceTypes.h"
 #include "corvus/pTypes.h"
 #include "corvus/analysis/pParseContext.h"
-#include "corvus/runtime/pFunction.h"
 
 #include <vector>
 #include <iterator>

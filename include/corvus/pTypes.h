@@ -21,6 +21,8 @@
 #ifndef COR_PTYPES_H_
 #define COR_PTYPES_H_
 
+#define BOOST_ALL_NO_LIB 1
+
 #include <boost/function.hpp>
 #include <boost/cstdint.hpp>
 #include <boost/tuple/tuple.hpp>
@@ -29,6 +31,11 @@
 
 #include <llvm/ADT/StringRef.h>
 #include <llvm/ADT/Twine.h>
+
+#include <boost/foreach.hpp>
+
+#define foreach         BOOST_FOREACH
+#define reverse_foreach BOOST_REVERSE_FOREACH
 
 namespace corvus {
 
@@ -54,33 +61,6 @@ typedef std::string pIdentString;
 
 /// string type used for filenames
 typedef std::string pFileNameString;
-
-/// string type used for warning/notice messages
-typedef std::string pMsgString;
-
-// notifier emit function callback
-typedef boost::function<void (pUInt level, pMsgString msg)> pNotifyEmitFun;
-
-// notifier log levels
-#define E_ERROR             0x00000001
-#define E_WARNING           0x00000002
-#define E_PARSE             0x00000004
-#define E_NOTICE            0x00000008
-#define E_CORE_ERROR        0x00000010
-#define E_CORE_WARNING      0x00000020
-#define E_COMPILE_ERROR     0x00000040
-#define E_COMPILE_WARNING   0x00000080
-#define E_USER_ERROR        0x00000100
-#define E_USER_WARNING      0x00000200
-#define E_USER_NOTICE       0x00000400
-#define E_STRICT            0x00000800
-#define E_RECOVERABLE_ERROR 0x00001000
-#define E_DEPRECATED        0x00002000
-#define E_USER_DEPRECATED   0x00004000
-// corvus: not catchable in php land
-#define E_COMPILE_DEBUG     0x01000000
-#define E_RUNTIME_DEBUG     0x02000000
-#define E_ALL               0xffffffff
 
 } /* namespace corvus */
 
