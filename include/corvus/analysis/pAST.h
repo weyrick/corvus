@@ -32,7 +32,6 @@
 #ifndef COR_PAST_H_
 #define COR_PAST_H_
 
-#include "corvus/pSourceTypes.h"
 #include "corvus/pTypes.h"
 #include "corvus/analysis/pParseContext.h"
 
@@ -445,6 +444,10 @@ public:
         }
     }
 
+    bool hasDefault(void) {
+        return defaultExpr() != NULL;
+    }
+
     expr* defaultExpr(void) {
         return static_cast<expr*>(default_);
     }
@@ -521,6 +524,10 @@ public:
     bool returnByRef(void) const { return returnByRef_; }
 
     pUInt numParams(void) const { return numParams_; }
+
+    formalParam* getParam(uint i) {
+        return static_cast<formalParam*>(formalParamList_[i]);
+    }
 
     stmt::child_iterator child_begin() { return &formalParamList_[0]; }
     stmt::child_iterator child_end() { return &formalParamList_[0]+numParams_; }

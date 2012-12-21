@@ -36,6 +36,7 @@
 
 #include "corvus/analysis/passes/DumpAST.h"
 #include "corvus/analysis/passes/DumpStats.h"
+#include "corvus/analysis/passes/Trivial.h"
 
 using namespace llvm;
 using namespace corvus;
@@ -103,8 +104,8 @@ int main( int argc, char* argv[] )
             }
         }
         else {
-            std::cout << "no action\n";
-            return 1;
+            // standard passes
+            passManager.addPass<AST::Pass::Trivial>();
         }
 
         try {

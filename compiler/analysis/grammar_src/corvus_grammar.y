@@ -21,7 +21,6 @@
 
 %include {   
 
-#include "corvus/pSourceTypes.h"
 #include "corvus/analysis/pAST.h"
 #include "corvus/analysis/pSourceModule.h"
 

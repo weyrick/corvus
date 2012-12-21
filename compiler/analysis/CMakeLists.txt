@@ -80,6 +80,7 @@ set(PARSER_SRC_FILES
   # passes
   passes/DumpAST.cpp
   passes/DumpStats.cpp
+  passes/Trivial.cpp
 )
 
 # PASSES
@@ -90,4 +91,7 @@ set_source_files_properties( ${PARSER_SRC_FILES}
                             )
 
 add_library( corvus-analysis ${PARSER_SRC_FILES} )
-
+set_target_properties(corvus-analysis
+                      PROPERTIES
+                      OUTPUT_NAME corvus
+                     )

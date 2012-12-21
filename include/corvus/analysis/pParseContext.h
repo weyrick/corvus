@@ -22,8 +22,6 @@
 #ifndef COR_PPARSECONTEXT_H_
 #define COR_PPARSECONTEXT_H_
 
-#include "corvus/pSourceTypes.h"
-
 #include <llvm/Support/Allocator.h>
 #include <llvm/Support/StringPool.h>
 #include <boost/unordered_map.hpp>

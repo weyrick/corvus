@@ -23,23 +23,23 @@
 #define COR_PSOURCEFILE_H_
 
 #include <string>
-#include "corvus/pTypes.h"
-#include "corvus/pSourceTypes.h"
+
+#include <llvm/Support/MemoryBuffer.h>
 
 namespace corvus {
 
 class pSourceFile {
 
 private:
-    pSourceFileDesc file_;
-    pSourceString contents_;
+    std::string file_;
+    llvm::MemoryBuffer* contents_;
 
 public:
 
-    pSourceFile(const pSourceFileDesc& file);
+    pSourceFile(const std::string& file);
 
-    const pFileNameString& fileName(void) const { return file_.fileName(); }
-    const pSourceString& contents(void) const { return contents_; }
+    const std::string& fileName(void) const { return file_.fileName(); }
+    const llvm::MemoryBuffer* contents(void) const { return contents_; }
 
 };
 

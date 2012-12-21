@@ -8,6 +8,8 @@ function foo($one, $two) {
 function bar($hey, $two=5, $three) {
 }
 
-$x = foo(1);
+$two = 2;
+$x = foo(1, "$two");
+echo $x;
 
 ?>
