@@ -54,7 +54,7 @@ void parseSourceFile(pSourceModule* pMod, bool debug=false) {
     // start at begining of source file
     AST::pParseContext& context = pMod->context();
     context.incLineNum(); // line 1
-    context.setLastToken(tokenPool.construct(pSourceRange(lexer.sourceBegin(),lexer.sourceBegin())));
+    context.setLastToken(tokenPool.construct(pSourceRange(lexer.sourceBegin(), 0)));
     context.setLastNewline(lexer.sourceBegin());
 
     pSourceRange* curRange;
@@ -72,7 +72,7 @@ void parseSourceFile(pSourceModule* pMod, bool debug=false) {
         // always make a range unless the scanner didn't match, in which case
         // we handle separately below
         if (curID != boost::lexer::npos) {
-            curRange = tokenPool.construct(pSourceRange(tokStart, tokEnd));
+            curRange = tokenPool.construct(pSourceRange(tokStart, tokEnd-tokStart));
             context.setTokenLine(curRange);
         }
 
@@ -100,7 +100,7 @@ void parseSourceFile(pSourceModule* pMod, bool debug=false) {
                         tokEnd++;
                     }
                     curID = T_INLINE_HTML;
-                    curRange = tokenPool.construct(pSourceRange(tokStart, tokEnd));
+                    curRange = tokenPool.construct(pSourceRange(tokStart, tokEnd-tokStart));
                     context.setTokenLine(curRange);
                     goto handleNewlines;
                 }

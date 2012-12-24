@@ -22,7 +22,7 @@
 #ifndef COR_PLEXER_H_
 #define COR_PLEXER_H_
 
-#include "corvus/pSourceTypes.h"
+#include "corvus/pTypes.h"
 #include "corvus/analysis/lexer/consts.hpp"
 
 // NOTE: these are generated during build, and so live

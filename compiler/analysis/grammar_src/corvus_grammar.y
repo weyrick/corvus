@@ -36,25 +36,13 @@ using namespace corvus;
 #define CURRENT_LINE  CTXT.currentLineNum()
 
 AST::literalExpr* extractLiteralString(pSourceRange* B, pSourceModule* pMod, bool isSimple) {
-  // binary specifier?
-  bool binaryString = false;
-  pSourceCharIterator start;
-  if ( *(*B).begin() == 'b') {
-      // binary
-      binaryString = true;
-      start = ++(*B).begin();
-  }
-  else {
-      // according to module default
-      start = (*B).begin();
-  }
   // substring out the quotes, special case for empty string
   AST::literalString* A;
-  if (++start == (*B).end()) {
-    A = new (CTXT) AST::literalString(binaryString);
+  if ((*B).size() <= 2) {
+    A = new (CTXT) AST::literalString();
   }
   else {
-    A = new (CTXT) AST::literalString(pSourceRange(start, --(*B).end()), binaryString);
+    A = new (CTXT) AST::literalString((*B).slice(1, (*B).size()-1));
   }
   A->setIsSimple(isSimple);
   return A;
@@ -593,7 +581,7 @@ staticDecl(A) ::= T_STATIC staticVarList(VARLIST) T_ASSIGN staticScalar(DEF).
 %type formalParam {AST::formalParam*}
 formalParam(A) ::= maybeHint(HINT) T_VARIABLE(PARAM).
 {
-    A = new (CTXT) AST::formalParam(pSourceRange(++(*PARAM).begin(), (*PARAM).end()),
+    A = new (CTXT) AST::formalParam((*PARAM).substr(1),
                               CTXT, false/*ref*/);
     if (HINT == (pSourceRange*)0x1) {
         A->setArrayHint();
@@ -605,7 +593,7 @@ formalParam(A) ::= maybeHint(HINT) T_VARIABLE(PARAM).
 }
 formalParam(A) ::= maybeHint(HINT) T_AND T_VARIABLE(PARAM).
 {
-    A = new (CTXT) AST::formalParam(pSourceRange(++(*PARAM).begin(), (*PARAM).end()),
+    A = new (CTXT) AST::formalParam((*PARAM).substr(1),
                               CTXT, true/*ref*/);
     if (HINT == (pSourceRange*)0x1) {
         A->setArrayHint();
@@ -617,7 +605,7 @@ formalParam(A) ::= maybeHint(HINT) T_AND T_VARIABLE(PARAM).
 }
 formalParam(A) ::= maybeHint(HINT) T_VARIABLE(PARAM) T_ASSIGN staticScalar(DEF).
 {
-    A = new (CTXT) AST::formalParam(pSourceRange(++(*PARAM).begin(), (*PARAM).end()),
+    A = new (CTXT) AST::formalParam((*PARAM).substr(1),
                               CTXT, false/*ref*/, DEF);
     if (HINT == (pSourceRange*)0x1) {
         A->setArrayHint();
@@ -629,7 +617,7 @@ formalParam(A) ::= maybeHint(HINT) T_VARIABLE(PARAM) T_ASSIGN staticScalar(DEF).
 }
 formalParam(A) ::= maybeHint(HINT) T_AND T_VARIABLE(PARAM) T_ASSIGN staticScalar(DEF).
 {
-    A = new (CTXT) AST::formalParam(pSourceRange(++(*PARAM).begin(), (*PARAM).end()),
+    A = new (CTXT) AST::formalParam((*PARAM).substr(1),
                               CTXT, true/*ref*/, DEF);
     if (HINT == (pSourceRange*)0x1) {
         A->setArrayHint();
@@ -820,26 +808,26 @@ classStatement(A) ::= methodFlags(FLAGS) T_AND T_FUNCTION signature(SIG) methodB
 classVar(A) ::= classVar(LIST) T_COMMA T_VARIABLE(VAR).
 {
     // strip $
-    LIST->push_back(new (CTXT) AST::propertyDecl(CTXT, pSourceRange(++(*VAR).begin(), (*VAR).end()), NULL));
+    LIST->push_back(new (CTXT) AST::propertyDecl(CTXT, (*VAR).substr(1), NULL));
     A = LIST;
 }
 classVar(A) ::= classVar(LIST) T_COMMA T_VARIABLE(VAR) T_ASSIGN staticScalar(DEFAULT).
 {
     // strip $
-    LIST->push_back(new (CTXT) AST::propertyDecl(CTXT, pSourceRange(++(*VAR).begin(), (*VAR).end()), DEFAULT));
+    LIST->push_back(new (CTXT) AST::propertyDecl(CTXT, (*VAR).substr(1), DEFAULT));
     A = LIST;
 }
 classVar(A) ::= T_VARIABLE(VAR).
 {
     A = new AST::statementList();
     // strip $
-    A->push_back(new (CTXT) AST::propertyDecl(CTXT, pSourceRange(++(*VAR).begin(), (*VAR).end()), NULL));
+    A->push_back(new (CTXT) AST::propertyDecl(CTXT, (*VAR).substr(1), NULL));
 }
 classVar(A) ::= T_VARIABLE(VAR) T_ASSIGN staticScalar(DEFAULT).
 {
     A = new AST::statementList();
     // strip $
-    A->push_back(new (CTXT) AST::propertyDecl(CTXT, pSourceRange(++(*VAR).begin(), (*VAR).end()), DEFAULT));
+    A->push_back(new (CTXT) AST::propertyDecl(CTXT, (*VAR).substr(1), DEFAULT));
 }
 %type classConstantDecl {AST::statementList*}
 classConstantDecl(A) ::= classConstantDecl(LIST) T_COMMA T_IDENTIFIER(ID) T_ASSIGN staticScalar(DEFAULT).
@@ -1094,7 +1082,7 @@ globalVarList(A) ::= globalVarList(LIST) T_COMMA globalVar(B).
 globalVar(A) ::= T_VARIABLE(B).
 {
     // strip $
-    A = new (CTXT) AST::var(pSourceRange(++(*B).begin(), (*B).end()), CTXT);
+    A = new (CTXT) AST::var((*B).substr(1), CTXT);
     A->setLine(CURRENT_LINE);
 }
 globalVar(A) ::= T_DOLLAR rVar(B).
@@ -1109,14 +1097,14 @@ globalVar(A) ::= T_DOLLAR rVar(B).
 staticVarList(A) ::= T_VARIABLE(B).
 {
     A = new AST::expressionList();
-    AST::var* V= new (CTXT) AST::var(pSourceRange(++(*B).begin(), (*B).end()), CTXT);
+    AST::var* V= new (CTXT) AST::var((*B).substr(1), CTXT);
     V->setLine(CURRENT_LINE);
     A->push_back(V);
 }
 staticVarList(A) ::= staticVarList(LIST) T_COMMA T_VARIABLE(B).
 {
     // strip $
-    AST::var* V= new (CTXT) AST::var(pSourceRange(++(*B).begin(), (*B).end()), CTXT);
+    AST::var* V= new (CTXT) AST::var((*B).substr(1), CTXT);
     V->setLine(CURRENT_LINE);
     LIST->push_back(V);
     A = LIST;
@@ -1743,7 +1731,7 @@ varProperty(A) ::= T_CLASSDEREF objProperty(PROP) maybeMethodInvoke(ARGS).
 {
     if (ARGS) {
         // XXX phc checks for array indices on PROP
-        AST::functionInvoke* f = new (CTXT) AST::functionInvoke(new (CTXT) AST::literalID(PROP->name(), CTXT), CTXT, ARGS);        
+        AST::functionInvoke* f = new (CTXT) AST::functionInvoke(new (CTXT) AST::literalID(PROP->name(), CTXT), CTXT, ARGS);
         A = f;
         // PROP is now orphaned
         PROP->destroy(CTXT);
@@ -1790,13 +1778,13 @@ baseVar(A) ::= staticMember(B). { A = B; }
 refVar(A) ::= T_VARIABLE(B).
 {
     // strip $
-    A = new (CTXT) AST::var(pSourceRange(++(*B).begin(), (*B).end()), CTXT);
+    A = new (CTXT) AST::var((*B).substr(1), CTXT);
     A->setLine(CURRENT_LINE);
 }
 refVar(A) ::= T_VARIABLE(B) arrayIndices(C).
 {
     // strip $
-    A = new (CTXT) AST::var(pSourceRange(++(*B).begin(), (*B).end()), CTXT, C);
+    A = new (CTXT) AST::var((*B).substr(1), CTXT, C);
     A->setLine(CURRENT_LINE);
     delete C;
 }

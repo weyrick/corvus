@@ -22,7 +22,6 @@
 #ifndef COR_PSOURCEMODULE_H_
 #define COR_PSOURCEMODULE_H_
 
-#include "corvus/pSourceTypes.h"
 #include "corvus/analysis/pAST.h"
 #include "corvus/analysis/pParseContext.h"
 
@@ -45,15 +44,14 @@ private:
     bool parsed_;
 
 public:
-    pSourceModule(const pSourceFileDesc& file);
+    pSourceModule(const std::string& file);
     ~pSourceModule();
 
     void parse(bool debug);
 
     // INSPECTION
     const pSourceFile* source() const { return source_; }
-    const pFileNameString& fileName() const;
-    const char* encoding(void) const;
+    const std::string& fileName() const;
 
     const AST::pParseContext& context(void) const { return context_; }
     AST::pParseContext& context(void) { return context_; }

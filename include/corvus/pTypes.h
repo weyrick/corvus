@@ -42,9 +42,6 @@ namespace corvus {
 /// string ref, see llvm::StringRef
 typedef llvm::StringRef pStringRef;
 
-/// Twine for fast string concats, see llvm::Twine
-typedef llvm::Twine pTwine;
-
 /// signed (fast) integer type (used in pVar)
 typedef signed long pInt;
 #define COR_INT_MIN LONG_MIN
@@ -56,11 +53,10 @@ typedef double pFloat;
 /// unsigned integer type (not used in pVar)
 typedef boost::uint_fast32_t pUInt;
 
-/// string type used for identifiers (classes, functions, variable names)
-typedef std::string pIdentString;
-
-/// string type used for filenames
-typedef std::string pFileNameString;
+/// source files. note that these are not safe to store. they must be copied
+/// if they will live past the life of the buffer they came from (source file)
+typedef pStringRef pSourceRange;
+typedef pStringRef::iterator pSourceCharIterator;
 
 } /* namespace corvus */
 

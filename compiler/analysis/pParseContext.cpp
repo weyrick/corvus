@@ -51,7 +51,7 @@ void pParseContext::parseError(pSourceRange* r) {
     // if it was a lex error, we show 1 character. if it was a parse error,
     // we show up the length of the problem token
     pUInt probsize;
-    pSourceString problem;
+    std::string problem;
     std::stringstream errorMsg;
 
     assert(lastToken_);
@@ -61,7 +61,7 @@ void pParseContext::parseError(pSourceRange* r) {
     // in this case, r is null and is called from lemon. we call error again with lastToken
     // as the parseError
     bool endOfSource(false);
-    if (lastToken_->end() == owner_->source()->contents().end())
+    if (lastToken_->end() == owner_->source()->contents()->getBufferEnd())
         endOfSource = true;
 
     if (r) {
@@ -83,13 +83,13 @@ void pParseContext::parseError(pSourceRange* r) {
     pSourceCharIterator eLineStop(lastToken_->end()+probsize);
 
     // try to take eLineStop to next new line
-    if (eLineStop < owner_->source()->contents().end()) {
-        while ( (*eLineStop != '\n') && (eLineStop < (owner_->source()->contents().end())) ) {
+    if (eLineStop < owner_->source()->contents()->getBufferEnd()) {
+        while ( (*eLineStop != '\n') && (eLineStop < (owner_->source()->contents()->getBufferEnd())) ) {
             ++eLineStop;
         }
     }
 
-    pSourceString errorLine;
+    std::string errorLine;
     if (eLineStop > eLineStart)
         errorLine.append(eLineStart, eLineStop);
 
@@ -101,7 +101,7 @@ void pParseContext::parseError(pSourceRange* r) {
                 errorLine[i] = ' ';
         }
         errorMsg << errorLine << std::endl;
-        errorMsg << pSourceString((lastToken_->end()+1)-(lastNewline_+1)-1,'-') << "^" << std::endl;
+        errorMsg << std::string((lastToken_->end()+1)-(lastNewline_+1)-1,'-') << "^" << std::endl;
     }
 
     // message

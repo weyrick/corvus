@@ -32,8 +32,8 @@ namespace corvus { namespace lexer {
 
 pLexer::pLexer(const pSourceFile* s):
     source_(s),
-    sourceBegin_(source_->contents().begin()),
-    sourceEnd_ (source_->contents().end())
+    sourceBegin_(source_->contents()->getBufferStart()),
+    sourceEnd_ (source_->contents()->getBufferEnd())
 {
 
 
@@ -70,7 +70,7 @@ void pLexer::dumpTokens(void) {
                 while ((*tokEnd != '<') && (tokEnd != sourceEnd_)) {
                     tokEnd++;
                 }
-                std::cout << pSourceString(tokStart, tokEnd) << " " << getTokenDescription(T_INLINE_HTML) << std::endl;
+                std::cout << std::string(tokStart, tokEnd) << " " << getTokenDescription(T_INLINE_HTML) << std::endl;
             }
             else {
                 // unmatched character in PHP state
@@ -82,7 +82,7 @@ void pLexer::dumpTokens(void) {
             // skip plain newlines in html state
             val.str("");
             if (curID != T_WHITESPACE)
-                val << pSourceString(tokStart, tokEnd);
+                val << std::string(tokStart, tokEnd);
             if ((state == 0) && (val.str() == "\n"))
                 continue;
             tokID = getTokenDescription(curID);

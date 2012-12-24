@@ -22,6 +22,8 @@
 #ifndef COR_PPARSECONTEXT_H_
 #define COR_PPARSECONTEXT_H_
 
+#include "corvus/pTypes.h"
+
 #include <llvm/Support/Allocator.h>
 #include <llvm/Support/StringPool.h>
 #include <boost/unordered_map.hpp>
@@ -32,7 +34,6 @@ namespace corvus {
 class pSourceModule;
 
 namespace AST {
-
 class pParseContext {
 private:
     typedef boost::unordered_map<const pSourceRange*, pUInt> lineNumMapType;

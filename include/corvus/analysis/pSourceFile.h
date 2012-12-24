@@ -24,6 +24,7 @@
 
 #include <string>
 
+#include <llvm/ADT/OwningPtr.h>
 #include <llvm/Support/MemoryBuffer.h>
 
 namespace corvus {
@@ -32,14 +33,14 @@ class pSourceFile {
 
 private:
     std::string file_;
-    llvm::MemoryBuffer* contents_;
+    llvm::OwningPtr<llvm::MemoryBuffer> contents_;
 
 public:
 
     pSourceFile(const std::string& file);
 
-    const std::string& fileName(void) const { return file_.fileName(); }
-    const llvm::MemoryBuffer* contents(void) const { return contents_; }
+    const std::string& fileName(void) const { return file_; }
+    const llvm::MemoryBuffer* contents(void) const { return contents_.get(); }
 
 };
 

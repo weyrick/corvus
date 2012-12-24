@@ -65,7 +65,7 @@ int main( int argc, char* argv[] )
 
     for (unsigned i = 0; i != inputFiles.size(); ++i) {
 
-        pSourceFileDesc inFile(inputFiles[i]);
+        std::string inFile(inputFiles[i]);
 
         if (dumpToks) {
             // no pass, just a token dump

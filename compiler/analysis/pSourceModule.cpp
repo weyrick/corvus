@@ -28,7 +28,7 @@
 
 namespace corvus {
 
-pSourceModule::pSourceModule(const pSourceFileDesc& file):
+pSourceModule::pSourceModule(const std::string &file):
     source_(new pSourceFile(file)),
     ast_(NULL),
     context_(this)
@@ -49,7 +49,7 @@ pSourceModule::~pSourceModule() {
     delete source_;
 }
 
-const pFileNameString& pSourceModule::fileName() const {
+const std::string &pSourceModule::fileName() const {
     return source_->fileName();
 }
 

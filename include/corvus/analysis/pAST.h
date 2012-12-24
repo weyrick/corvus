@@ -42,6 +42,7 @@
 #include <llvm/Support/StringPool.h>
 #include <llvm/Support/Casting.h>
 #include <llvm/ADT/SmallVector.h>
+#include <llvm/ADT/APInt.h>
 
 namespace corvus {
 
@@ -434,7 +435,7 @@ class formalParam: public decl {
 public:
     formalParam(const pSourceRange& name, pParseContext& C, bool ref, expr* def=NULL):
         decl(formalParamKind),
-        name_(C.idPool().intern(pStringRef(name.begin().base(), (name.end()-name.begin())))),
+        name_(C.idPool().intern(name)),
         classHint_(),
         flags_(0),
         default_(def)
@@ -461,15 +462,15 @@ public:
     void setArrayHint(void) { flags_ ^= arrayHintBit; }
 
     void setClassHint(const pSourceRange& name, pParseContext& C) {
-        classHint_ = C.idPool().intern(pStringRef(name.begin().base(), (name.end()-name.begin())));
+        classHint_ = C.idPool().intern(name);
     }
 
-    pIdentString name(void) const {
+    pStringRef name(void) const {
         assert(name_);
         return *name_;
     }
 
-    pIdentString classHint(void) const {
+    pStringRef classHint(void) const {
         if (classHint_)
             return *classHint_;
         else
@@ -505,7 +506,7 @@ public:
               const formalParamList* s,
               bool returnByRef=false):
             decl(signatureKind),
-            name_(C.idPool().intern(pStringRef(name.begin().base(), (name.end()-name.begin())))),
+            name_(C.idPool().intern(name)),
             formalParamList_(0),
             numParams_(s ? s->size() : 0),
             returnByRef_(returnByRef)
@@ -516,7 +517,7 @@ public:
         }
     }
 
-    pIdentString name(void) const {
+    pStringRef name(void) const {
         assert(name_);
         return *name_;
     }
@@ -610,14 +611,14 @@ public:
                  ):
         decl(propertyDeclKind),
         flags_(0),
-        name_(C.idPool().intern(pStringRef(name.begin().base(), (name.end()-name.begin())))),
+        name_(C.idPool().intern(name)),
         default_(def)
     {
     }
 
     void setFlags(pUInt f) { flags_ = f; }
     pUInt flags(void) const { return flags_; }
-    pIdentString name(void) const {
+    pStringRef name(void) const {
         assert(name_);
         return *name_;
     }
@@ -666,7 +667,7 @@ public:
               block* members
               ):
         decl(classDeclKind),
-        name_(C.idPool().intern(pStringRef(name.begin().base(), (name.end()-name.begin())))),
+        name_(C.idPool().intern(name)),
         extends_(),
         implements_(),
         classType_(type),
@@ -679,7 +680,7 @@ public:
             ++i) {
                 extends_.push_back(C.idPool().intern(
                         pStringRef(
-                                (*i)->begin().base(), ((*i)->end() - (*i)->begin()))
+                                (*i)->begin(), ((*i)->end() - (*i)->begin()))
                         ));
             }
         }
@@ -690,13 +691,13 @@ public:
             ++i) {
                 implements_.push_back(C.idPool().intern(
                         pStringRef(
-                                (*i)->begin().base(), ((*i)->end() - (*i)->begin()))
+                                (*i)->begin(), ((*i)->end() - (*i)->begin()))
                         ));
             }
         }
     }
 
-    pIdentString name(void) const {
+    pStringRef name(void) const {
         assert(name_);
         return *name_;
     }
@@ -1184,18 +1185,18 @@ public:
               pParseContext& C,
               block* body):
     stmt(catchStmtKind),
-    className_(C.idPool().intern(pStringRef(className.begin().base(), (className.end()-className.begin())))),
-    varName_(C.idPool().intern(pStringRef(varName.begin().base(), (varName.end()-varName.begin())))),
+    className_(C.idPool().intern(pStringRef(className.begin(), (className.end()-className.begin())))),
+    varName_(C.idPool().intern(pStringRef(varName.begin(), (varName.end()-varName.begin())))),
     body_(body)
     {
     }
 
-    pIdentString className(void) const {
+    pStringRef className(void) const {
         assert(className_);
         return *className_;
     }
 
-    pIdentString varName(void) const {
+    pStringRef varName(void) const {
         assert(varName_);
         return *varName_;
     }
@@ -1317,7 +1318,7 @@ public:
 class literalExpr: public expr {
 
 protected:
-    pSourceString stringVal_;
+    pStringRef stringVal_;
     literalExpr(const literalExpr& other, pParseContext& C): expr(other),
             stringVal_(other.stringVal_) {}
     
@@ -1328,9 +1329,9 @@ public:
     static const nodeKind lastLiteralKind = inlineHtmlKind;
 
     literalExpr(nodeKind k): expr(k), stringVal_() { }
-    literalExpr(nodeKind k, const pSourceRange& v): expr(k), stringVal_(v.begin(), v.end()) { }
+    literalExpr(nodeKind k, const pSourceRange& v): expr(k), stringVal_(v.begin(), v.end()-v.begin()) { }
 
-    virtual const pSourceString& getStringVal(void) const {
+    virtual const pStringRef getStringVal(void) const {
         return stringVal_;
     }
 
@@ -1354,73 +1355,37 @@ public:
 // NODE: literal bstring
 class literalString: public literalExpr {
 
-    bool isBinary_;
     bool isSimple_; // i.e., single quoted
-
-    // this is storage for a string that was artificially created
-    // during a pass and therefore doesn't exist in the original source
-    pSourceString* artificial_;
 
 protected:
     literalString(const literalString& other, pParseContext& C): literalExpr(other),
-            isBinary_(other.isBinary_), isSimple_(other.isSimple_), artificial_(0)
+            isSimple_(other.isSimple_)
     {
-        if(other.artificial_)
-            artificial_ = new pSourceString(*other.artificial_);
+
     }
     
 public:
 
     // empty source string
-    literalString(bool isBinary):
+    literalString(void):
             literalExpr(literalStringKind),
-            isBinary_(isBinary),
-            isSimple_(true),
-            artificial_(0) { }
+            isSimple_(true) { }
 
     // normal source string
-    literalString(const pSourceRange& v, bool isBinary):
+    literalString(const pSourceRange& v):
             literalExpr(literalStringKind, v),
-            isBinary_(isBinary),
-            isSimple_(true),
-            artificial_(0) { }
+            isSimple_(true) { }
 
     // extending string (inline html)
     literalString(const pSourceRange& v, nodeKind k):
             literalExpr(k, v),
-            isBinary_(false),
-            isSimple_(true),
-            artificial_(0) { }
-
-    // artificial constructor (creates storage space)
-    literalString(pStringRef r):
-            literalExpr(literalStringKind),
-            isBinary_(true),
-            isSimple_(true),
-            artificial_(new pSourceString(r)) { }
+            isSimple_(true) { }
 
     ~literalString(void) {
-        if (artificial_)
-            delete artificial_;
     }
-
-    bool isBinary(void) const { return isBinary_; }
 
     void setIsSimple(bool s)  {
         isSimple_ = s;
-    }
-
-    void setStringVal(pStringRef s) {
-        if (artificial_)
-            delete artificial_;
-        artificial_ = new pSourceString(s);
-    }
-
-    const pSourceString& getStringVal(void) const {
-        if (artificial_)
-            return *artificial_;
-        else
-            return stringVal_;
     }
 
     bool isSimple(void) const { return isSimple_; }
@@ -1441,7 +1406,11 @@ class literalInt: public literalExpr {
     pInt val_;
 
     void parse() {
-        val_ = strtol(stringVal_.c_str(), (char**)NULL, 0);
+        llvm::APInt result;
+        if (stringVal_.getAsInteger(0, result))
+            val_ = result.getLimitedValue();
+        else
+            val_ = 0;
         isParsed_ = true;
     }
 protected:
@@ -1605,17 +1574,17 @@ protected:
 public:
     literalID(const pSourceRange& name, pParseContext& C):
         expr(literalIDKind),
-        name_(C.idPool().intern(pStringRef(name.begin().base(), (name.end()-name.begin()))))
+        name_(C.idPool().intern(name))
     {
     }
 
-    pIdentString name(void) const {
+    pStringRef name(void) const {
         assert(name_);
         return *name_;
     }
 
     static literalID* create(pStringRef name, pParseContext& C) {
-        return new (C) literalID(pSourceRange(name.begin(),name.end()), C);
+        return new (C) literalID(name, C);
     }
 
     stmt::child_iterator child_begin() { return child_iterator(); }
@@ -1642,12 +1611,12 @@ protected:
 public:
     literalConstant(const pSourceRange& name, pParseContext& C, expr* target = NULL):
         literalExpr(literalConstantKind),
-        name_(C.idPool().intern(pStringRef(name.begin().base(), (name.end()-name.begin())))),
+        name_(C.idPool().intern(name)),
         target_(target)
     {
     }
 
-    pIdentString name(void) const {
+    pStringRef name(void) const {
         assert(name_);
         return *name_;
     }
@@ -1714,7 +1683,7 @@ protected:
 public:
     var(const pSourceRange& name, pParseContext& C, expr* target = NULL):
         expr(varKind),
-        name_(C.idPool().intern(pStringRef(name.begin().base(), (name.end()-name.begin())))),
+        name_(C.idPool().intern(name)),
         indirectionCount_(0),
         children_(NULL),
         numChildren_(1)
@@ -1725,7 +1694,7 @@ public:
 
     var(const pSourceRange& name, pParseContext& C, expressionList* indices, expr* target = NULL):
         expr(varKind),
-        name_(C.idPool().intern(pStringRef(name.begin().base(), (name.end()-name.begin())))),
+        name_(C.idPool().intern(name)),
         indirectionCount_(0),
         children_(NULL),
         numChildren_(1+indices->size())
@@ -1737,7 +1706,7 @@ public:
         }
     }
 
-    pIdentString name(void) const {
+    pStringRef name(void) const {
         assert(name_);
         return *name_;
     }

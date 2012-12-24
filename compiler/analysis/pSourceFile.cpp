@@ -20,18 +20,10 @@
 */
 
 #include "corvus/analysis/pSourceFile.h"
-
 #include "corvus/analysis/pParseError.h"
 
-/*
-#include <iostream>
-#include <iomanip>
-#include <fstream>
-#include <string>
-#include <sstream>
+#include <llvm/Support/system_error.h>
 
-#include <stdio.h>
-*/
 
 namespace corvus { 
 
@@ -39,18 +31,6 @@ pSourceFile::pSourceFile(const std::string& file):
     file_(file)
 {
 
-    /*
-    std::ifstream instream(file_.fileName().c_str());
-    if (!instream.is_open()) {
-        throw pParseError("couldn't open file [" + file_.fileName() + "]");
-    }
-    instream.unsetf(std::ios::skipws);
-
-    std::istreambuf_iterator<std::string::value_type> startPos(instream.rdbuf());
-    std::istreambuf_iterator<std::string::value_type> endPos;
-
-    contents_.assign(startPos, endPos);
-    */
     if (llvm::MemoryBuffer::getFile(file.c_str(), contents_)) {
         throw pParseError("couldn't open file [" + file_ + "]");
     }

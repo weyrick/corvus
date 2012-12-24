@@ -347,7 +347,6 @@ void DumpAST::visit_pre_binaryOp(binaryOp* n)  {
 }
 
 void DumpAST::visit_pre_literalString(literalString* n)  {
-    currentElement_->SetAttribute("type", (n->isBinary() ? "binary" : "utf8"));
     currentElement_->SetAttribute("simple", (n->isSimple() ? "yes" : "no"));
     TiXmlText * text = new TiXmlText( n->getStringVal() );
     currentElement_->LinkEndChild( text );
@@ -414,7 +413,7 @@ void DumpAST::visit_pre_formalParam(formalParam* n) {
     currentElement_->SetAttribute("id",n->name());
     currentElement_->SetAttribute("byRef", (n->byRef() ? "true" : "false") );
     currentElement_->SetAttribute("arrayHint", (n->arrayHint() ? "true" : "false") );
-    pIdentString hint = n->classHint();
+    std::string hint = n->classHint();
     if (hint.length())
         currentElement_->SetAttribute("classHint",hint);
 }
