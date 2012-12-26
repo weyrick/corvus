@@ -4,6 +4,10 @@ This is a fast, lightweight PHP static analyzer with few dependencies.
 Its purpose is to catch programming errors by statically analyzing the
 source code, without running it.
 
+It's meant to be a first code review, generally by being run automatically in
+a continuous integration system or even before allowing code to be checked into
+a repository.
+
 == Requires ==
 
  * [http://llvm.org LLVM] 3.0+
@@ -22,4 +26,23 @@ corvus uses the CMake build system. Basic *nix instructions:
  * create "build" directory inside of corvus/
  * in the build directory, type "cmake .."
  * make
+
+== Status ==
+
+the parser in corvus is based on an earlier project (roadsend-php-raven) and is
+quite functional. the analysis passes are, however, in the early stages.
+
+corvus can:
+
+ * parse php < 5.3
+ * dump tokens
+ * dump AST in XML format
+ * report diagnostics on:
+ 1. in a function signature, using a parameter without a default after a parameter with one e.g. foo($bar, $baz='foo', $bip)
+
+planned:
+
+ * 5.2 and 5.3 source compatibility
+ * more diagnostics
+ * library support (callable from e.g. an IDE)
 

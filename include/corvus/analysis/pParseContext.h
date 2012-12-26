@@ -83,6 +83,8 @@ public:
     void incLineNum(void) { ++currentLineNum_; }
     void incLineNum(pUInt i) { currentLineNum_ +=i; }
 
+    pColRange getColPair(pSourceRange* r);
+
     void setLastNewline(pSourceCharIterator i) { lastNewline_ = i; }
     const pSourceCharIterator& lastNewline(void) const { return lastNewline_; }
 
@@ -105,6 +107,10 @@ public:
         currentLineNum_ = 0;
         lastToken_ = NULL;
         tokenLineInfo_.clear();
+    }
+
+    const pSourceModule* getOwner(void) const {
+        return owner_;
     }
 
     // PARSE ERROR HANDLER

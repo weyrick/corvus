@@ -44,7 +44,7 @@ private:
     bool parsed_;
 
 public:
-    pSourceModule(const std::string& file);
+    pSourceModule(pStringRef file);
     ~pSourceModule();
 
     void parse(bool debug);

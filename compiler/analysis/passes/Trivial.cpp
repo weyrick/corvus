@@ -35,20 +35,24 @@ void Trivial::visit_pre_signature(signature* n) {
 
     // verify that if we see a parameter with a default, that
     // we don't find a parameter after it with no default
+    // function($foo, $bar='test', $baz)
     int p = n->numParams();
     if (!p)
         return;
-    bool reqDefault = false;
     formalParam* param(0);
-    for (uint i = 0; i < p; i++) {
+    formalParam* firstParam(0);
+    // note, the params are in reverse order
+    for (int i = p-1; i >= 0; i--) {
         param = n->getParam(i);
         if (param->hasDefault()) {
-            reqDefault = true;
+            if (!firstParam)
+                firstParam = param;
         }
-        else if (reqDefault) {
-            // here we have this situation:
-            // function($foo, $bar='test', $baz)
-            std::cout << "no no! on line " << n->startLineNum() << "\n";
+        else if (firstParam) {
+            addDiagnostic(param, "Parameter should have default because previous parameter does");
+            addDiagnostic(firstParam, "First parameter with default defined here");
+            // return so that we only show the diag once
+            return;
         }
     }
 

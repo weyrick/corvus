@@ -32,6 +32,16 @@ namespace corvus {
 
 namespace AST {
 
+pColRange pParseContext::getColPair(pSourceRange* r) {
+    // find the closest newline to the left of r->begin, without underrunning
+    // the buffer
+    pSourceCharIterator bufBegin = owner_->source()->contents()->getBufferStart();
+    pSourceCharIterator i = r->begin();
+    while (i != bufBegin && *i != '\n')
+        i--;
+    return pColRange(r->begin()-i, r->end()-i);
+}
+
 void pParseContext::parseError(pStringRef msg) {
     std::stringstream errorMsg;
 

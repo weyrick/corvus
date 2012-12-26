@@ -29,5 +29,12 @@ const char* pPass::nodeDescTable_[] = {
 };
 
 
+void pPass::addDiagnostic(AST::stmt* s, pStringRef msg) {
+    // XXX this is temporary
+    std::cout << C_.getOwner()->fileName() << ":" << s->startLineNum() << ":" << s->startCol() << std::endl;
+    std::cout << msg.data() << std::endl;
+}
+
+
 } } // namespace
 

@@ -8,6 +8,9 @@ function foo($one, $two) {
 function bar($hey, $two=5, $three) {
 }
 
+function baz($foo1, $foo2=5, $foo3=10) {
+}
+
 $two = 2;
 $x = foo(1, "$two");
 echo $x;

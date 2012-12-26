@@ -57,6 +57,7 @@ typedef boost::uint_fast32_t pUInt;
 /// if they will live past the life of the buffer they came from (source file)
 typedef pStringRef pSourceRange;
 typedef pStringRef::iterator pSourceCharIterator;
+typedef std::pair<pUInt,pUInt> pColRange;
 
 } /* namespace corvus */
 

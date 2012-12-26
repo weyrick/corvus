@@ -28,7 +28,7 @@
 
 namespace corvus {
 
-pSourceModule::pSourceModule(const std::string &file):
+pSourceModule::pSourceModule(pStringRef file):
     source_(new pSourceFile(file)),
     ast_(NULL),
     context_(this)

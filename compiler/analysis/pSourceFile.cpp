@@ -27,11 +27,11 @@
 
 namespace corvus { 
 
-pSourceFile::pSourceFile(const std::string& file):
+pSourceFile::pSourceFile(pStringRef file):
     file_(file)
 {
 
-    if (llvm::MemoryBuffer::getFile(file.c_str(), contents_)) {
+    if (llvm::MemoryBuffer::getFile(file, contents_)) {
         throw pParseError("couldn't open file [" + file_ + "]");
     }
     

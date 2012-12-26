@@ -22,8 +22,9 @@
 #ifndef COR_PSOURCEFILE_H_
 #define COR_PSOURCEFILE_H_
 
-#include <string>
+#include "corvus/pTypes.h"
 
+#include <string>
 #include <llvm/ADT/OwningPtr.h>
 #include <llvm/Support/MemoryBuffer.h>
 
@@ -37,7 +38,7 @@ private:
 
 public:
 
-    pSourceFile(const std::string& file);
+    pSourceFile(pStringRef file);
 
     const std::string& fileName(void) const { return file_; }
     const llvm::MemoryBuffer* contents(void) const { return contents_.get(); }

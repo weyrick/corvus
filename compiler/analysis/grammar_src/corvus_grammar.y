@@ -31,9 +31,10 @@
 
 using namespace corvus;
 
-#define CTXT          pMod->context()
-#define TOKEN_LINE(T) CTXT.getTokenLine(T)
-#define CURRENT_LINE  CTXT.currentLineNum()
+#define CTXT               pMod->context()
+#define TOKEN_LINE(T)      CTXT.getTokenLine(T)
+#define TOKEN_COL(T)       CTXT.getColPair(T)
+#define CURRENT_LINE       CTXT.currentLineNum()
 
 AST::literalExpr* extractLiteralString(pSourceRange* B, pSourceModule* pMod, bool isSimple) {
   // substring out the quotes, special case for empty string
@@ -590,6 +591,7 @@ formalParam(A) ::= maybeHint(HINT) T_VARIABLE(PARAM).
         A->setClassHint(*HINT, CTXT);
     }
     A->setLine(TOKEN_LINE(PARAM));
+    A->setCol(TOKEN_COL(PARAM));
 }
 formalParam(A) ::= maybeHint(HINT) T_AND T_VARIABLE(PARAM).
 {
@@ -602,6 +604,7 @@ formalParam(A) ::= maybeHint(HINT) T_AND T_VARIABLE(PARAM).
         A->setClassHint(*HINT, CTXT);
     }
     A->setLine(TOKEN_LINE(PARAM));
+    A->setCol(TOKEN_COL(PARAM));
 }
 formalParam(A) ::= maybeHint(HINT) T_VARIABLE(PARAM) T_ASSIGN staticScalar(DEF).
 {
@@ -614,6 +617,7 @@ formalParam(A) ::= maybeHint(HINT) T_VARIABLE(PARAM) T_ASSIGN staticScalar(DEF).
         A->setClassHint(*HINT, CTXT);
     }
     A->setLine(TOKEN_LINE(PARAM));
+    A->setCol(TOKEN_COL(PARAM));
 }
 formalParam(A) ::= maybeHint(HINT) T_AND T_VARIABLE(PARAM) T_ASSIGN staticScalar(DEF).
 {
@@ -626,6 +630,7 @@ formalParam(A) ::= maybeHint(HINT) T_AND T_VARIABLE(PARAM) T_ASSIGN staticScalar
         A->setClassHint(*HINT, CTXT);
     }
     A->setLine(TOKEN_LINE(PARAM));
+    A->setCol(TOKEN_COL(PARAM));
 }
 
 // this will be NULL (no hint), integral 1 (array hint) or an identifier

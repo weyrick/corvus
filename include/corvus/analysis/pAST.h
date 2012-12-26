@@ -143,7 +143,11 @@ class stmt {
 
     pUInt startLineNum_;
     pUInt endLineNum_;
-    
+
+    // startCol is col @ startLineNum, endCol is col @ endLineNum
+    pUInt startCol_;
+    pUInt endCol_;
+
 protected:
   void* operator new(size_t bytes) throw() {
     assert(0 && "stmt cannot be allocated with regular 'new'.");
@@ -167,7 +171,8 @@ protected:
   void destroyChildren(pParseContext& C);
   
   stmt(const stmt& other): kind_(other.kind_), refCount_(1),
-          startLineNum_(other.startLineNum_), endLineNum_(other.endLineNum_) {}
+          startLineNum_(other.startLineNum_), endLineNum_(other.endLineNum_),
+          startCol_(0), endCol_(0){}
     
   // This method assists in deep-copys of stmt**'s which are present for example in block nodes.
   void deepCopyChildren(stmt**& newChildren, stmt** const& oldChildren, pUInt numChildren, pParseContext& C) {
@@ -182,7 +187,8 @@ protected:
       }
   }
 public:
-    stmt(nodeKind k): kind_(k), refCount_(1), startLineNum_(0), endLineNum_(0) { }
+    stmt(nodeKind k): kind_(k), refCount_(1), startLineNum_(0), endLineNum_(0),
+        startCol_(0), endCol_(0) { }
 
     void destroy(pParseContext& C) {
         assert(refCount_ >= 1);
@@ -238,11 +244,22 @@ public:
     nodeKind kind(void) const { return kind_; }
 
     void setLine(pUInt start) { startLineNum_ = start; endLineNum_ = start; }
+    // simple case where one token defines col range
+    void setCol(pColRange cols) { startCol_ = cols.first; endCol_ = cols.second; }
+    // start/end on multiple lines so cols come from different tokens
+    // this presumes startCols was generated from the token on startLine and endCols
+    // was generated from the token on endLine
+    void setCol(pColRange startCols, pColRange endCols) {
+        startCol_ = startCols.first;
+        endCol_ = endCols.second;
+    }
     void setLine(pUInt start, pUInt end) { startLineNum_ = start; endLineNum_ = end; }
 
     pUInt startLineNum(void) const { return startLineNum_; }
     pUInt endLineNum(void) const { return endLineNum_; }
-    
+    pUInt startCol(void) const { return startCol_; }
+    pUInt endCol(void) const { return endCol_; }
+
     // Polymorphic deep copying.
     virtual stmt* clone(pParseContext& C) const = 0;
 
@@ -1318,7 +1335,8 @@ public:
 class literalExpr: public expr {
 
 protected:
-    pStringRef stringVal_;
+    // XXX pool this?
+    std::string stringVal_;
     literalExpr(const literalExpr& other, pParseContext& C): expr(other),
             stringVal_(other.stringVal_) {}
     
@@ -1407,7 +1425,7 @@ class literalInt: public literalExpr {
 
     void parse() {
         llvm::APInt result;
-        if (stringVal_.getAsInteger(0, result))
+        if (pStringRef(stringVal_).getAsInteger(0, result))
             val_ = result.getLimitedValue();
         else
             val_ = 0;
