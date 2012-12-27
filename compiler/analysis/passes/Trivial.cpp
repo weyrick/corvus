@@ -49,8 +49,8 @@ void Trivial::visit_pre_signature(signature* n) {
                 firstParam = param;
         }
         else if (firstParam) {
-            addDiagnostic(param, "Parameter should have default because previous parameter does");
-            addDiagnostic(firstParam, "First parameter with default defined here");
+            addDiagnostic(param, "parameter should have default because previous parameter does");
+            addDiagnostic(firstParam, "first parameter with default defined here");
             // return so that we only show the diag once
             return;
         }

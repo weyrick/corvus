@@ -38,6 +38,7 @@ corvus can:
  * dump tokens
  * dump AST in XML format
  * report diagnostics on:
+
  1. in a function signature, using a parameter without a default after a parameter with one e.g. foo($bar, $baz='foo', $bip)
 
 planned:

@@ -23,15 +23,9 @@
 
 #define BOOST_ALL_NO_LIB 1
 
-#include <boost/function.hpp>
-#include <boost/cstdint.hpp>
-#include <boost/tuple/tuple.hpp>
-
 #include <string>
-
 #include <llvm/ADT/StringRef.h>
-#include <llvm/ADT/Twine.h>
-
+#include <boost/cstdint.hpp>
 #include <boost/foreach.hpp>
 
 #define foreach         BOOST_FOREACH
@@ -42,7 +36,7 @@ namespace corvus {
 /// string ref, see llvm::StringRef
 typedef llvm::StringRef pStringRef;
 
-/// signed (fast) integer type (used in pVar)
+/// signed (fast) integer type
 typedef signed long pInt;
 #define COR_INT_MIN LONG_MIN
 #define COR_INT_MAX LONG_MAX
@@ -50,7 +44,7 @@ typedef signed long pInt;
 /// float type (used in pVar)
 typedef double pFloat;
 
-/// unsigned integer type (not used in pVar)
+/// unsigned integer type
 typedef boost::uint_fast32_t pUInt;
 
 /// source files. note that these are not safe to store. they must be copied

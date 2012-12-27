@@ -1,6 +1,13 @@
+- architecture
+ - source manager
+ - diagnostics
+   - http://clang.llvm.org/diagnostics.html
+   - http://clang.llvm.org/docs/InternalsManual.html#the-diagnostics-subsystem
+
 - remove boost lib depedency (osx)
 - add model passes, declare-use-chain, call graphs, cfg
 - investigate config files from phpmd
 - keep output generic for use from e.g. ide
 - update boost lexer, or switch to lexertl
 - investigate other uses of llvm support classes
+- http://tinythreadpp.bitsnbites.eu/ async parsing
