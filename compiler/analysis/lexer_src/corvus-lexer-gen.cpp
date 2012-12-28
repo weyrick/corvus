@@ -65,6 +65,8 @@ int main(void) {
     // language rules
     langRules_.add_state("PHP");
 
+    langRules_.add_macro ("TRI", "\\?\\?");
+    langRules_.add_macro ("BACKSLASH", "(\\\\|{TRI}\\/)");
     langRules_.add_macro ("DIGIT", "[0-9]");
     langRules_.add_macro ("OCTALDIGIT", "[0-7]");
     langRules_.add_macro ("HEXDIGIT", "[0-9a-fA-F]");
@@ -213,8 +215,10 @@ int main(void) {
     langRules_.add("PHP", "\\/\\*\\*[^*]*\\*+([^/*][^*]*\\*+)*\\/", T_DOC_COMMENT, ".");
     langRules_.add("PHP", "\\/\\*[^*]*\\*+([^/*][^*]*\\*+)*\\/", T_MULTILINE_COMMENT, ".");
     langRules_.add("PHP", "(\\/\\/|#).*$", T_SINGLELINE_COMMENT, ".");
-    langRules_.add("PHP", "b*[\"](\\\\\\\"|[^\"])*[\"]", T_DQ_STRING, ".");
-    langRules_.add("PHP", "b*[\'](\\\\\\.|[^\'])*[\']", T_SQ_STRING, ".");
+    langRules_.add_macro ("ESCAPESEQ", "{BACKSLASH}([abfnrtv?'\"]|{BACKSLASH}|x{HEXDIGIT}+|{OCTALDIGIT}{1,3})");
+    langRules_.add("PHP", "\\\"({ESCAPESEQ}|[^\"])*\\\"", T_DQ_STRING, ".");
+    langRules_.add_macro ("ESCAPESEQ2", "{BACKSLASH}.");
+    langRules_.add("PHP", "'({ESCAPESEQ2}|[^'\\\\])*'", T_SQ_STRING, ".");
 
     boost::lexer::generator::build (langRules_, langState_);
     boost::lexer::generator::minimise(langState_);

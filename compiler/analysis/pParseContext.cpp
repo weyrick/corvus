@@ -103,6 +103,14 @@ void pParseContext::parseError(pSourceRange* r) {
     if (eLineStop > eLineStart)
         errorLine.append(eLineStart, eLineStop);
 
+    // message
+    errorMsg  << owner_->source()->fileName()
+              << ":" << currentLineNum_
+              << ": parse error: unexpected '"
+              << problem
+              << "'"
+              <<  std::endl;
+
     // error line with arrow
     if (!errorLine.empty() && !endOfSource) {
         // convert tabs to spaces so arrow lines up
@@ -111,17 +119,8 @@ void pParseContext::parseError(pSourceRange* r) {
                 errorLine[i] = ' ';
         }
         errorMsg << errorLine << std::endl;
-        errorMsg << std::string((lastToken_->end()+1)-(lastNewline_+1)-1,'-') << "^" << std::endl;
+        errorMsg << std::string((lastToken_->end()+1)-(lastNewline_+1)-1,' ') << "^" << std::endl;
     }
-
-    // message
-    errorMsg  << "parse error: unexpected '"
-              << problem
-              << "' in ";
-    errorMsg  << owner_->source()->fileName();
-    errorMsg  << " on line "
-              << currentLineNum_
-              <<  std::endl;
 
     throw pParseError(errorMsg.str());
 
