@@ -43,7 +43,9 @@ corvus can:
 
 planned:
 
- * 5.2 and 5.3 source compatibility
- * more diagnostics
+ * 5.3 and 5.4 source compatibility
+ * many more diagnostics, configurable
+ * asynchronous parsing
+ * project configuration file
  * library support (callable from e.g. an IDE)
 

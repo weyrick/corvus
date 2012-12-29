@@ -1,13 +1,15 @@
 - architecture
- - source manager
+ - source manager, async parsing
+   - http://tinythreadpp.bitsnbites.eu/ 
  - diagnostics
    - http://clang.llvm.org/diagnostics.html
    - http://clang.llvm.org/docs/InternalsManual.html#the-diagnostics-subsystem
-
+   - rendering in: console, html, xml, json
+   - each diagnostic configurable on/off
+   - possibly whitespace, phpdoc checks, basic phpmd-like checks
+- yaml configuration file (llvm yaml)
 - remove boost lib depedency (osx)
 - add model passes, declare-use-chain, call graphs, cfg
-- investigate config files from phpmd
 - keep output generic for use from e.g. ide
 - update boost lexer, or switch to lexertl
 - investigate other uses of llvm support classes
-- http://tinythreadpp.bitsnbites.eu/ async parsing
