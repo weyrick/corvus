@@ -34,7 +34,8 @@ void pSourceModule::parse(bool debug=false) {
 
 pSourceModule::~pSourceModule() {
     // cleanup AST
-    ast_->destroy(context_);
+    if (ast_)
+        ast_->destroy(context_);
     delete source_;
 }
 

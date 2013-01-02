@@ -75,6 +75,7 @@ set(PARSER_SRC_FILES
   pLexer.cpp
   pParser.cpp
   pSourceModule.cpp
+  pSourceManager.cpp
   pPass.cpp
   pPassManager.cpp
   # passes

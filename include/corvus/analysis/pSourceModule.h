@@ -14,9 +14,14 @@
 #include "corvus/analysis/pAST.h"
 #include "corvus/analysis/pParseContext.h"
 
+#include <boost/shared_ptr.hpp>
+
 namespace corvus {
 
 class pSourceFile;
+class pSourceModule;
+
+typedef boost::shared_ptr<pSourceModule> pSourceModulePtr;
 
 namespace AST {
     class stmt;
