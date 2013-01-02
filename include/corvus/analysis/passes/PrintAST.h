@@ -19,7 +19,7 @@ class TiXmlElement;
 
 namespace corvus { namespace AST { namespace Pass {
 
-class DumpAST: public pBaseVisitor {
+class PrintAST: public pBaseVisitor {
 
     TiXmlDocument*doc_;
     TiXmlElement* currentElement_;
@@ -30,8 +30,8 @@ class DumpAST: public pBaseVisitor {
     void visitOrNullChild(stmt*);
 
 public:
-    DumpAST(pSourceModule* m):
-            pBaseVisitor("AST Dump","Basic dump of the AST", m),
+    PrintAST():
+            pBaseVisitor("AST Dump","Basic dump of the AST"),
             doc_(NULL),
             currentElement_(NULL)
             { }

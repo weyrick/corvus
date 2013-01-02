@@ -19,8 +19,8 @@ namespace corvus { namespace AST { namespace Pass {
 class DumpStats: public pBaseVisitor {
 
 public:
-    DumpStats(pSourceModule* m):
-            pBaseVisitor("Statistics Dump","Dump parse and memory statistics", m)
+    DumpStats():
+            pBaseVisitor("Statistics Dump","Dump parse and memory statistics")
             { }
 
     void post_run(void);

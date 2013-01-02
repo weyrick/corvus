@@ -8,7 +8,7 @@
    ***** END LICENSE BLOCK *****
 */
 
-#include "corvus/analysis/passes/DumpAST.h"
+#include "corvus/analysis/passes/PrintAST.h"
 #include "corvus/analysis/pSourceModule.h"
 
 #include "tinyxml.h"
@@ -17,7 +17,7 @@
 
 namespace corvus { namespace AST { namespace Pass {
 
-void DumpAST::pre_run(void) {
+void PrintAST::pre_run(void) {
     doc_ = new TiXmlDocument();
     TiXmlDeclaration * decl = new TiXmlDeclaration( "1.0", "", "" );
     doc_->LinkEndChild(decl);
@@ -27,7 +27,7 @@ void DumpAST::pre_run(void) {
     doc_->LinkEndChild(currentElement_);
 }
 
-void DumpAST::post_run(void) {
+void PrintAST::post_run(void) {
     TiXmlPrinter printer;
     printer.SetIndent( "    " );
     doc_->Accept( &printer );
@@ -35,7 +35,7 @@ void DumpAST::post_run(void) {
     delete doc_;
 }
 
-void DumpAST::visit_pre_stmt(stmt* n) {
+void PrintAST::visit_pre_stmt(stmt* n) {
     TiXmlElement* node = new TiXmlElement(nodeDescTable_[n->kind()]);
     currentElement_->LinkEndChild(node);
     currentElement_ = node;
@@ -48,37 +48,37 @@ void DumpAST::visit_pre_stmt(stmt* n) {
     }
 }
 
-void DumpAST::visit_post_stmt(stmt* n) {
+void PrintAST::visit_post_stmt(stmt* n) {
     TiXmlNode* xnode = currentElement_->Parent();
     currentElement_ = static_cast<TiXmlElement*>(xnode);
 }
 
 
-void DumpAST::visitOrNullChild(stmt* n) {
+void PrintAST::visitOrNullChild(stmt* n) {
     if (n)
         visit(n);
     else
         doNullChild();
 }
 
-void DumpAST::doComment(const char* c) {
+void PrintAST::doComment(const char* c) {
     TiXmlComment* node = new TiXmlComment(c);
     currentElement_->LinkEndChild(node);
 }
 
-void DumpAST::doNullChild(void) {
+void PrintAST::doNullChild(void) {
     TiXmlElement* node = new TiXmlElement("NULL");
     currentElement_->LinkEndChild(node);
 }
 
-void DumpAST::visit_pre_var(var* n) {
+void PrintAST::visit_pre_var(var* n) {
     currentElement_->SetAttribute("id",n->name());
     if (n->indirectionCount()) {
         currentElement_->SetAttribute("indirectionCount",n->indirectionCount());
     }
 }
 
-void DumpAST::visit_pre_classDecl(classDecl* n) {
+void PrintAST::visit_pre_classDecl(classDecl* n) {
 
     currentElement_->SetAttribute("id",n->name());
     TiXmlElement* sub, *node;
@@ -139,15 +139,15 @@ void DumpAST::visit_pre_classDecl(classDecl* n) {
 
 }
 
-void DumpAST::visit_pre_literalID(literalID* n) {
+void PrintAST::visit_pre_literalID(literalID* n) {
     currentElement_->SetAttribute("id",n->name());
 }
 
-void DumpAST::visit_pre_assignment(assignment* n) {
+void PrintAST::visit_pre_assignment(assignment* n) {
     currentElement_->SetAttribute("byRef", (n->byRef() ? "true" : "false") );
 }
 
-bool DumpAST::visit_children_staticDecl(staticDecl* n) {
+bool PrintAST::visit_children_staticDecl(staticDecl* n) {
     doComment("default value");
     visitOrNullChild(n->defaultExpr());
     doComment("variable list");
@@ -155,7 +155,7 @@ bool DumpAST::visit_children_staticDecl(staticDecl* n) {
     return true;
 }
 
-void DumpAST::visit_pre_methodDecl(methodDecl* n) {
+void PrintAST::visit_pre_methodDecl(methodDecl* n) {
     pUInt flags = n->flags();
     if (flags & memberFlags::ABSTRACT)
         currentElement_->SetAttribute("ABSTRACT", "true");
@@ -173,14 +173,14 @@ void DumpAST::visit_pre_methodDecl(methodDecl* n) {
         currentElement_->SetAttribute("STATIC", "true");
 }
 
-bool DumpAST::visit_children_methodDecl(methodDecl* n) {
+bool PrintAST::visit_children_methodDecl(methodDecl* n) {
     visit(n->sig());
     doComment("method body");
     visitOrNullChild(n->body());
     return true;
 }
 
-void DumpAST::visit_pre_propertyDecl(propertyDecl* n) {
+void PrintAST::visit_pre_propertyDecl(propertyDecl* n) {
     currentElement_->SetAttribute("id",n->name());
     pUInt flags = n->flags();
     if (flags & memberFlags::ABSTRACT)
@@ -200,7 +200,7 @@ void DumpAST::visit_pre_propertyDecl(propertyDecl* n) {
 }
 
 
-void DumpAST::visit_pre_unaryOp(unaryOp* n)  {
+void PrintAST::visit_pre_unaryOp(unaryOp* n)  {
     switch (n->opKind()) {
     case unaryOp::LOGICALNOT:
         currentElement_->SetAttribute("op", "LOGICALNOT");
@@ -217,7 +217,7 @@ void DumpAST::visit_pre_unaryOp(unaryOp* n)  {
     }
 }
 
-void DumpAST::visit_pre_builtin(builtin* n)  {
+void PrintAST::visit_pre_builtin(builtin* n)  {
     switch (n->opKind()) {
     case builtin::CLONE:
         currentElement_->SetAttribute("op", "CLONE");
@@ -261,7 +261,7 @@ void DumpAST::visit_pre_builtin(builtin* n)  {
     }
 }
 
-void DumpAST::visit_pre_binaryOp(binaryOp* n)  {
+void PrintAST::visit_pre_binaryOp(binaryOp* n)  {
     switch (n->opKind()) {
     case binaryOp::CONCAT:
         currentElement_->SetAttribute("op", "CONCAT");
@@ -335,33 +335,33 @@ void DumpAST::visit_pre_binaryOp(binaryOp* n)  {
     }
 }
 
-void DumpAST::visit_pre_literalString(literalString* n)  {
+void PrintAST::visit_pre_literalString(literalString* n)  {
     currentElement_->SetAttribute("simple", (n->isSimple() ? "yes" : "no"));
     TiXmlText * text = new TiXmlText( n->getStringVal() );
     currentElement_->LinkEndChild( text );
 }
 
-void DumpAST::visit_pre_inlineHtml(inlineHtml* n)  {
+void PrintAST::visit_pre_inlineHtml(inlineHtml* n)  {
     visit_pre_literalString(static_cast<literalString*>(n));
 }
 
-void DumpAST::visit_pre_literalInt(literalInt* n)  {
+void PrintAST::visit_pre_literalInt(literalInt* n)  {
     currentElement_->SetAttribute("value", n->getStringVal());
 }
 
-void DumpAST::visit_pre_literalFloat(literalFloat* n)  {
+void PrintAST::visit_pre_literalFloat(literalFloat* n)  {
     currentElement_->SetAttribute("value", n->getStringVal());
 }
 
-void DumpAST::visit_pre_literalBool(literalBool* n)  {
+void PrintAST::visit_pre_literalBool(literalBool* n)  {
     currentElement_->SetAttribute("value", (n->getBoolVal() ? "true" : "false") );
 }
 
-void DumpAST::visit_pre_literalConstant(literalConstant* n)  {
+void PrintAST::visit_pre_literalConstant(literalConstant* n)  {
     currentElement_->SetAttribute("id", n->name());
 }
 
-void DumpAST::visit_pre_literalArray(literalArray* n)  {
+void PrintAST::visit_pre_literalArray(literalArray* n)  {
 
     TiXmlElement* element(NULL);
     TiXmlElement* key(NULL);
@@ -393,12 +393,12 @@ void DumpAST::visit_pre_literalArray(literalArray* n)  {
 }
 
 
-void DumpAST::visit_pre_signature(signature* n) {
+void PrintAST::visit_pre_signature(signature* n) {
     currentElement_->SetAttribute("id",n->name());
     currentElement_->SetAttribute("returnByRef", (n->returnByRef() ? "true" : "false") );
 }
 
-void DumpAST::visit_pre_formalParam(formalParam* n) {
+void PrintAST::visit_pre_formalParam(formalParam* n) {
     currentElement_->SetAttribute("id",n->name());
     currentElement_->SetAttribute("byRef", (n->byRef() ? "true" : "false") );
     currentElement_->SetAttribute("arrayHint", (n->arrayHint() ? "true" : "false") );
@@ -407,22 +407,22 @@ void DumpAST::visit_pre_formalParam(formalParam* n) {
         currentElement_->SetAttribute("classHint",hint);
 }
 
-bool DumpAST::visit_children_formalParam(formalParam* n) {
+bool PrintAST::visit_children_formalParam(formalParam* n) {
     doComment("default value");
     visitOrNullChild(n->defaultExpr());
     return true;
 }
 
-void DumpAST::visit_pre_label(label* n) {
+void PrintAST::visit_pre_label(label* n) {
     currentElement_->SetAttribute("id", n->labelNo());
 }
 
-void DumpAST::visit_pre_branch(branch* n) {
+void PrintAST::visit_pre_branch(branch* n) {
     currentElement_->SetAttribute("trueLabel", n->trueLabel());
     currentElement_->SetAttribute("falseLabel", n->falseLabel());
 }
 
-void DumpAST::visit_pre_typeCast(typeCast* n) {
+void PrintAST::visit_pre_typeCast(typeCast* n) {
     switch(n->castKind()) {
 
         case typeCast::STRING:

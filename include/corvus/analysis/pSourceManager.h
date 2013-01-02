@@ -18,12 +18,16 @@
 
 namespace corvus {
 
+class pPassManager;
+
 class pSourceManager {
 
 private:
 
     bool debug_;
     std::vector<pSourceModule*> moduleList_;
+
+    void runPasses(pPassManager *pm);
 
 public:
 

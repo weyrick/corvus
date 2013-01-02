@@ -28,14 +28,13 @@ public:
 private:
 
     queueType passQueue_;
-    pSourceModule* module_;
 
     // no copy constructor
     pPassManager(const pPassManager&);
 
 public:
 
-    pPassManager(pSourceModule* m): passQueue_(), module_(m) { }
+    pPassManager(): passQueue_() { }
     ~pPassManager(void);
 
     /// add a pass. takes ownership.
@@ -43,11 +42,11 @@ public:
 
     template <typename PassType>
     void addPass(void) {
-        PassType* P = new PassType(module_);
+        PassType* P = new PassType();
         addPass(P);
     }
 
-    void run(void);
+    void run(pSourceModule *mod);
 
 };
 

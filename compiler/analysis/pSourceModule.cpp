@@ -12,7 +12,7 @@
 #include "corvus/analysis/pSourceFile.h"
 
 #include "corvus/analysis/pBaseVisitor.h"
-#include "corvus/analysis/pBaseTransformer.h"
+//#include "corvus/analysis/pBaseTransformer.h"
 #include "corvus/analysis/pParser.h"
 
 namespace corvus {
@@ -28,7 +28,8 @@ pSourceModule::pSourceModule(pStringRef file):
 
 void pSourceModule::parse(bool debug=false) {
 
-    parser::parseSourceFile(this,debug);
+    if (!ast_)
+        parser::parseSourceFile(this,debug);
 
 }
 
@@ -53,10 +54,10 @@ void pSourceModule::applyVisitor(AST::pBaseVisitor* v) {
     assert(ast_);
     v->visit(ast_);
 }
-
+/*
 void pSourceModule::applyTransform(AST::pBaseTransformer* t) {
     assert(ast_);
     ast_ = cast<AST::block>(t->transform(ast_));
 }
-
+*/
 } // namespace

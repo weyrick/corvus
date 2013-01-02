@@ -57,7 +57,7 @@ public:
     const AST::block* getAST() const { return ast_; }
     void setAST(const AST::statementList* list);
     void applyVisitor(AST::pBaseVisitor* v);
-    void applyTransform(AST::pBaseTransformer* t);
+    //void applyTransform(AST::pBaseTransformer* t);
 
 };
 

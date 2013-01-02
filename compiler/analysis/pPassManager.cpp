@@ -25,14 +25,14 @@ pPassManager::~pPassManager(void) {
 
 }
 
-void pPassManager::run(void) {
+void pPassManager::run(pSourceModule* mod) {
 
     for (queueType::iterator i = passQueue_.begin();
          i != passQueue_.end();
          ++i) {
-        (*i)->pre_run();
-        (*i)->run();
-        (*i)->post_run();
+        (*i)->do_pre_run(mod);
+        (*i)->do_run(mod);
+        (*i)->do_post_run(mod);
     }
 }
 

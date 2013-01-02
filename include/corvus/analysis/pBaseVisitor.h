@@ -27,7 +27,7 @@ private:
     static childDispatchFunction childrenDispatchTable_[];
 
 public:
-    pBaseVisitor(const char* name, const char* desc, pSourceModule* m): pPass(name,desc,m) { }
+    pBaseVisitor(const char* name, const char* desc): pPass(name,desc) { }
     virtual ~pBaseVisitor(void) { }
 
     // pass

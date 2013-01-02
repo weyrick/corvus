@@ -23,7 +23,7 @@ class pPass {
 
 private:
     // no copy constructor
-    pPass(const pPass& p): C_(module_->context()) { }
+    pPass(const pPass& p) { }
 
 protected:
     std::string passName_;
@@ -31,14 +31,16 @@ protected:
 
     pSourceModule* module_;
 
-    pParseContext& C_;
-
     static const char* nodeDescTable_[];
 public:
 
-    pPass(const char* n, const char* d, pSourceModule* m): passName_(n), passDesc_(d), module_(m), C_(module_->context()) { }
+    pPass(const char* n, const char* d): passName_(n), passDesc_(d) { }
 
     virtual ~pPass(void) { }
+
+    void do_pre_run(pSourceModule *mod) { module_ = mod; pre_run(); module_ = NULL; }
+    void do_run(pSourceModule *mod) { module_ = mod; run(); module_ = NULL; }
+    void do_post_run(pSourceModule *mod) { module_ = mod; post_run(); module_ = NULL; }
 
     virtual void pre_run(void) { }
     virtual void run(void) = 0;

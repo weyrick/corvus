@@ -14,7 +14,7 @@
 #include "corvus/analysis/pSourceModule.h"
 #include "corvus/analysis/pPassManager.h"
 
-#include "corvus/analysis/passes/DumpAST.h"
+#include "corvus/analysis/passes/PrintAST.h"
 #include "corvus/analysis/passes/DumpStats.h"
 #include "corvus/analysis/passes/Trivial.h"
 
@@ -35,12 +35,13 @@ void pSourceManager::addSourceDir(pStringRef name, pStringRef glob) {
 
 }
 
-void pSourceManager::printAST() {
+void pSourceManager::runPasses(pPassManager *pm) {
 
     for (unsigned i = 0; i != moduleList_.size(); ++i) {
 
         try {
             // catch parse errors
+            // this is idempotent
             moduleList_[i]->parse(debug_);
         }
         catch (std::exception& e) {
@@ -48,21 +49,27 @@ void pSourceManager::printAST() {
             continue;
         }
 
-        pPassManager passManager(moduleList_[i]);
-
-        passManager.addPass<AST::Pass::DumpAST>();
-        if (debug_)
-            passManager.addPass<AST::Pass::DumpStats>();
-
         try {
             // run selected passes
-            passManager.run();
+            pm->run(moduleList_[i]);
         }
         catch (std::exception& e) {
             std::cerr << e.what() << std::endl;
         }
 
     } // input file loop
+
+}
+
+void pSourceManager::printAST() {
+
+    pPassManager passManager;
+
+    passManager.addPass<AST::Pass::PrintAST>();
+    if (debug_)
+        passManager.addPass<AST::Pass::DumpStats>();
+
+    runPasses(&passManager);
 
 }
 
@@ -80,31 +87,12 @@ void pSourceManager::printToks() {
 
 void pSourceManager::refreshModel() {
 
-    for (unsigned i = 0; i != moduleList_.size(); ++i) {
+    pPassManager passManager;
 
-        try {
-            // catch parse errors
-            moduleList_[i]->parse(debug_);
-        }
-        catch (std::exception& e) {
-            std::cerr << e.what() << std::endl;
-            continue;
-        }
+    // standard passes
+    passManager.addPass<AST::Pass::Trivial>();
 
-        pPassManager passManager(moduleList_[i]);
-
-        // standard passes
-        passManager.addPass<AST::Pass::Trivial>();
-
-        try {
-            // run selected passes
-            passManager.run();
-        }
-        catch (std::exception& e) {
-            std::cerr << e.what() << std::endl;
-        }
-
-    } // input file loop
+    runPasses(&passManager);
 
 }
 

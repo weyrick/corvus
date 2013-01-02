@@ -24,8 +24,8 @@ class Trivial: public pBaseVisitor {
     void visitOrNullChild(stmt*);
 
 public:
-    Trivial(pSourceModule* m):
-            pBaseVisitor("Trivial","Trivial static checks requiring a single pass", m)
+    Trivial():
+            pBaseVisitor("Trivial","Trivial static checks requiring a single pass")
             { }
 
     /*
