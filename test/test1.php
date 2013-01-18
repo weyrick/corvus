@@ -1,5 +1,15 @@
 <?php
 
+namespace myns;
+
+class myclass {
+  const FOO = 1;
+  public function bar($one) {
+    $hey = 5;
+    echo $baz;
+  }
+}
+
 function foo($one, $two) {
     if (1) return 5;
     echo $hello;
