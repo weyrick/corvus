@@ -57,6 +57,7 @@ AST::literalExpr* extractLiteralString(pSourceRange* B, pSourceModule* pMod, boo
 %type T_LEFTSQUARE {int}
 %type T_RIGHTSQUARE {int}
 %type T_COMMA {int}
+%type T_NS_SEPARATOR {int}
 %type T_SINGLELINE_COMMENT {int}
 %type T_MULTILINE_COMMENT {int}
 %type T_DOC_COMMENT {int}
@@ -227,6 +228,7 @@ statement_list(A) ::= statement_list(B) statement(C). { B->push_back(C); A = B; 
 %type statement {AST::stmt*}
 statement(A) ::= statementBlock(B). { A = B; }
 statement(A) ::= inlineHTML(B). { A = B; }
+statement(A) ::= namespaceDecl(B). { A = B; }
 statement(A) ::= functionDecl(B). { A = B; }
 statement(A) ::= classDecl(B). { A = B; }
 statement(A) ::= ifBlock(B). { A = B; }
@@ -256,6 +258,27 @@ statementBlock(A) ::= T_LEFTCURLY(LC) statement_list(B) T_RIGHTCURLY(RC).
     A = new (CTXT) AST::block(CTXT, B);
     A->setLine(TOKEN_LINE(LC), TOKEN_LINE(RC));
     delete B;
+}
+
+// namespace
+%type namespaceName {AST::namespaceParts*}
+namespaceName(A) ::= T_IDENTIFIER(PART).
+{
+    A = new AST::namespaceParts();
+    A->push_back(CTXT.idPool().intern(*PART));
+}
+namespaceName(A) ::= namespaceName(PARTS) T_NS_SEPARATOR T_IDENTIFIER(PART).
+{
+    PARTS->push_back(CTXT.idPool().intern(*PART));
+    A = PARTS;
+}
+
+%type namespaceDecl{AST::namespaceDecl*}
+namespaceDecl(A) ::= T_NAMESPACE namespaceName(PARTS) T_SEMI.
+{
+    A = new (CTXT) AST::namespaceDecl(PARTS, CTXT);
+    A->setLine(CURRENT_LINE);
+    delete PARTS;
 }
 
 // echo

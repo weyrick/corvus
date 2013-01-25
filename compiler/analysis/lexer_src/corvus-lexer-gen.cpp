@@ -93,6 +93,7 @@ int main(void) {
     langRules_.add("PHP", "\\?", T_QUESTION, ".");
     langRules_.add("PHP", "\\:", T_COLON, ".");
     langRules_.add("PHP", "\\$", T_DOLLAR, ".");
+    langRules_.add("PHP", "\\\\", T_NS_SEPARATOR, ".");
     langRules_.add("PHP", ">=", T_GREATER_OR_EQUAL, ".");
     langRules_.add("PHP", "<=", T_LESS_OR_EQUAL, ".");
     langRules_.add("PHP", "<<", T_SL, ".");
@@ -181,6 +182,7 @@ int main(void) {
     langRules_.add("PHP", "include_once", T_INCLUDE_ONCE, ".");
     langRules_.add("PHP", "require", T_REQUIRE, ".");
     langRules_.add("PHP", "require_once", T_REQUIRE_ONCE, ".");
+    langRules_.add("PHP", "namespace", T_NAMESPACE, ".");
     langRules_.add("PHP", "__FILE__", T_MAGIC_FILE, ".");
     langRules_.add("PHP", "__LINE__", T_MAGIC_LINE, ".");
     langRules_.add("PHP", "__CLASS__", T_MAGIC_CLASS, ".");

@@ -422,6 +422,41 @@ public:
 
 };
 
+typedef std::vector<llvm::PooledStringPtr> namespaceParts;
+
+class namespaceDecl: public decl {
+
+    llvm::PooledStringPtr name_;
+
+protected:
+    namespaceDecl(const namespaceDecl& other, pParseContext& C): decl(other),
+        name_(other.name_) { }
+
+public:
+    namespaceDecl(const namespaceParts* parts, pParseContext& C):
+        decl(namespaceDeclKind) {
+        std::string name(*(*parts)[0]);
+        if (parts->size() > 1) {
+            name.push_back('\\');
+            for (int i = 1; i < parts->size(); i++) {
+                name.append(*(*parts)[i]);
+                name.push_back('\\');
+            }
+        }
+        name_ = C.idPool().intern(name);
+    }
+
+    pStringRef name(void) const {
+        assert(name_);
+        return *name_;
+    }
+
+    stmt::child_iterator child_begin() { return child_iterator(); }
+    stmt::child_iterator child_end() { return child_iterator(); }
+
+    IMPLEMENT_SUPPORT_MEMBERS(namespaceDecl);
+
+};
 
 class formalParam: public decl {
 

@@ -52,6 +52,7 @@ public:
 
     bool visit_children_staticDecl(staticDecl* n);
 
+    void visit_pre_namespaceDecl(namespaceDecl* n);
     void visit_pre_assignment(assignment* n);
     void visit_pre_builtin(builtin* n);
     void visit_pre_literalID(literalID* n);

@@ -78,6 +78,10 @@ void PrintAST::visit_pre_var(var* n) {
     }
 }
 
+void PrintAST::visit_pre_namespaceDecl(namespaceDecl* n) {
+    currentElement_->SetAttribute("name",n->name());
+}
+
 void PrintAST::visit_pre_classDecl(classDecl* n) {
 
     currentElement_->SetAttribute("id",n->name());
