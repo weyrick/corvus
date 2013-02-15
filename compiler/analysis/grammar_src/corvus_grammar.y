@@ -1146,6 +1146,12 @@ conditionalExpr(A) ::= expr(COND) T_QUESTION expr(TRUE) T_COLON expr(FALSE).
     A = new (CTXT) AST::conditionalExpr(COND, TRUE, FALSE);
     A->setLine(CURRENT_LINE);
 }
+// 5.3 ternary with implicit true condition
+conditionalExpr(A) ::= expr(COND) T_QUESTION T_COLON expr(FALSE).
+{
+    A = new (CTXT) AST::conditionalExpr(COND, COND->clone(CTXT), FALSE);
+    A->setLine(CURRENT_LINE);
+}
 
 /** TYPECASTS **/
 %type typeCast {AST::typeCast*}
