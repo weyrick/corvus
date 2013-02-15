@@ -13,3 +13,6 @@
 - keep output generic for use from e.g. ide
 - update boost lexer, or switch to lexertl
 - investigate other uses of llvm support classes
+
+- diagnostic wish list
+ - warn on new ternary operator with implicit true expression

@@ -127,6 +127,7 @@ int main(void) {
     langRules_.add("PHP", "=>", T_ARROWKEY, ".");
 
     langRules_.add("PHP", "->", T_CLASSDEREF, "OBJPROP");
+    langRules_.add("OBJPROP", "([ \\t]|{NEWLINE})+", T_WHITESPACE, ".");
     langRules_.add("OBJPROP", "{IDCHARS}", T_IDENTIFIER, "PHP");
     langRules_.add("OBJPROP", "\\${IDCHARS}", T_VARIABLE, "PHP");
 
