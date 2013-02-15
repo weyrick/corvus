@@ -53,6 +53,7 @@ int main(void) {
 
     // language rules
     langRules_.add_state("PHP");
+    langRules_.add_state("OBJPROP");
 
     langRules_.add_macro ("TRI", "\\?\\?");
     langRules_.add_macro ("BACKSLASH", "(\\\\|{TRI}\\/)");
@@ -124,7 +125,11 @@ int main(void) {
     langRules_.add("PHP", "xor", T_BOOLEAN_XOR_LIT, ".");
     langRules_.add("PHP", "\\?>", T_CLOSE_TAG, ".");
     langRules_.add("PHP", "=>", T_ARROWKEY, ".");
-    langRules_.add("PHP", "->", T_CLASSDEREF, ".");
+
+    langRules_.add("PHP", "->", T_CLASSDEREF, "OBJPROP");
+    langRules_.add("OBJPROP", "{IDCHARS}", T_IDENTIFIER, "PHP");
+    langRules_.add("OBJPROP", "\\${IDCHARS}", T_VARIABLE, "PHP");
+
     langRules_.add("PHP", "<>", T_NOT_EQUAL, ".");
     langRules_.add("PHP", "true", T_TRUE, ".");
     langRules_.add("PHP", "false", T_FALSE, ".");
