@@ -214,6 +214,7 @@ int main(void) {
     langRules_.add("PHP", "(\\/\\/|#).*$", T_SINGLELINE_COMMENT, ".");
     langRules_.add_macro ("ESCAPESEQ", "{BACKSLASH}.");
     langRules_.add("PHP", "\\\"({ESCAPESEQ}|[^\"\\\\])*\\\"", T_DQ_STRING, ".");
+    langRules_.add("PHP", "\\\`({ESCAPESEQ}|[^\`\\\\])*\\\`", T_TICK_STRING, ".");
     langRules_.add("PHP", "'({ESCAPESEQ}|[^'\\\\])*'", T_SQ_STRING, ".");
 
     boost::lexer::generator::build (langRules_, langState_);

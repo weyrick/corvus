@@ -1242,6 +1242,11 @@ literal(A) ::= T_DQ_STRING(B).
   A = extractLiteralString(B, pMod, false);
   A->setLine(CURRENT_LINE);
 }
+literal(A) ::= T_TICK_STRING(B).
+{
+  A = extractLiteralString(B, pMod, false);
+  A->setLine(CURRENT_LINE);
+}
 
 // literal integers (decimal)
 literal(A) ::= T_LNUMBER(B).
