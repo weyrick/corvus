@@ -212,10 +212,9 @@ int main(void) {
     langRules_.add("PHP", "\\/\\*\\*[^*]*\\*+([^/*][^*]*\\*+)*\\/", T_DOC_COMMENT, ".");
     langRules_.add("PHP", "\\/\\*[^*]*\\*+([^/*][^*]*\\*+)*\\/", T_MULTILINE_COMMENT, ".");
     langRules_.add("PHP", "(\\/\\/|#).*$", T_SINGLELINE_COMMENT, ".");
-    langRules_.add_macro ("ESCAPESEQ", "{BACKSLASH}([abfnrtv?'\"]|{BACKSLASH}|x{HEXDIGIT}+|{OCTALDIGIT}{1,3})");
-    langRules_.add("PHP", "\\\"({ESCAPESEQ}|[^\"])*\\\"", T_DQ_STRING, ".");
-    langRules_.add_macro ("ESCAPESEQ2", "{BACKSLASH}.");
-    langRules_.add("PHP", "'({ESCAPESEQ2}|[^'\\\\])*'", T_SQ_STRING, ".");
+    langRules_.add_macro ("ESCAPESEQ", "{BACKSLASH}.");
+    langRules_.add("PHP", "\\\"({ESCAPESEQ}|[^\"\\\\])*\\\"", T_DQ_STRING, ".");
+    langRules_.add("PHP", "'({ESCAPESEQ}|[^'\\\\])*'", T_SQ_STRING, ".");
 
     boost::lexer::generator::build (langRules_, langState_);
     boost::lexer::generator::minimise(langState_);
