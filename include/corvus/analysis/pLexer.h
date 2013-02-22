@@ -12,7 +12,6 @@
 #define COR_PLEXER_H_
 
 #include "corvus/pTypes.h"
-#include "corvus/analysis/lexer/consts.hpp"
 
 // NOTE: these are generated during build, and so live
 // in the build directory (not source directory)
@@ -24,6 +23,8 @@ namespace corvus {
 class pSourceFile;
 
 namespace lexer {
+
+typedef lexertl::recursive_match_results<pSourceCharIterator> rmatch;
 
 class pLexer {
 

@@ -42,27 +42,26 @@ void pLexer::dumpTokens(void) {
     std::string tokID;
     std::stringstream val;
 
-    pUInt curID(0);
-    std::size_t state(0), newState(0), uniqueID(0);
-    pSourceCharIterator tokStart(sourceBegin_);
-    pSourceCharIterator tokEnd(sourceBegin_);
-    while ( (curID = corvus_nextLangToken(newState, tokEnd, sourceEnd_, uniqueID)) )
-    {
+    rmatch match(sourceBegin_, sourceEnd_);
 
-        if (curID == 0) {
+    do {
+
+        corvus_nextLangToken(match);
+        if (match.id == 0) {
             // end of input
             break;
         }
-        else if (curID == boost::lexer::npos) {
+        else if (match.id == match.npos()) {
             // if state is HTML, collect characters for INLINE HTML token
-            if (state == 0) {                
-                while ((*tokEnd != '<') && (tokEnd != sourceEnd_)) {
-                    tokEnd++;
+            if (match.state == 0) {
+                while ((*match.end != '<') && (match.end != sourceEnd_)) {
+                    match.end++;
                 }
-                std::cout << std::string(tokStart, tokEnd) << " " << getTokenDescription(T_INLINE_HTML) << std::endl;
+                std::cout << match.str() << " " << getTokenDescription(T_INLINE_HTML) << std::endl;
             }
             else {
                 // unmatched character in PHP state
+                std::cout << "breaking on unmatched: " << match.str() << std::endl;
                 break;
             }
         }
@@ -70,21 +69,18 @@ void pLexer::dumpTokens(void) {
             // matched
             // skip plain newlines in html state
             val.str("");
-            if (curID != T_WHITESPACE)
-                val << std::string(tokStart, tokEnd);
-            if ((state == 0) && (val.str() == "\n"))
+            if (match.id != T_WHITESPACE)
+                val << match.str();
+            if ((match.state == 0) && (val.str() == "\n"))
                 continue;
-            tokID = getTokenDescription(curID);
+            tokID = getTokenDescription(match.id);
             if (tokID.size() == 0)
                 tokID = val.str();
             std::cout << val.str() << " " << tokID << std::endl;
         }
 
-        // next token
-        tokStart = tokEnd;
-        state = newState;
-
     }
+    while (match.id != 0);
 
 
 }

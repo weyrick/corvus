@@ -1714,6 +1714,9 @@ class var: public expr {
     stmt** children_;
     pUInt numChildren_;
 
+    // dynamic name based on expression
+    expr* dynamicName_;
+
 protected:
     var(const var& other, pParseContext& C): expr(other), name_(other.name_),
             indirectionCount_(other.indirectionCount_), children_(other.children_),
@@ -1723,12 +1726,24 @@ protected:
     }
     
 public:
+    var(expr* dynamicName, pParseContext& C, expr* target = NULL):
+        expr(varKind),
+        indirectionCount_(0),
+        children_(NULL),
+        numChildren_(1),
+        dynamicName_(dynamicName)
+    {
+        children_ = new (C) stmt*[1];
+        children_[TARGET] = target;
+    }
+
     var(const pSourceRange& name, pParseContext& C, expr* target = NULL):
         expr(varKind),
         name_(C.idPool().intern(name)),
         indirectionCount_(0),
         children_(NULL),
-        numChildren_(1)
+        numChildren_(1),
+        dynamicName_(NULL)
     {
         children_ = new (C) stmt*[1];
         children_[TARGET] = target;
@@ -1739,7 +1754,8 @@ public:
         name_(C.idPool().intern(name)),
         indirectionCount_(0),
         children_(NULL),
-        numChildren_(1+indices->size())
+        numChildren_(1+indices->size()),
+        dynamicName_(NULL)
     {
         children_ = new (C) stmt*[numChildren_];
         children_[TARGET] = target;
@@ -1748,7 +1764,17 @@ public:
         }
     }
 
+    bool hasDynamicName(void) const {
+        return (dynamicName_ != NULL);
+    }
+
+    expr* dynamicName(void) {
+        return dynamicName_;
+    }
+
     pStringRef name(void) const {
+        if (hasDynamicName())
+            return "";
         assert(name_);
         return *name_;
     }

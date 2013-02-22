@@ -1,6 +1,6 @@
 /* ***** BEGIN LICENSE BLOCK *****
 ;;
-;; Copyright (c) 2008-2010 Shannon Weyrick <weyrick@mozek.us>
+;; Copyright (c) 2008-2013 Shannon Weyrick <weyrick@mozek.us>
 ;;
 ;; This Source Code Form is subject to the terms of the Mozilla Public
 ;; License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,12 +12,11 @@
 // in the build directory (not source directory)
 #include "corvus_grammar.h"
 
-#include "corvus/analysis/lexer/debug.hpp"
+#include "corvus/analysis/lexertl/debug.hpp"
 
-#include "corvus/analysis/lexer/generator.hpp"
-#include "corvus/analysis/lexer/generate_cpp.hpp"
-#include "corvus/analysis/lexer/input.hpp"
-#include "corvus/analysis/lexer/state_machine.hpp"
+#include "corvus/analysis/lexertl/generator.hpp"
+#include "corvus/analysis/lexertl/generate_cpp.hpp"
+#include "corvus/analysis/lexertl/state_machine.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -27,29 +26,8 @@
 int main(void) {
 
     // language lexer
-    boost::lexer::rules langRules_((boost::lexer::regex_flags)(boost::lexer::icase/* | boost::lexer::dot_not_newline*/));
-    boost::lexer::state_machine langState_;
-
-    // double quote lexer
-    boost::lexer::rules dqRules_;
-    boost::lexer::state_machine dqState_;
-
-    // double quote rules
-    dqRules_.add_macro ("IDCHARS", IDCHARS);
-    dqRules_.add("INITIAL", "\\\\n", T_DQ_NEWLINE, ".");
-    dqRules_.add("INITIAL", "\\\"", T_DQ_DQ, ".");
-    dqRules_.add("INITIAL", "\\\\\\\"", T_DQ_ESCAPE, ".");
-    dqRules_.add("INITIAL", "\\${IDCHARS}", T_DQ_VARIABLE, ".");
-    boost::lexer::generator::build (dqRules_, dqState_);
-    boost::lexer::generator::minimise(dqState_);
-
-    std::ofstream outFile("corvus_dq_lexer.h", std::ios::out|std::ios::trunc);
-    if (!outFile.is_open()) {
-        std::cerr << "unable to open output file corvus_dq_lexer.h" << std::endl;
-        exit(-1);
-    }
-    boost::lexer::generate_cpp (dqState_, outFile, false, true, true, "corvus_nextDQToken");
-    outFile.close();
+    lexertl::rules langRules_((lexertl::regex_flags)(lexertl::icase | lexertl::dot_not_newline));
+    lexertl::state_machine langState_;
 
     // language rules
     langRules_.add_state("PHP");
@@ -127,10 +105,11 @@ int main(void) {
     langRules_.add("PHP", "\\?>", T_CLOSE_TAG, ".");
     langRules_.add("PHP", "=>", T_ARROWKEY, ".");
 
-    langRules_.add("PHP", "->", T_CLASSDEREF, "OBJPROP");
+    langRules_.add("PHP", "->", T_CLASSDEREF, ">OBJPROP");
     langRules_.add("OBJPROP", "{WHITESPACE}", T_WHITESPACE, ".");
-    langRules_.add("OBJPROP", "{IDCHARS}", T_IDENTIFIER, "PHP");
-    langRules_.add("OBJPROP", "\\${IDCHARS}", T_VARIABLE, "PHP");
+    langRules_.add("OBJPROP", "{IDCHARS}", T_IDENTIFIER, "<");
+    langRules_.add("OBJPROP", "\\${IDCHARS}", T_VARIABLE, "<");
+    langRules_.add("OBJPROP", "\\{", T_LEFTCURLY, "<");
 
     langRules_.add("PHP", "<>", T_NOT_EQUAL, ".");
     langRules_.add("PHP", "true", T_TRUE, ".");
@@ -214,19 +193,20 @@ int main(void) {
     langRules_.add("PHP", "(\\/\\/|#).*$", T_SINGLELINE_COMMENT, ".");
     langRules_.add_macro ("ESCAPESEQ", "{BACKSLASH}.");
     langRules_.add("PHP", "\\\"({ESCAPESEQ}|[^\"\\\\])*\\\"", T_DQ_STRING, ".");
-    langRules_.add("PHP", "\\\`({ESCAPESEQ}|[^\`\\\\])*\\\`", T_TICK_STRING, ".");
+    langRules_.add("PHP", "\\`({ESCAPESEQ}|[^`\\\\])*\\`", T_TICK_STRING, ".");
     langRules_.add("PHP", "'({ESCAPESEQ}|[^'\\\\])*'", T_SQ_STRING, ".");
 
-    boost::lexer::generator::build (langRules_, langState_);
-    boost::lexer::generator::minimise(langState_);
+    lexertl::generator::build (langRules_, langState_);
+    langState_.minimise();
 
-    std::ofstream outFile2("corvus_lang_lexer.h", std::ios::out|std::ios::trunc);
-    if (!outFile2.is_open()) {
+    std::ofstream outFile("corvus_lang_lexer.h", std::ios::out|std::ios::trunc);
+    if (!outFile.is_open()) {
         std::cerr << "unable to open output file corvus_lang_lexer.h" << std::endl;
         exit(-1);
     }
-    boost::lexer::generate_cpp (langState_, outFile2, false, true, true, "corvus_nextLangToken");
-    outFile2.close();
+    outFile << "#include \"corvus/analysis/lexertl/match_results.hpp\"" << std::endl;
+    lexertl::table_based_cpp::generate_cpp("corvus_nextLangToken", langState_, false, outFile);
+    outFile.close();
 
 }
 

@@ -72,7 +72,13 @@ void PrintAST::doNullChild(void) {
 }
 
 void PrintAST::visit_pre_var(var* n) {
-    currentElement_->SetAttribute("id",n->name());
+    if (!n->hasDynamicName()) {
+        currentElement_->SetAttribute("id",n->name());
+    }
+    else {
+        // XXX put under <dynamic> node?
+        visit(n->dynamicName());
+    }
     if (n->indirectionCount()) {
         currentElement_->SetAttribute("indirectionCount",n->indirectionCount());
     }

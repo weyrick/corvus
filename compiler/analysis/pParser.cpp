@@ -50,46 +50,47 @@ void parseSourceFile(pSourceModule* pMod, bool debug=false) {
     pSourceCharIterator lastNL;
     pUInt nlCnt(0);
 
-    pUInt curID(0);
-    std::size_t state(0), newState(0), uniqueID(0);
-    pSourceCharIterator sourceEnd(lexer.sourceEnd());
-    pSourceCharIterator tokStart(lexer.sourceBegin());
-    pSourceCharIterator tokEnd(lexer.sourceBegin());
+    bool inlineHtml = false;
 
-    while ( (curID = corvus_nextLangToken(newState, tokEnd, sourceEnd, uniqueID)) ) {
+    pSourceCharIterator sourceEnd(lexer.sourceEnd());
+    lexer::rmatch match(lexer.sourceBegin(), lexer.sourceEnd());
+
+    do {
+
+        corvus_nextLangToken(match);
 
         // always make a range unless the scanner didn't match, in which case
         // we handle separately below
-        if (curID != boost::lexer::npos) {
-            curRange = tokenPool.construct(pSourceRange(tokStart, tokEnd-tokStart));
+        if (match.id != match.npos()) {
+            curRange = tokenPool.construct(pSourceRange(match.start, match.end-match.start));
             context.setTokenLine(curRange);
         }
 
-        switch (curID) {
+        switch (match.id) {
             case 0:
                 // end of input (success)
                 break;
             case T_CLOSE_TAG:
                 // we swallow one newline if it follows
-                if ((tokEnd != sourceEnd) && (*tokEnd == '\n'))
-                    ++tokEnd;
+                //if ((match.end != sourceEnd) && (*match.end == '\n'))
+                //    ++tokEnd;
                 break;
             case T_OPEN_TAG:
                 // state change (no parse), but count newlines from OPEN tag
                 goto handleNewlines;
-            case boost::lexer::npos:
+            case ~0: // npos
                 // if state is HTML, collect characters for INLINE HTML token
-                if (state == 0) {
+                if (match.state == 0) {
                     // we go until a single < is found, or end of input
                     // this potentially breaks up inline htmls
                     // at tags that don't turn out to be php open tags,
                     // but that way we let the lexer handle the matching
-                    // and limit the special handler code here
-                    while ((*tokEnd != '<') && (tokEnd != sourceEnd)) {
-                        tokEnd++;
+                    // and limit the special handler code here                    
+                    while ((*match.end != '<') && (match.end != sourceEnd)) {
+                        match.end++;
                     }
-                    curID = T_INLINE_HTML;
-                    curRange = tokenPool.construct(pSourceRange(tokStart, tokEnd-tokStart));
+                    inlineHtml = true;
+                    curRange = tokenPool.construct(pSourceRange(match.start, match.end-match.start));
                     context.setTokenLine(curRange);
                     goto handleNewlines;
                 }
@@ -105,7 +106,7 @@ void parseSourceFile(pSourceModule* pMod, bool debug=false) {
             case T_SINGLELINE_COMMENT:
                 // handle newlines
                 handleNewlines:
-                for (pSourceCharIterator i = tokStart; i != tokEnd; ++i) {
+                for (pSourceCharIterator i = match.start; i != match.end; ++i) {
                     if (*i == '\n') {
                         nlCnt++;
                         lastNL = i;
@@ -116,23 +117,25 @@ void parseSourceFile(pSourceModule* pMod, bool debug=false) {
                     context.setLastNewline(lastNL);
                 }
                 // only actually parse T_INLINE_HTML, not whitespace
-                if (curID == T_INLINE_HTML) {
-                    corvusParse(pParser, curID, curRange, pMod);
+                /*
+                if (inlineHtml) {
+                    corvusParse(pParser, match.id, curRange, pMod);
+                    inlineHtml = false;
                 }
+                */
                 break;
             default:
                 // parse
-                corvusParse(pParser, curID, curRange, pMod);
+                corvusParse(pParser, match.id, curRange, pMod);
                 break;
         }
 
         // next token
         nlCnt = 0;
-        tokStart = tokEnd;
-        state = newState;
         context.setLastToken(curRange);
 
     }
+    while (match.id != 0);
 
     // finish parse
     corvusParse(pParser, 0, 0, pMod); // note, this may generate a parse error still

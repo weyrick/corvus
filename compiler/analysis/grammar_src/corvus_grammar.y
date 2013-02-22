@@ -1837,7 +1837,13 @@ objProperty(A) ::= varNoObjects(VAR).
     VAR->setIndirectionCount(1);
     A = VAR;
 }
-// XXX objProperty: support $foo->${baz} here?
+
+// $foo->{expr}
+objProperty(A) ::= T_LEFTCURLY expr(VAL) T_RIGHTCURLY.
+{
+    A = new (CTXT) AST::var(VAL, CTXT);
+    A->setLine(CURRENT_LINE);
+}
 
 %type varVar {pUInt*}
 varVar(A) ::= T_DOLLAR. { A = new pUInt(1); }
