@@ -55,14 +55,15 @@ int main(void) {
     langRules_.add_state("PHP");
     langRules_.add_state("OBJPROP");
 
-    langRules_.add_macro ("TRI", "\\?\\?");
-    langRules_.add_macro ("BACKSLASH", "(\\\\|{TRI}\\/)");
-    langRules_.add_macro ("DIGIT", "[0-9]");
-    langRules_.add_macro ("OCTALDIGIT", "[0-7]");
-    langRules_.add_macro ("HEXDIGIT", "[0-9a-fA-F]");
-    langRules_.add_macro ("IDCHARS", IDCHARS);
-    langRules_.add_macro ("ANY", "[^]");
-    langRules_.add_macro ("NEWLINE", "(\\r|\\n|\\r\\n)");
+    langRules_.add_macro("BACKSLASH", "\\\\");
+    langRules_.add_macro("DIGIT", "[0-9]");
+    langRules_.add_macro("OCTALDIGIT", "[0-7]");
+    langRules_.add_macro("HEXDIGIT", "[0-9a-fA-F]");
+    langRules_.add_macro("IDCHARS", IDCHARS);
+    langRules_.add_macro("ANY", "[^]");
+    langRules_.add_macro("NEWLINE", "(\\r|\\n|\\r\\n)");
+    langRules_.add_macro("SPACEORTAB", "[ \\t]");
+    langRules_.add_macro("WHITESPACE", "({SPACEORTAB}|{NEWLINE})+");
 
     langRules_.add("INITIAL", "(<\\?|<\\?PHP)([ \\t]|{NEWLINE})", T_OPEN_TAG, "PHP"); // go to PHP state
 
@@ -127,7 +128,7 @@ int main(void) {
     langRules_.add("PHP", "=>", T_ARROWKEY, ".");
 
     langRules_.add("PHP", "->", T_CLASSDEREF, "OBJPROP");
-    langRules_.add("OBJPROP", "([ \\t]|{NEWLINE})+", T_WHITESPACE, ".");
+    langRules_.add("OBJPROP", "{WHITESPACE}", T_WHITESPACE, ".");
     langRules_.add("OBJPROP", "{IDCHARS}", T_IDENTIFIER, "PHP");
     langRules_.add("OBJPROP", "\\${IDCHARS}", T_VARIABLE, "PHP");
 
@@ -195,20 +196,19 @@ int main(void) {
     langRules_.add("PHP", "__METHOD__", T_MAGIC_METHOD, ".");
     langRules_.add("PHP", "__FUNCTION__", T_MAGIC_FUNCTION, ".");
     langRules_.add("PHP", "__NAMESPACE__", T_MAGIC_NS, ".");
-    langRules_.add("PHP", "\\((int|integer)\\)", T_INT_CAST, ".");
-    langRules_.add("PHP", "\\((real|double|float)\\)", T_FLOAT_CAST, ".");
-    langRules_.add("PHP", "\\(string\\)", T_STRING_CAST, ".");
-    langRules_.add("PHP", "\\(binary\\)", T_BINARY_CAST, ".");
-    langRules_.add("PHP", "\\(unicode\\)", T_UNICODE_CAST, ".");
-    langRules_.add("PHP", "\\(array\\)", T_ARRAY_CAST, ".");
-    langRules_.add("PHP", "\\(object\\)", T_OBJECT_CAST, ".");
-    langRules_.add("PHP", "\\((bool|boolean)\\)", T_BOOL_CAST, ".");
-    langRules_.add("PHP", "\\(unset\\)", T_UNSET_CAST, ".");
+    langRules_.add("PHP", "\\({SPACEORTAB}*(int|integer){SPACEORTAB}*\\)", T_INT_CAST, ".");
+    langRules_.add("PHP", "\\({SPACEORTAB}*(real|double|float){SPACEORTAB}*\\)", T_FLOAT_CAST, ".");
+    langRules_.add("PHP", "\\({SPACEORTAB}*string{SPACEORTAB}*\\)", T_STRING_CAST, ".");
+    langRules_.add("PHP", "\\({SPACEORTAB}*binary{SPACEORTAB}*\\)", T_BINARY_CAST, ".");
+    langRules_.add("PHP", "\\({SPACEORTAB}*array{SPACEORTAB}*\\)", T_ARRAY_CAST, ".");
+    langRules_.add("PHP", "\\({SPACEORTAB}*object{SPACEORTAB}*\\)", T_OBJECT_CAST, ".");
+    langRules_.add("PHP", "\\({SPACEORTAB}*(bool|boolean){SPACEORTAB}*\\)", T_BOOL_CAST, ".");
+    langRules_.add("PHP", "\\({SPACEORTAB}*unset{SPACEORTAB}*\\)", T_UNSET_CAST, ".");
     langRules_.add("PHP", "{IDCHARS}", T_IDENTIFIER, ".");
     langRules_.add("PHP", "\\${IDCHARS}", T_VARIABLE, ".");
     langRules_.add("PHP", "((0x|0X){HEXDIGIT}+|0{OCTALDIGIT}*|[1-9]{DIGIT}*)", T_LNUMBER, ".");
     langRules_.add("PHP", "([0-9]*[\\.][0-9]+)|([0-9]+[\\.][0-9]*)", T_DNUMBER, ".");
-    langRules_.add("PHP", "([ \\t]|{NEWLINE})+", T_WHITESPACE, ".");
+    langRules_.add("PHP", "{WHITESPACE}", T_WHITESPACE, ".");
     langRules_.add("PHP", "\\/\\*\\*[^*]*\\*+([^/*][^*]*\\*+)*\\/", T_DOC_COMMENT, ".");
     langRules_.add("PHP", "\\/\\*[^*]*\\*+([^/*][^*]*\\*+)*\\/", T_MULTILINE_COMMENT, ".");
     langRules_.add("PHP", "(\\/\\/|#).*$", T_SINGLELINE_COMMENT, ".");
