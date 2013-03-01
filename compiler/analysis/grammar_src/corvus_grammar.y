@@ -1247,6 +1247,13 @@ literal(A) ::= T_TICK_STRING(B).
   A = extractLiteralString(B, pMod, false);
   A->setLine(CURRENT_LINE);
 }
+literal(A) ::= T_HEREDOC_START T_HEREDOC_STRING(B) T_HEREDOC_END.
+{
+  AST::literalString *hd = new (CTXT) AST::literalString(*B);
+  hd->setIsSimple(false);
+  hd->setLine(CURRENT_LINE);
+  A = hd;
+}
 
 // literal integers (decimal)
 literal(A) ::= T_LNUMBER(B).

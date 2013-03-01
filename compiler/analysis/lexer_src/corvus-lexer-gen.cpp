@@ -32,6 +32,7 @@ int main(void) {
     // language rules
     langRules_.add_state("PHP");
     langRules_.add_state("OBJPROP");
+    langRules_.add_state("HEREDOC");
 
     langRules_.add_macro("BACKSLASH", "\\\\");
     langRules_.add_macro("DIGIT", "[0-9]");
@@ -110,6 +111,12 @@ int main(void) {
     langRules_.add("OBJPROP", "{IDCHARS}", T_IDENTIFIER, "<");
     langRules_.add("OBJPROP", "\\${IDCHARS}", T_VARIABLE, "<");
     langRules_.add("OBJPROP", "\\{", T_LEFTCURLY, "<");
+
+
+    langRules_.add("PHP", "<<<{SPACEORTAB}*{IDCHARS}{NEWLINE}", T_HEREDOC_START, ">HEREDOC");
+    langRules_.add("HEREDOC", "{NEWLINE}{IDCHARS};", "<");
+    // lexer actually manually switches back to PHP state. it has to because it has to
+    // match on the identifier in the HEREDOC
 
     langRules_.add("PHP", "<>", T_NOT_EQUAL, ".");
     langRules_.add("PHP", "true", T_TRUE, ".");

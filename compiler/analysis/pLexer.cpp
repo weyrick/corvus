@@ -16,6 +16,7 @@
 #include <fstream>
 #include <string>
 #include <sstream>
+#include <assert.h>
 
 namespace corvus { namespace lexer {
 
@@ -41,6 +42,7 @@ void pLexer::dumpTokens(void) {
 
     std::string tokID;
     std::stringstream val;
+    std::string HEREDOC_ID;
 
     rmatch match(sourceBegin_, sourceEnd_);
 
@@ -59,6 +61,35 @@ void pLexer::dumpTokens(void) {
                 }
                 std::cout << match.str() << " " << getTokenDescription(T_INLINE_HTML) << std::endl;
             }
+            // if state is HEREDOC, collect heredoc string, looking for heredoc id
+            else if (match.state == 3) {
+                // assert we have a heredoc ID
+                assert(HEREDOC_ID.length() && "no heredoc id");
+                look_for_id:
+                    while ((*match.end != '\n') && (match.end != sourceEnd_)) {
+                        match.end++;
+                    }
+                if (sourceEnd_ - match.end < HEREDOC_ID.length()) {
+                    // the remaining source text is shorter than the heredocid length,
+                    // which means we're never going to match it
+                    std::cout << "dangling HEREDOC" << std::endl;
+                    break;
+                }
+                match.end++; // skip newline
+                pSourceCharIterator ms = match.end;
+                pSourceCharIterator me = match.end+HEREDOC_ID.length();
+                std::string maybeID(ms, me);
+                if (maybeID != HEREDOC_ID) {
+                    goto look_for_id;
+                }
+                // if we get here, we matched the heredoc id
+                std::cout << match.str() << " " << getTokenDescription(T_DQ_STRING) << std::endl;
+                match.start = ms;
+                match.end = me;
+                std::cout << match.str() << " " << getTokenDescription(T_HEREDOC_END) << std::endl;
+                match.state = 1;
+                HEREDOC_ID.clear();
+            }
             else {
                 // unmatched character in PHP state
                 std::cout << "breaking on unmatched: " << match.str() << std::endl;
@@ -69,6 +100,15 @@ void pLexer::dumpTokens(void) {
             // matched
             // skip plain newlines in html state
             val.str("");
+            if (match.id == T_HEREDOC_START) {
+                // save the heredoc id so we can match the end
+                pSourceCharIterator ms = match.start;
+                while (*ms == '<' || *ms == ' ' || *ms == '\t')
+                    ms++;
+                HEREDOC_ID.assign(ms, match.end-1);
+                std::cout << std::string(match.start, match.end-1) << " T_HEREDOC_START" << std::endl;
+                continue;
+            }
             if (match.id != T_WHITESPACE)
                 val << match.str();
             if ((match.state == 0) && (val.str() == "\n"))
@@ -297,6 +337,10 @@ const char* pLexer::getTokenDescription(const std::size_t t) const {
             return "T_PRINT";
         case T_INTERFACE:
             return "T_INTERFACE";
+        case T_HEREDOC_START:
+            return "T_HEREDOC_START";
+        case T_HEREDOC_END:
+            return "T_HEREDOC_END";
 
     }
     return "";

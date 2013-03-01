@@ -18,6 +18,7 @@
 
 #include <iostream>
 #include <stdio.h>
+#include <assert.h>
 
 /* generated corvus_grammar parser interface */
 void* corvusParseAlloc(void *(*)(size_t));
@@ -26,6 +27,48 @@ void  corvusParseFree(void *, void (*)(void*));
 void  corvusParseTrace(FILE *, char *);
 
 namespace corvus { namespace parser {
+
+void countNewlines(AST::pParseContext& context, lexer::rmatch& match, pSourceCharIterator& lastNL) {
+    pUInt nlCnt(0);
+    //std::cout << "countNewLines [" << match.str() << "]\n";
+    for (pSourceCharIterator i = match.start; i != match.end; ++i) {
+        if (*i == '\n') {
+            nlCnt++;
+            lastNL = i;
+        }
+    }
+    if (nlCnt) {
+        //std::cout << "inc by: " << nlCnt << std::endl;
+        context.incLineNum(nlCnt);
+        context.setLastNewline(lastNL);
+    }
+}
+
+// find the heredoc id, or else parse error looking for it
+// returns pointers to the matching end token (HEREDOC_ID)
+std::pair<pSourceCharIterator,pSourceCharIterator> find_heredoc_id(const std::string& HEREDOC_ID,
+                     const lexer::pLexer& lexer,
+                     lexer::rmatch& match,
+                     pSourceModule* pMod) {
+    AST::pParseContext& context = pMod->context();
+ look_for_id:
+    while ((*match.end != '\n') && (match.end != lexer.sourceEnd())) {
+        match.end++;
+    }
+    if (lexer.sourceEnd() - match.end < HEREDOC_ID.length()) {
+        // the remaining source text is shorter than the heredocid length,
+        // which means we're never going to match it
+        context.parseError("dangling HEREDOC");
+        // XXX does not reach this, parseError throws
+    }
+    match.end++; // skip newline
+    pSourceCharIterator ms = match.end;
+    pSourceCharIterator me = match.end+HEREDOC_ID.length();
+    std::string maybeID(ms, me);
+    if (maybeID != HEREDOC_ID)
+        goto look_for_id;
+    return std::pair<pSourceCharIterator, pSourceCharIterator>(ms, me);
+}
 
 void parseSourceFile(pSourceModule* pMod, bool debug=false) {
 
@@ -48,9 +91,9 @@ void parseSourceFile(pSourceModule* pMod, bool debug=false) {
 
     pSourceRange* curRange;
     pSourceCharIterator lastNL;
-    pUInt nlCnt(0);
 
     bool inlineHtml = false;
+    std::string HEREDOC_ID;
 
     pSourceCharIterator sourceEnd(lexer.sourceEnd());
     lexer::rmatch match(lexer.sourceBegin(), lexer.sourceEnd());
@@ -58,6 +101,8 @@ void parseSourceFile(pSourceModule* pMod, bool debug=false) {
     do {
 
         corvus_nextLangToken(match);
+
+        //std::cout << "match: [" << match.str() << "]\n";
 
         // always make a range unless the scanner didn't match, in which case
         // we handle separately below
@@ -68,17 +113,25 @@ void parseSourceFile(pSourceModule* pMod, bool debug=false) {
 
         switch (match.id) {
             case 0:
+            {
                 // end of input (success)
                 break;
+            }
             case T_CLOSE_TAG:
+            {
                 // we swallow one newline if it follows
                 //if ((match.end != sourceEnd) && (*match.end == '\n'))
                 //    ++tokEnd;
                 break;
+            }
             case T_OPEN_TAG:
+            {
                 // state change (no parse), but count newlines from OPEN tag
-                goto handleNewlines;
+                countNewlines(context, match, lastNL);
+                break;
+            }
             case ~0: // npos
+            {
                 // if state is HTML, collect characters for INLINE HTML token
                 if (match.state == 0) {
                     // we go until a single < is found, or end of input
@@ -92,46 +145,61 @@ void parseSourceFile(pSourceModule* pMod, bool debug=false) {
                     inlineHtml = true;
                     curRange = tokenPool.construct(pSourceRange(match.start, match.end-match.start));
                     context.setTokenLine(curRange);
-                    goto handleNewlines;
+                    countNewlines(context, match, lastNL);
+                }
+                // if state is HEREDOC, collect heredoc string, looking for heredoc id
+                else if (match.state == 3) {
+                    // assert we have a heredoc ID
+                    assert(HEREDOC_ID.length() && "no heredoc id");
+                    std::pair<pSourceCharIterator,pSourceCharIterator> idr = find_heredoc_id(HEREDOC_ID, lexer, match, pMod);
+                    countNewlines(context, match, lastNL);
+                    curRange = tokenPool.construct(pSourceRange(match.start, match.end-match.start));
+                    context.setTokenLine(curRange);
+                    corvusParse(pParser, T_HEREDOC_STRING, curRange, pMod);
+                    match.start = idr.first;
+                    match.end = idr.second;
+                    curRange = tokenPool.construct(pSourceRange(match.start, match.end-match.start));
+                    context.setTokenLine(curRange);
+                    corvusParse(pParser, T_HEREDOC_END, curRange, pMod);
+                    match.state = 1;
+                    HEREDOC_ID.clear();
                 }
                 else {
                     // unmatched token: error
                     pMod->context().parseError(NULL);
                 }
                 break;
+            }
+            case T_HEREDOC_START:
+            {
+                // save the heredoc id so we can match the end
+                pSourceCharIterator ms = match.start;
+                while (*ms == '<' || *ms == ' ' || *ms == '\t')
+                    ms++;
+                countNewlines(context, match, lastNL);
+                HEREDOC_ID.assign(ms, match.end-1);
+                corvusParse(pParser, T_HEREDOC_START, curRange, pMod);
+                break;
+            }
             case T_WHITESPACE:
             case T_INLINE_HTML:
             case T_DOC_COMMENT:
             case T_MULTILINE_COMMENT:
             case T_SINGLELINE_COMMENT:
+            {
                 // handle newlines
-                handleNewlines:
-                for (pSourceCharIterator i = match.start; i != match.end; ++i) {
-                    if (*i == '\n') {
-                        nlCnt++;
-                        lastNL = i;
-                    }
-                }
-                if (nlCnt) {
-                    context.incLineNum(nlCnt);
-                    context.setLastNewline(lastNL);
-                }
-                // only actually parse T_INLINE_HTML, not whitespace
-                /*
-                if (inlineHtml) {
-                    corvusParse(pParser, match.id, curRange, pMod);
-                    inlineHtml = false;
-                }
-                */
+                countNewlines(context, match, lastNL);
                 break;
+            }
             default:
+            {
                 // parse
                 corvusParse(pParser, match.id, curRange, pMod);
                 break;
+            }
         }
 
         // next token
-        nlCnt = 0;
         context.setLastToken(curRange);
 
     }
