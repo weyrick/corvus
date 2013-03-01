@@ -265,11 +265,11 @@ statementBlock(A) ::= T_LEFTCURLY(LC) statement_list(B) T_RIGHTCURLY(RC).
 namespaceName(A) ::= T_IDENTIFIER(PART).
 {
     A = new AST::namespaceParts();
-    A->push_back(CTXT.idPool().intern(*PART));
+    A->push_back(*PART);
 }
 namespaceName(A) ::= namespaceName(PARTS) T_NS_SEPARATOR T_IDENTIFIER(PART).
 {
-    PARTS->push_back(CTXT.idPool().intern(*PART));
+    PARTS->push_back(*PART);
     A = PARTS;
 }
 

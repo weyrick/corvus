@@ -117,7 +117,7 @@ void PrintAST::visit_pre_classDecl(classDecl* n) {
         {
             // synthesize literal id nodes here
             node = new TiXmlElement("literalID");
-            node->SetAttribute("id", *(*i));
+            node->SetAttribute("id", *i);
             sub->LinkEndChild(node);
         }
         currentElement_->LinkEndChild(sub);
@@ -136,7 +136,7 @@ void PrintAST::visit_pre_classDecl(classDecl* n) {
         {
             // synthesize literal id nodes here
             node = new TiXmlElement("literalID");
-            node->SetAttribute("id", *(*i));
+            node->SetAttribute("id", *i);
             sub->LinkEndChild(node);
         }
         currentElement_->LinkEndChild(sub);

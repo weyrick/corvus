@@ -28,7 +28,6 @@
 #include <iterator>
 #include <boost/range/iterator_range.hpp>
 
-#include <llvm/Support/StringPool.h>
 #include <llvm/Support/Casting.h>
 #include <llvm/ADT/SmallVector.h>
 #include <llvm/ADT/APInt.h>
@@ -49,7 +48,7 @@ const int COR_IDLIST_SIZE = 5; // list of ids, used by extends, implements
 const int COR_FORMAL_PARAM_VECTOR_SIZE = 5; // formal parameters in function/method decl
 
 // a list of symbols, used for extends, implements
-typedef llvm::SmallVector<llvm::PooledStringPtr,COR_IDLIST_SIZE> idList;
+typedef llvm::SmallVector<std::string,COR_IDLIST_SIZE> idList;
 typedef std::vector<const pSourceRange*> sourceRangeList;
 
 enum nodeKind {
@@ -422,11 +421,11 @@ public:
 
 };
 
-typedef std::vector<llvm::PooledStringPtr> namespaceParts;
+typedef std::vector<std::string> namespaceParts;
 
 class namespaceDecl: public decl {
 
-    llvm::PooledStringPtr name_;
+    std::string name_;
 
 protected:
     namespaceDecl(const namespaceDecl& other, pParseContext& C): decl(other),
@@ -435,20 +434,19 @@ protected:
 public:
     namespaceDecl(const namespaceParts* parts, pParseContext& C):
         decl(namespaceDeclKind) {
-        std::string name(*(*parts)[0]);
+        std::string name((*parts)[0]);
         if (parts->size() > 1) {
             name.push_back('\\');
             for (int i = 1; i < parts->size(); i++) {
-                name.append(*(*parts)[i]);
+                name.append((*parts)[i]);
                 name.push_back('\\');
             }
         }
-        name_ = C.idPool().intern(name);
+        name_ = name;
     }
 
     pStringRef name(void) const {
-        assert(name_);
-        return *name_;
+        return name_;
     }
 
     stmt::child_iterator child_begin() { return child_iterator(); }
@@ -462,8 +460,8 @@ class formalParam: public decl {
 
     enum { byRefBit=1, arrayHintBit=2 };
 
-    llvm::PooledStringPtr name_;
-    llvm::PooledStringPtr classHint_;
+    std::string name_;
+    std::string classHint_;
     pUInt flags_;
     stmt* default_;
 
@@ -476,7 +474,7 @@ class formalParam: public decl {
 public:
     formalParam(const pSourceRange& name, pParseContext& C, bool ref, expr* def=NULL):
         decl(formalParamKind),
-        name_(C.idPool().intern(name)),
+        name_(name),
         classHint_(),
         flags_(0),
         default_(def)
@@ -503,17 +501,16 @@ public:
     void setArrayHint(void) { flags_ ^= arrayHintBit; }
 
     void setClassHint(const pSourceRange& name, pParseContext& C) {
-        classHint_ = C.idPool().intern(name);
+        classHint_ = name;
     }
 
     pStringRef name(void) const {
-        assert(name_);
-        return *name_;
+        return name_;
     }
 
     pStringRef classHint(void) const {
-        if (classHint_)
-            return *classHint_;
+        if (!classHint_.empty())
+            return classHint_;
         else
             return "";
     }
@@ -529,7 +526,7 @@ typedef llvm::SmallVector<formalParam*,COR_FORMAL_PARAM_VECTOR_SIZE> formalParam
 
 class signature: public decl {
 
-    llvm::PooledStringPtr name_;
+    std::string name_;
     stmt** formalParamList_;
     pUInt numParams_;
     bool returnByRef_;
@@ -547,7 +544,7 @@ public:
               const formalParamList* s,
               bool returnByRef=false):
             decl(signatureKind),
-            name_(C.idPool().intern(name)),
+            name_(name),
             formalParamList_(0),
             numParams_(s ? s->size() : 0),
             returnByRef_(returnByRef)
@@ -559,8 +556,7 @@ public:
     }
 
     pStringRef name(void) const {
-        assert(name_);
-        return *name_;
+        return name_;
     }
 
     bool returnByRef(void) const { return returnByRef_; }
@@ -634,7 +630,7 @@ public:
 class propertyDecl: public decl {
 
     pUInt flags_;
-    llvm::PooledStringPtr name_;
+    std::string name_;
     expr* default_;
     
 protected:
@@ -652,7 +648,7 @@ public:
                  ):
         decl(propertyDeclKind),
         flags_(0),
-        name_(C.idPool().intern(name)),
+        name_(name),
         default_(def)
     {
     }
@@ -660,8 +656,7 @@ public:
     void setFlags(pUInt f) { flags_ = f; }
     pUInt flags(void) const { return flags_; }
     pStringRef name(void) const {
-        assert(name_);
-        return *name_;
+        return name_;
     }
 
     stmt::child_iterator child_begin() { return (stmt**)&default_; }
@@ -682,7 +677,7 @@ public:
                       ABSTRACT };
 
 private:
-    llvm::PooledStringPtr name_;
+    std::string name_;
     idList extends_;
     idList implements_;
     classTypes classType_;
@@ -708,7 +703,7 @@ public:
               block* members
               ):
         decl(classDeclKind),
-        name_(C.idPool().intern(name)),
+        name_(name),
         extends_(),
         implements_(),
         classType_(type),
@@ -719,10 +714,10 @@ public:
             for (sourceRangeList::const_iterator i=extends->begin();
             i != extends->end();
             ++i) {
-                extends_.push_back(C.idPool().intern(
+                extends_.push_back(
                         pStringRef(
                                 (*i)->begin(), ((*i)->end() - (*i)->begin()))
-                        ));
+                        );
             }
         }
         // intern list of implements (if any)
@@ -730,17 +725,16 @@ public:
             for (sourceRangeList::const_iterator i=implements->begin();
             i != implements->end();
             ++i) {
-                implements_.push_back(C.idPool().intern(
+                implements_.push_back(
                         pStringRef(
                                 (*i)->begin(), ((*i)->end() - (*i)->begin()))
-                        ));
+                        );
             }
         }
     }
 
     pStringRef name(void) const {
-        assert(name_);
-        return *name_;
+        return name_;
     }
 
     block* members(void) { return members_; }
@@ -1208,8 +1202,8 @@ public:
 // catch
 class catchStmt: public stmt {
 
-    llvm::PooledStringPtr className_;
-    llvm::PooledStringPtr varName_;
+    std::string className_;
+    std::string varName_;
     block* body_;
     
 protected:
@@ -1226,20 +1220,18 @@ public:
               pParseContext& C,
               block* body):
     stmt(catchStmtKind),
-    className_(C.idPool().intern(pStringRef(className.begin(), (className.end()-className.begin())))),
-    varName_(C.idPool().intern(pStringRef(varName.begin(), (varName.end()-varName.begin())))),
+    className_(pStringRef(className.begin(), (className.end()-className.begin()))),
+    varName_(pStringRef(varName.begin(), (varName.end()-varName.begin()))),
     body_(body)
     {
     }
 
     pStringRef className(void) const {
-        assert(className_);
-        return *className_;
+        return className_;
     }
 
     pStringRef varName(void) const {
-        assert(varName_);
-        return *varName_;
+        return varName_;
     }
 
     stmt::child_iterator child_begin() { return (stmt**)&body_; }
@@ -1359,7 +1351,6 @@ public:
 class literalExpr: public expr {
 
 protected:
-    // XXX pool this?
     std::string stringVal_;
     literalExpr(const literalExpr& other, pParseContext& C): expr(other),
             stringVal_(other.stringVal_) {}
@@ -1608,7 +1599,7 @@ public:
 //TODO: doesn't inherit by literalExpr?
 class literalID: public expr {
 
-    llvm::PooledStringPtr name_;
+    std::string name_;
 
 protected:
     literalID(const literalID& other, pParseContext& C): expr(other), name_(other.name_) {}
@@ -1616,13 +1607,12 @@ protected:
 public:
     literalID(const pSourceRange& name, pParseContext& C):
         expr(literalIDKind),
-        name_(C.idPool().intern(name))
+        name_(name)
     {
     }
 
     pStringRef name(void) const {
-        assert(name_);
-        return *name_;
+        return name_;
     }
 
     static literalID* create(pStringRef name, pParseContext& C) {
@@ -1639,7 +1629,7 @@ public:
 // literal constant (always represents a runtime value symbol. optional target for static class)
 class literalConstant: public literalExpr {
 
-    llvm::PooledStringPtr name_;
+    std::string name_;
     expr* target_;
 
 protected:
@@ -1653,14 +1643,13 @@ protected:
 public:
     literalConstant(const pSourceRange& name, pParseContext& C, expr* target = NULL):
         literalExpr(literalConstantKind),
-        name_(C.idPool().intern(name)),
+        name_(name),
         target_(target)
     {
     }
 
     pStringRef name(void) const {
-        assert(name_);
-        return *name_;
+        return name_;
     }
 
     expr* target(void) const { return target_; }
@@ -1706,7 +1695,7 @@ class var: public expr {
 
     enum { TARGET=0, INDICES=1 };
 
-    llvm::PooledStringPtr name_;
+    std::string name_;
     pUInt indirectionCount_; // layers of indirection, i.e. variable variables
 
     // children_[0] is always target, which may be null. the rest will be array indices
@@ -1739,7 +1728,7 @@ public:
 
     var(const pSourceRange& name, pParseContext& C, expr* target = NULL):
         expr(varKind),
-        name_(C.idPool().intern(name)),
+        name_(name),
         indirectionCount_(0),
         children_(NULL),
         numChildren_(1),
@@ -1751,7 +1740,7 @@ public:
 
     var(const pSourceRange& name, pParseContext& C, expressionList* indices, expr* target = NULL):
         expr(varKind),
-        name_(C.idPool().intern(name)),
+        name_(name),
         indirectionCount_(0),
         children_(NULL),
         numChildren_(1+indices->size()),
@@ -1775,8 +1764,7 @@ public:
     pStringRef name(void) const {
         if (hasDynamicName())
             return "";
-        assert(name_);
-        return *name_;
+        return name_;
     }
 
     void setTarget(expr *t) {
