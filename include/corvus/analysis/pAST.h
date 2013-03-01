@@ -332,7 +332,7 @@ protected:
     
 public:
     // see astNodes.def
-    static const nodeKind firstDeclKind = formalParamKind;
+    static const nodeKind firstDeclKind = useDeclKind;
     static const nodeKind lastDeclKind = functionDeclKind;
 
     decl(nodeKind k): stmt(k) { }
@@ -348,13 +348,13 @@ public:
 
 
 // global
-class globalDecl: public stmt {
+class globalDecl: public decl {
 
     stmt** children_;
     pUInt numChildren_;
 
 protected:
-    globalDecl(const globalDecl& other, pParseContext& C): stmt(other), children_(0),
+    globalDecl(const globalDecl& other, pParseContext& C): decl(other), children_(0),
         numChildren_(other.numChildren_)
     {
         deepCopyChildren(children_, other.children_, numChildren_, C);
@@ -363,7 +363,7 @@ public:
 
     globalDecl(const expressionList* varList,
                pParseContext& C):
-            stmt(globalDeclKind),
+            decl(globalDeclKind),
             children_(0),
             numChildren_(varList->size())
     {
@@ -421,7 +421,46 @@ public:
 
 };
 
-typedef std::vector<std::string> namespaceParts;
+
+
+class namespaceName {
+public:
+    typedef std::vector<std::string> partsType;
+
+protected:
+    partsType parts_;
+    bool absolute_;
+
+public:
+    namespaceName(void): absolute_(false) { }
+
+    void push_back(pStringRef part) {
+        parts_.push_back(part);
+    }
+
+    std::string getPrimary() const {
+        return parts_.back();
+    }
+
+    void setAbsolute() { absolute_ = true; }
+
+    std::string getFullName() const {
+        std::string result;
+        if (absolute_)
+            result.push_back('\\');
+        result.append(parts_[0]);
+        if (parts_.size() > 1) {
+            result.push_back('\\');
+            for (int i = 1; i < parts_.size(); i++) {
+                result.append(parts_[i]);
+                if (i < parts_.size()-1)
+                    result.push_back('\\');
+            }
+        }
+        return result;
+    }
+
+};
 
 class namespaceDecl: public decl {
 
@@ -432,17 +471,9 @@ protected:
         name_(other.name_) { }
 
 public:
-    namespaceDecl(const namespaceParts* parts, pParseContext& C):
+    namespaceDecl(const namespaceName* ns, pParseContext& C):
         decl(namespaceDeclKind) {
-        std::string name((*parts)[0]);
-        if (parts->size() > 1) {
-            name.push_back('\\');
-            for (int i = 1; i < parts->size(); i++) {
-                name.append((*parts)[i]);
-                name.push_back('\\');
-            }
-        }
-        name_ = name;
+        name_ = ns->getFullName();
     }
 
     pStringRef name(void) const {
@@ -453,6 +484,76 @@ public:
     stmt::child_iterator child_end() { return child_iterator(); }
 
     IMPLEMENT_SUPPORT_MEMBERS(namespaceDecl);
+
+};
+
+class useIdent;
+typedef std::vector<useIdent*> useIdentList;
+
+class useDecl: public decl {
+
+    stmt** children_;
+    pUInt numChildren_;
+
+protected:
+    useDecl(const useDecl& other, pParseContext& C): decl(other), children_(0),
+        numChildren_(other.numChildren_)
+    {
+        deepCopyChildren(children_, other.children_, numChildren_, C);
+    }
+public:
+
+    useDecl(const useIdentList* identList,
+               pParseContext& C):
+            decl(useDeclKind),
+            children_(0),
+            numChildren_(identList->size())
+    {
+        children_ = new (C) stmt*[numChildren_];
+        memcpy(children_, &(identList->front()), (numChildren_) * sizeof(decl*));
+    }
+
+    stmt::child_iterator child_begin() { return child_iterator(); }
+    stmt::child_iterator child_end() { return child_iterator(); }
+
+    IMPLEMENT_SUPPORT_MEMBERS(useDecl);
+
+};
+
+
+class useIdent: public decl {
+
+    std::string nsname_;
+    std::string alias_;
+
+protected:
+    useIdent(const useIdent& other, pParseContext& C): decl(other),
+        nsname_(other.nsname_), alias_(other.alias_) { }
+
+public:
+    useIdent(const namespaceName* ns, pParseContext& C):
+        decl(useIdentKind) {
+        nsname_ = ns->getFullName();
+        alias_.clear();
+    }
+    useIdent(const namespaceName* ns, const pSourceRange& alias, pParseContext& C):
+        decl(useIdentKind) {
+        nsname_ = ns->getFullName();
+        alias_ = alias;
+    }
+
+    pStringRef nsname(void) const {
+        return nsname_;
+    }
+
+    pStringRef alias(void) const {
+        return alias_;
+    }
+
+    stmt::child_iterator child_begin() { return child_iterator(); }
+    stmt::child_iterator child_end() { return child_iterator(); }
+
+    IMPLEMENT_SUPPORT_MEMBERS(useIdent);
 
 };
 
@@ -1610,6 +1711,13 @@ public:
         name_(name)
     {
     }
+
+    literalID(const namespaceName* name, pParseContext& C):
+        expr(literalIDKind),
+        name_(name->getFullName())
+    {
+    }
+
 
     pStringRef name(void) const {
         return name_;

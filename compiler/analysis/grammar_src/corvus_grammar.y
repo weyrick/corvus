@@ -229,6 +229,7 @@ statement_list(A) ::= statement_list(B) statement(C). { B->push_back(C); A = B; 
 statement(A) ::= statementBlock(B). { A = B; }
 statement(A) ::= inlineHTML(B). { A = B; }
 statement(A) ::= namespaceDecl(B). { A = B; }
+statement(A) ::= useDecl(B). { A = B; }
 statement(A) ::= functionDecl(B). { A = B; }
 statement(A) ::= classDecl(B). { A = B; }
 statement(A) ::= ifBlock(B). { A = B; }
@@ -261,10 +262,10 @@ statementBlock(A) ::= T_LEFTCURLY(LC) statement_list(B) T_RIGHTCURLY(RC).
 }
 
 // namespace
-%type namespaceName {AST::namespaceParts*}
+%type namespaceName {AST::namespaceName*}
 namespaceName(A) ::= T_IDENTIFIER(PART).
 {
-    A = new AST::namespaceParts();
+    A = new AST::namespaceName();
     A->push_back(*PART);
 }
 namespaceName(A) ::= namespaceName(PARTS) T_NS_SEPARATOR T_IDENTIFIER(PART).
@@ -274,11 +275,61 @@ namespaceName(A) ::= namespaceName(PARTS) T_NS_SEPARATOR T_IDENTIFIER(PART).
 }
 
 %type namespaceDecl{AST::namespaceDecl*}
-namespaceDecl(A) ::= T_NAMESPACE namespaceName(PARTS) T_SEMI.
+namespaceDecl(A) ::= T_NAMESPACE namespaceName(NSNAME) T_SEMI.
 {
-    A = new (CTXT) AST::namespaceDecl(PARTS, CTXT);
+    A = new (CTXT) AST::namespaceDecl(NSNAME, CTXT);
     A->setLine(CURRENT_LINE);
-    delete PARTS;
+    delete NSNAME;
+}
+
+%type useDecl{AST::useDecl*}
+useDecl(A) ::= T_USE useIdentList(L) T_SEMI.
+{
+    A = new (CTXT) AST::useDecl(L, CTXT);
+    A->setLine(CURRENT_LINE);
+    // note this deletes the vector, not the pointers is contains,
+    // which are now owned by the useDecl as children
+    delete L;
+}
+
+%type useIdentList{AST::useIdentList*}
+useIdentList(A) ::= useIdent(USE).
+{
+    A = new AST::useIdentList();
+    A->push_back(USE);
+}
+useIdentList(A) ::= useIdent(USE) T_COMMA useIdentList(C).
+{
+    C->push_back(USE);
+    A = C;
+}
+useIdentList(A) ::= .
+{
+    A = new AST::useIdentList();
+}
+
+%type useIdent{AST::useIdent*}
+useIdent(A) ::= namespaceName(NSNAME).
+{
+    A = new (CTXT) AST::useIdent(NSNAME, CTXT);
+    delete NSNAME;
+}
+useIdent(A) ::= namespaceName(NSNAME) T_AS IDENTIFIER(ID).
+{
+    A = new (CTXT) AST::useIdent(NSNAME, *ID, CTXT);
+    delete NSNAME;
+}
+useIdent(A) ::= T_NS_SEPARATOR namespaceName(NSNAME).
+{
+    NSNAME->setAbsolute();
+    A = new (CTXT) AST::useIdent(NSNAME, CTXT);
+    delete NSNAME;
+}
+useIdent(A) ::= T_NS_SEPARATOR namespaceName(NSNAME) T_AS IDENTIFIER(ID).
+{
+    NSNAME->setAbsolute();
+    A = new (CTXT) AST::useIdent(NSNAME, *ID, CTXT);
+    delete NSNAME;
 }
 
 // echo
@@ -1982,6 +2033,19 @@ literalID(A) ::= T_IDENTIFIER(ID).
 {
     A = new (CTXT) AST::literalID(*ID, CTXT);
     A->setLine(CURRENT_LINE);
+}
+literalID(A) ::= namespaceName(NSNAME).
+{
+    A = new (CTXT) AST::literalID(NSNAME, CTXT);
+    A->setLine(CURRENT_LINE);
+    delete NSNAME;
+}
+literalID(A) ::= T_NS_SEPARATOR namespaceName(NSNAME).
+{
+    NSNAME->setAbsolute();
+    A = new (CTXT) AST::literalID(NSNAME, CTXT);
+    A->setLine(CURRENT_LINE);
+    delete NSNAME;
 }
 %type maybeDynamicID {AST::expr*}
 maybeDynamicID(A) ::= literalID(B). { A = B; }

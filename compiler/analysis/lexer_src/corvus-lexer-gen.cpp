@@ -125,6 +125,7 @@ int main(void) {
     langRules_.add("PHP", "list", T_LIST, ".");
     langRules_.add("PHP", "if", T_IF, ".");
     langRules_.add("PHP", "for", T_FOR, ".");
+    langRules_.add("PHP", "use", T_USE, ".");
     langRules_.add("PHP", "endfor", T_ENDFOR, ".");
     langRules_.add("PHP", "foreach", T_FOREACH, ".");
     langRules_.add("PHP", "endforeach", T_ENDFOREACH, ".");

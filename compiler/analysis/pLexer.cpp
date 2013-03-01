@@ -341,6 +341,9 @@ const char* pLexer::getTokenDescription(const std::size_t t) const {
             return "T_HEREDOC_START";
         case T_HEREDOC_END:
             return "T_HEREDOC_END";
+        case T_USE:
+            return "T_USE";
+
 
     }
     return "";
