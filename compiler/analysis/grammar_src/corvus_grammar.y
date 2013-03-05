@@ -751,10 +751,7 @@ classDecl(A) ::= T_CLASS(C) T_IDENTIFIER(NAME) classExtends(EXTENDS) classImplem
                                   IMPLEMENTS,
                                   new (CTXT) AST::block(CTXT, MEMBERS));
     A->setLine(TOKEN_LINE(C), TOKEN_LINE(RC));
-    if (EXTENDS)
-        delete EXTENDS;
-    if (IMPLEMENTS)
-        delete IMPLEMENTS;
+    // EXTENDS and IMPLEMENTS memory managed in classDecl constructor
     delete MEMBERS;
 }
 classDecl(A) ::= T_FINAL T_CLASS(C) T_IDENTIFIER(NAME) classExtends(EXTENDS) classImplements(IMPLEMENTS)
@@ -767,10 +764,7 @@ classDecl(A) ::= T_FINAL T_CLASS(C) T_IDENTIFIER(NAME) classExtends(EXTENDS) cla
                                   IMPLEMENTS,
                                   new (CTXT) AST::block(CTXT, MEMBERS));
     A->setLine(TOKEN_LINE(C), TOKEN_LINE(RC));
-    if (EXTENDS)
-        delete EXTENDS;
-    if (IMPLEMENTS)
-        delete IMPLEMENTS;
+    // EXTENDS and IMPLEMENTS memory managed in classDecl constructor
     delete MEMBERS;
 }
 classDecl(A) ::= T_ABSTRACT T_CLASS(C) T_IDENTIFIER(NAME) classExtends(EXTENDS) classImplements(IMPLEMENTS)
@@ -783,10 +777,7 @@ classDecl(A) ::= T_ABSTRACT T_CLASS(C) T_IDENTIFIER(NAME) classExtends(EXTENDS) 
                                   IMPLEMENTS,
                                   new (CTXT) AST::block(CTXT, MEMBERS));
     A->setLine(TOKEN_LINE(C), TOKEN_LINE(RC));
-    if (EXTENDS)
-        delete EXTENDS;
-    if (IMPLEMENTS)
-        delete IMPLEMENTS;
+    // EXTENDS and IMPLEMENTS memory managed in classDecl constructor
     delete MEMBERS;
 }
 classDecl(A) ::= T_INTERFACE(C) T_IDENTIFIER(NAME) interfaceExtends(EXTENDS)
@@ -959,16 +950,21 @@ methodBody(A) ::= T_SEMI. { A = NULL; }
 methodBody(A) ::= statementBlock(B). { A = B; }
 
 // class extends at most one id
-%type classExtends {AST::sourceRangeList*}
+%type classExtends {AST::namespaceList*}
 classExtends(A) ::= . { A = NULL; }
-classExtends(A) ::= T_EXTENDS T_IDENTIFIER(NAME).
+classExtends(A) ::= T_EXTENDS namespaceName(NAME).
 {
-    A = new AST::sourceRangeList();
+    A = new AST::namespaceList();
+    A->push_back(NAME);
+}
+classExtends(A) ::= T_EXTENDS T_NS_SEPARATOR namespaceName(NAME).
+{
+    A = new AST::namespaceList();
     A->push_back(NAME);
 }
 
 // interface extends 0-n ids
-%type interfaceExtends {AST::sourceRangeList*}
+%type interfaceExtends {AST::namespaceList*}
 interfaceExtends(A) ::= . { A = NULL; }
 interfaceExtends(A) ::= T_EXTENDS idList(LIST).
 {
@@ -976,7 +972,7 @@ interfaceExtends(A) ::= T_EXTENDS idList(LIST).
 }
 
 // class implements 0-n ids
-%type classImplements {AST::sourceRangeList*}
+%type classImplements {AST::namespaceList*}
 classImplements(A) ::= . { A = NULL; }
 classImplements(A) ::= T_IMPLEMENTS idList(LIST).
 {
@@ -984,13 +980,23 @@ classImplements(A) ::= T_IMPLEMENTS idList(LIST).
 }
 
 // 1-n identifiers, comma separated
-%type idList {AST::sourceRangeList*}
-idList(A) ::= T_IDENTIFIER(NAME).
+%type idList {AST::namespaceList*}
+idList(A) ::= namespaceName(NAME).
 {
-    A = new AST::sourceRangeList();
+    A = new AST::namespaceList();
     A->push_back(NAME);
 }
-idList(A) ::= idList(LIST) T_COMMA T_IDENTIFIER(NAME).
+idList(A) ::= T_NS_SEPARATOR namespaceName(NAME).
+{
+    A = new AST::namespaceList();
+    A->push_back(NAME);
+}
+idList(A) ::= idList(LIST) T_COMMA namespaceName(NAME).
+{
+    LIST->push_back(NAME);
+    A = LIST;
+}
+idList(A) ::= idList(LIST) T_COMMA T_NS_SEPARATOR namespaceName(NAME).
 {
     LIST->push_back(NAME);
     A = LIST;
@@ -1821,6 +1827,7 @@ varProperty(A) ::= T_CLASSDEREF objProperty(PROP) maybeMethodInvoke(ARGS).
         A = f;
         // PROP is now orphaned
         PROP->destroy(CTXT);
+        delete ARGS;
     }
     else {
         // var

@@ -48,7 +48,7 @@ const int COR_IDLIST_SIZE = 5; // list of ids, used by extends, implements
 const int COR_FORMAL_PARAM_VECTOR_SIZE = 5; // formal parameters in function/method decl
 
 // a list of symbols, used for extends, implements
-typedef llvm::SmallVector<std::string,COR_IDLIST_SIZE> idList;
+typedef llvm::SmallVector<std::string, COR_IDLIST_SIZE> idList;
 typedef std::vector<const pSourceRange*> sourceRangeList;
 
 enum nodeKind {
@@ -462,6 +462,8 @@ public:
 
 };
 
+typedef llvm::SmallVector<const namespaceName*, COR_IDLIST_SIZE> namespaceList;
+
 class namespaceDecl: public decl {
 
     std::string name_;
@@ -799,8 +801,8 @@ public:
     classDecl(pParseContext& C,
               const pSourceRange& name,
               classTypes type,
-              const sourceRangeList* extends, // may be null
-              const sourceRangeList* implements, // may be null
+              const namespaceList* extends, // may be null
+              const namespaceList* implements, // may be null
               block* members
               ):
         decl(classDeclKind),
@@ -812,25 +814,23 @@ public:
     {
         // intern list of extends (if any)
         if (extends) {
-            for (sourceRangeList::const_iterator i=extends->begin();
+            for (namespaceList::const_iterator i=extends->begin();
             i != extends->end();
             ++i) {
-                extends_.push_back(
-                        pStringRef(
-                                (*i)->begin(), ((*i)->end() - (*i)->begin()))
-                        );
+                extends_.push_back((*i)->getFullName());
+                delete (*i);
             }
+            delete extends;
         }
         // intern list of implements (if any)
         if (implements) {
-            for (sourceRangeList::const_iterator i=implements->begin();
+            for (namespaceList::const_iterator i=implements->begin();
             i != implements->end();
             ++i) {
-                implements_.push_back(
-                        pStringRef(
-                                (*i)->begin(), ((*i)->end() - (*i)->begin()))
-                        );
+                implements_.push_back((*i)->getFullName());
+                delete (*i);
             }
+            delete implements;
         }
     }
 
