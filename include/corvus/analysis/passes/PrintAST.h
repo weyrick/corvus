@@ -57,6 +57,7 @@ public:
     void visit_pre_builtin(builtin* n);
     void visit_pre_literalID(literalID* n);
     void visit_pre_var(var* n);
+    void visit_pre_useIdent(useIdent* n);
     void visit_pre_unaryOp(unaryOp* n);
     void visit_pre_binaryOp(binaryOp* n);
     void visit_pre_literalString(literalString* n);

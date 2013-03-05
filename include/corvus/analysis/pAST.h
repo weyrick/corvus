@@ -513,8 +513,8 @@ public:
         memcpy(children_, &(identList->front()), (numChildren_) * sizeof(decl*));
     }
 
-    stmt::child_iterator child_begin() { return child_iterator(); }
-    stmt::child_iterator child_end() { return child_iterator(); }
+    stmt::child_iterator child_begin() { return &children_[0]; }
+    stmt::child_iterator child_end() { return &children_[0]+numChildren_; }
 
     IMPLEMENT_SUPPORT_MEMBERS(useDecl);
 

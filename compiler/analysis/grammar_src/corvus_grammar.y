@@ -314,7 +314,7 @@ useIdent(A) ::= namespaceName(NSNAME).
     A = new (CTXT) AST::useIdent(NSNAME, CTXT);
     delete NSNAME;
 }
-useIdent(A) ::= namespaceName(NSNAME) T_AS IDENTIFIER(ID).
+useIdent(A) ::= namespaceName(NSNAME) T_AS T_IDENTIFIER(ID).
 {
     A = new (CTXT) AST::useIdent(NSNAME, *ID, CTXT);
     delete NSNAME;
@@ -325,7 +325,7 @@ useIdent(A) ::= T_NS_SEPARATOR namespaceName(NSNAME).
     A = new (CTXT) AST::useIdent(NSNAME, CTXT);
     delete NSNAME;
 }
-useIdent(A) ::= T_NS_SEPARATOR namespaceName(NSNAME) T_AS IDENTIFIER(ID).
+useIdent(A) ::= T_NS_SEPARATOR namespaceName(NSNAME) T_AS T_IDENTIFIER(ID).
 {
     NSNAME->setAbsolute();
     A = new (CTXT) AST::useIdent(NSNAME, *ID, CTXT);
@@ -2029,11 +2029,6 @@ constructorInvoke(A) ::= T_NEW maybeDynamicID(ID).
 // these are either identifiers or a variable representing one
 
 %type literalID {AST::expr*}
-literalID(A) ::= T_IDENTIFIER(ID).
-{
-    A = new (CTXT) AST::literalID(*ID, CTXT);
-    A->setLine(CURRENT_LINE);
-}
 literalID(A) ::= namespaceName(NSNAME).
 {
     A = new (CTXT) AST::literalID(NSNAME, CTXT);

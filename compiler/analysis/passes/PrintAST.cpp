@@ -402,10 +402,15 @@ void PrintAST::visit_pre_literalArray(literalArray* n)  {
     currentElement_ = arrayNode;
 }
 
-
 void PrintAST::visit_pre_signature(signature* n) {
     currentElement_->SetAttribute("id",n->name());
     currentElement_->SetAttribute("returnByRef", (n->returnByRef() ? "true" : "false") );
+}
+
+void PrintAST::visit_pre_useIdent(useIdent* n) {
+    currentElement_->SetAttribute("namespace",n->nsname());
+    if (!n->alias().empty())
+        currentElement_->SetAttribute("alias", n->alias() );
 }
 
 void PrintAST::visit_pre_formalParam(formalParam* n) {
