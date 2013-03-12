@@ -1316,12 +1316,12 @@ protected:
     }
 
 public:
-    catchStmt(const pSourceRange& className,
+    catchStmt(const namespaceName* className,
               const pSourceRange& varName,
               pParseContext& C,
               block* body):
     stmt(catchStmtKind),
-    className_(pStringRef(className.begin(), (className.end()-className.begin()))),
+    className_(className->getFullName()),
     varName_(pStringRef(varName.begin(), (varName.end()-varName.begin()))),
     body_(body)
     {

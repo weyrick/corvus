@@ -448,11 +448,20 @@ nonEmptyCatches(A) ::= nonEmptyCatches(LIST) catch(C).
 }
 
 %type catch {AST::catchStmt*}
-catch(A) ::= T_CATCH T_LEFTPAREN T_IDENTIFIER(CLASSNAME) T_VARIABLE(VAR) T_RIGHTPAREN
+catch(A) ::= T_CATCH T_LEFTPAREN namespaceName(CLASSNAME) T_VARIABLE(VAR) T_RIGHTPAREN
              statementBlock(CATCHBODY).
 {
-    A = new (CTXT) AST::catchStmt(*CLASSNAME, *VAR, CTXT, new (CTXT) AST::block(CTXT, CATCHBODY));
+    A = new (CTXT) AST::catchStmt(CLASSNAME, *VAR, CTXT, new (CTXT) AST::block(CTXT, CATCHBODY));
     A->setLine(CURRENT_LINE);
+    delete CLASSNAME;
+}
+catch(A) ::= T_CATCH T_LEFTPAREN T_NS_SEPARATOR namespaceName(CLASSNAME) T_VARIABLE(VAR) T_RIGHTPAREN
+             statementBlock(CATCHBODY).
+{
+    CLASSNAME->setAbsolute();
+    A = new (CTXT) AST::catchStmt(CLASSNAME, *VAR, CTXT, new (CTXT) AST::block(CTXT, CATCHBODY));
+    A->setLine(CURRENT_LINE);
+    delete CLASSNAME;
 }
 
 // conditionals
@@ -959,6 +968,7 @@ classExtends(A) ::= T_EXTENDS namespaceName(NAME).
 }
 classExtends(A) ::= T_EXTENDS T_NS_SEPARATOR namespaceName(NAME).
 {
+    NAME->setAbsolute();
     A = new AST::namespaceList();
     A->push_back(NAME);
 }
@@ -988,6 +998,7 @@ idList(A) ::= namespaceName(NAME).
 }
 idList(A) ::= T_NS_SEPARATOR namespaceName(NAME).
 {
+    NAME->setAbsolute();
     A = new AST::namespaceList();
     A->push_back(NAME);
 }
@@ -998,6 +1009,7 @@ idList(A) ::= idList(LIST) T_COMMA namespaceName(NAME).
 }
 idList(A) ::= idList(LIST) T_COMMA T_NS_SEPARATOR namespaceName(NAME).
 {
+    NAME->setAbsolute();
     LIST->push_back(NAME);
     A = LIST;
 }
@@ -1270,10 +1282,18 @@ scalar(A) ::= T_IDENTIFIER(B).
     A->setLine(CURRENT_LINE);
 }
 // static class constant
-scalar(A) ::= T_IDENTIFIER(TARGET) T_DBL_COLON T_IDENTIFIER(ID).
+scalar(A) ::= namespaceName(TARGET) T_DBL_COLON T_IDENTIFIER(ID).
 {
-    A = new (CTXT) AST::literalConstant(*ID, CTXT, new (CTXT) AST::literalID(*TARGET, CTXT));
+    A = new (CTXT) AST::literalConstant(*ID, CTXT, new (CTXT) AST::literalID(TARGET, CTXT));
     A->setLine(CURRENT_LINE);
+    delete TARGET;
+}
+scalar(A) ::= T_NS_SEPARATOR namespaceName(TARGET) T_DBL_COLON T_IDENTIFIER(ID).
+{
+    TARGET->setAbsolute();
+    A = new (CTXT) AST::literalConstant(*ID, CTXT, new (CTXT) AST::literalID(TARGET, CTXT));
+    A->setLine(CURRENT_LINE);
+    delete TARGET;
 }
 
 // same as a scalar except can be +, - and array
@@ -1853,10 +1873,11 @@ varNoObjects(A) ::= varVar(COUNT) refVar(VAR).
 
 // foo::$bar
 %type staticMember {AST::expr*}
-staticMember(A) ::= T_IDENTIFIER(TARGET) T_DBL_COLON varNoObjects(VAR).
+staticMember(A) ::= namespaceName(TARGET) T_DBL_COLON varNoObjects(VAR).
 {
-    VAR->setTarget(new (CTXT) AST::literalID(*TARGET, CTXT));
+    VAR->setTarget(new (CTXT) AST::literalID(TARGET, CTXT));
     A = VAR;
+    delete TARGET;
 }
 
 %type varWithFunCalls {AST::expr*}
@@ -1980,25 +2001,51 @@ functionInvoke(A) ::= maybeDynamicID(ID) T_LEFTPAREN argList(ARGS) T_RIGHTPAREN.
     delete ARGS;
 }
 // foo::bar() (or self:: or parent::)
-functionInvoke(A) ::= T_IDENTIFIER(TARGET) T_DBL_COLON T_IDENTIFIER(ID) T_LEFTPAREN argList(ARGS) T_RIGHTPAREN.
+functionInvoke(A) ::= namespaceName(TARGET) T_DBL_COLON T_IDENTIFIER(ID) T_LEFTPAREN argList(ARGS) T_RIGHTPAREN.
 {
     A = new (CTXT) AST::functionInvoke(new (CTXT) AST::literalID(*ID, CTXT), // f name
                                        CTXT,
                                        ARGS,  // expression list: arguments, copied
-                                       new (CTXT) AST::literalID(*TARGET, CTXT)
+                                       new (CTXT) AST::literalID(TARGET, CTXT)
                                        );
     A->setLine(CURRENT_LINE);
     delete ARGS;
+    delete TARGET;
 }
-functionInvoke(A) ::= T_IDENTIFIER(TARGET) T_DBL_COLON varNoObjects(DNAME) T_LEFTPAREN argList(ARGS) T_RIGHTPAREN.
+functionInvoke(A) ::= namespaceName(TARGET) T_DBL_COLON varNoObjects(DNAME) T_LEFTPAREN argList(ARGS) T_RIGHTPAREN.
 {
     A = new (CTXT) AST::functionInvoke(DNAME, // f name
                                        CTXT,
                                        ARGS,  // expression list: arguments, copied
-                                       new (CTXT) AST::literalID(*TARGET, CTXT)
+                                       new (CTXT) AST::literalID(TARGET, CTXT)
                                        );
     A->setLine(CURRENT_LINE);
     delete ARGS;
+    delete TARGET;
+}
+functionInvoke(A) ::= T_NS_SEPARATOR namespaceName(TARGET) T_DBL_COLON T_IDENTIFIER(ID) T_LEFTPAREN argList(ARGS) T_RIGHTPAREN.
+{
+    TARGET->setAbsolute();
+    A = new (CTXT) AST::functionInvoke(new (CTXT) AST::literalID(*ID, CTXT), // f name
+                                       CTXT,
+                                       ARGS,  // expression list: arguments, copied
+                                       new (CTXT) AST::literalID(TARGET, CTXT)
+                                       );
+    A->setLine(CURRENT_LINE);
+    delete ARGS;
+    delete TARGET;
+}
+functionInvoke(A) ::= T_NS_SEPARATOR namespaceName(TARGET) T_DBL_COLON varNoObjects(DNAME) T_LEFTPAREN argList(ARGS) T_RIGHTPAREN.
+{
+    TARGET->setAbsolute();
+    A = new (CTXT) AST::functionInvoke(DNAME, // f name
+                                       CTXT,
+                                       ARGS,  // expression list: arguments, copied
+                                       new (CTXT) AST::literalID(TARGET, CTXT)
+                                       );
+    A->setLine(CURRENT_LINE);
+    delete ARGS;
+    delete TARGET;
 }
 functionInvoke(A) ::= varNoObjects(DNAME) T_LEFTPAREN argList(ARGS) T_RIGHTPAREN.
 {
