@@ -656,11 +656,9 @@ formalParam(A) ::= maybeHint(HINT) T_VARIABLE(PARAM).
 {
     A = new (CTXT) AST::formalParam((*PARAM).substr(1),
                               CTXT, false/*ref*/);
-    if (HINT == (pSourceRange*)0x1) {
-        A->setArrayHint();
-    }
-    else if (HINT) {
-        A->setClassHint(*HINT, CTXT);
+    if (HINT) {
+        A->setHint(*HINT);
+        delete HINT;
     }
     A->setLine(TOKEN_LINE(PARAM));
     A->setCol(TOKEN_COL(PARAM));
@@ -669,11 +667,9 @@ formalParam(A) ::= maybeHint(HINT) T_AND T_VARIABLE(PARAM).
 {
     A = new (CTXT) AST::formalParam((*PARAM).substr(1),
                               CTXT, true/*ref*/);
-    if (HINT == (pSourceRange*)0x1) {
-        A->setArrayHint();
-    }
-    else if (HINT) {
-        A->setClassHint(*HINT, CTXT);
+    if (HINT) {
+        A->setHint(*HINT);
+        delete HINT;
     }
     A->setLine(TOKEN_LINE(PARAM));
     A->setCol(TOKEN_COL(PARAM));
@@ -682,11 +678,9 @@ formalParam(A) ::= maybeHint(HINT) T_VARIABLE(PARAM) T_ASSIGN staticScalar(DEF).
 {
     A = new (CTXT) AST::formalParam((*PARAM).substr(1),
                               CTXT, false/*ref*/, DEF);
-    if (HINT == (pSourceRange*)0x1) {
-        A->setArrayHint();
-    }
-    else if (HINT) {
-        A->setClassHint(*HINT, CTXT);
+    if (HINT) {
+        A->setHint(*HINT);
+        delete HINT;
     }
     A->setLine(TOKEN_LINE(PARAM));
     A->setCol(TOKEN_COL(PARAM));
@@ -695,21 +689,27 @@ formalParam(A) ::= maybeHint(HINT) T_AND T_VARIABLE(PARAM) T_ASSIGN staticScalar
 {
     A = new (CTXT) AST::formalParam((*PARAM).substr(1),
                               CTXT, true/*ref*/, DEF);
-    if (HINT == (pSourceRange*)0x1) {
-        A->setArrayHint();
-    }
-    else if (HINT) {
-        A->setClassHint(*HINT, CTXT);
+    if (HINT) {
+        A->setHint(*HINT);
+        delete HINT;
     }
     A->setLine(TOKEN_LINE(PARAM));
     A->setCol(TOKEN_COL(PARAM));
 }
 
-// this will be NULL (no hint), integral 1 (array hint) or an identifier
-%type maybeHint {pSourceRange*}
+// this will be NULL (no hint) or a string rep of the hint
+%type maybeHint {std::string*}
 maybeHint(A) ::= . { A = NULL; }
-maybeHint(A) ::= T_ARRAY. { A = (pSourceRange*)0x1; }
-maybeHint(A) ::= T_IDENTIFIER(B). { A = B; }
+maybeHint(A) ::= T_ARRAY. { A = new std::string("array"); }
+maybeHint(A) ::= namespaceName(B). {
+    A = new std::string(B->getFullName());
+    delete B;
+}
+maybeHint(A) ::= T_NS_SEPARATOR namespaceName(B). {
+    B->setAbsolute();
+    A = new std::string(B->getFullName());
+    delete B;
+}
 
 %type formalParamList {AST::formalParamList*}
 formalParamList(A) ::= formalParam(PARAM).
@@ -748,6 +748,16 @@ lambdaSignature(A) ::= T_LEFTPAREN(LP) formalParamList(PARAMS) T_RIGHTPAREN.
     A = new (CTXT) AST::signature(CTXT, PARAMS);
     A->setLine(TOKEN_LINE(LP));
     delete PARAMS;
+}
+// XXX we cheat here and use formalParamList. that wouldn't be acceptable
+// php for real, since you can't e.g. have a default value in a use list
+// but it gets us started
+lambdaSignature(A) ::= T_LEFTPAREN(LP) formalParamList(PARAMS) T_RIGHTPAREN T_USE T_LEFTPAREN formalParamList(USE_PARAMS) T_RIGHTPAREN.
+{
+    A = new (CTXT) AST::signature(CTXT, PARAMS, USE_PARAMS);
+    A->setLine(TOKEN_LINE(LP));
+    delete PARAMS;
+    delete USE_PARAMS;
 }
 
 %type functionDecl {AST::functionDecl*}

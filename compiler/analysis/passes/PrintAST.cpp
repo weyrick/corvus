@@ -416,10 +416,9 @@ void PrintAST::visit_pre_useIdent(useIdent* n) {
 void PrintAST::visit_pre_formalParam(formalParam* n) {
     currentElement_->SetAttribute("id",n->name());
     currentElement_->SetAttribute("byRef", (n->byRef() ? "true" : "false") );
-    currentElement_->SetAttribute("arrayHint", (n->arrayHint() ? "true" : "false") );
-    std::string hint = n->classHint();
+    std::string hint = n->hint();
     if (hint.length())
-        currentElement_->SetAttribute("classHint",hint);
+        currentElement_->SetAttribute("hint",hint);
 }
 
 bool PrintAST::visit_children_formalParam(formalParam* n) {

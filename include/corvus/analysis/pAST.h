@@ -561,15 +561,15 @@ public:
 
 class formalParam: public decl {
 
-    enum { byRefBit=1, arrayHintBit=2 };
+    enum { byRefBit=1 };
 
     std::string name_;
-    std::string classHint_;
+    std::string hint_;
     pUInt flags_;
     stmt* default_;
 
     formalParam(const formalParam& other, pParseContext& C): decl(other),
-            name_(other.name_), classHint_(other.classHint_), flags_(other.flags_)
+            name_(other.name_), hint_(other.hint_), flags_(other.flags_)
     {
         if(other.default_)
             default_ = other.default_->clone(C);
@@ -578,7 +578,7 @@ public:
     formalParam(const pSourceRange& name, pParseContext& C, bool ref, expr* def=NULL):
         decl(formalParamKind),
         name_(name),
-        classHint_(),
+        hint_(),
         flags_(0),
         default_(def)
     {
@@ -597,23 +597,19 @@ public:
 
     bool byRef(void) const { return flags_ & byRefBit; }
 
-    bool arrayHint(void) const { return flags_ & arrayHintBit; }
-
     bool optional(void) const {  return default_ != NULL; }
 
-    void setArrayHint(void) { flags_ ^= arrayHintBit; }
-
-    void setClassHint(const pSourceRange& name, pParseContext& C) {
-        classHint_ = name;
+    void setHint(const pStringRef name) {
+        hint_ = name;
     }
 
     pStringRef name(void) const {
         return name_;
     }
 
-    pStringRef classHint(void) const {
-        if (!classHint_.empty())
-            return classHint_;
+    pStringRef hint(void) const {
+        if (!hint_.empty())
+            return hint_;
         else
             return "";
     }
@@ -632,14 +628,18 @@ class signature: public decl {
     bool anonymous_;
     std::string name_;
     stmt** formalParamList_;
+    stmt** useParamList_;
     pUInt numParams_;
+    pUInt numUseParams_;
     bool returnByRef_;
 
 protected:
     signature(const signature& other, pParseContext& C): decl(other), name_(other.name_),
-        formalParamList_(0), numParams_(other.numParams_), returnByRef_(other.returnByRef_)
+        formalParamList_(0), numParams_(other.numParams_), useParamList_(0), numUseParams_(other.numUseParams_),
+        returnByRef_(other.returnByRef_)
     {
         deepCopyChildren(formalParamList_, other.formalParamList_, numParams_, C);
+        deepCopyChildren(useParamList_, other.useParamList_, numUseParams_, C);
     }
     
 public:
@@ -650,7 +650,9 @@ public:
             decl(signatureKind),
             name_(name),
             formalParamList_(0),
+            useParamList_(0),
             numParams_(s ? s->size() : 0),
+            numUseParams_(0),
             returnByRef_(returnByRef),
             anonymous_(false)
     {
@@ -661,16 +663,24 @@ public:
     }
 
     signature(pParseContext& C,
-              const formalParamList* s):
+              const formalParamList* s,
+              const formalParamList* s2=NULL
+              ):
             decl(signatureKind),
             formalParamList_(0),
             numParams_(s ? s->size() : 0),
+            useParamList_(0),
+            numUseParams_(s2 ? s2->size() : 0),
             returnByRef_(false),
             anonymous_(true)
     {
         if (numParams_) {
             formalParamList_ = new (C) stmt*[numParams_];
             memcpy(formalParamList_, &(s->front()), numParams_ * sizeof(*formalParamList_));
+        }
+        if (numUseParams_) {
+            useParamList_ = new (C) stmt*[numUseParams_];
+            memcpy(useParamList_, &(s->front()), numUseParams_ * sizeof(*useParamList_));
         }
     }
 
@@ -683,12 +693,21 @@ public:
 
     pUInt numParams(void) const { return numParams_; }
 
+    pUInt numUseParams(void) const { return numUseParams_; }
+
     formalParam* getParam(uint i) {
         return static_cast<formalParam*>(formalParamList_[i]);
     }
 
+    formalParam* getUseParam(uint i) {
+        return static_cast<formalParam*>(useParamList_[i]);
+    }
+
     stmt::child_iterator child_begin() { return &formalParamList_[0]; }
     stmt::child_iterator child_end() { return &formalParamList_[0]+numParams_; }
+
+    stmt::child_iterator use_begin() { return &useParamList_[0]; }
+    stmt::child_iterator use_end() { return &useParamList_[0]+numUseParams_; }
 
     IMPLEMENT_SUPPORT_MEMBERS(signature);
 };
