@@ -629,6 +629,7 @@ typedef llvm::SmallVector<formalParam*,COR_FORMAL_PARAM_VECTOR_SIZE> formalParam
 
 class signature: public decl {
 
+    bool anonymous_;
     std::string name_;
     stmt** formalParamList_;
     pUInt numParams_;
@@ -650,13 +651,29 @@ public:
             name_(name),
             formalParamList_(0),
             numParams_(s ? s->size() : 0),
-            returnByRef_(returnByRef)
+            returnByRef_(returnByRef),
+            anonymous_(false)
     {
         if (numParams_) {
             formalParamList_ = new (C) stmt*[numParams_];
             memcpy(formalParamList_, &(s->front()), numParams_ * sizeof(*formalParamList_));
         }
     }
+
+    signature(pParseContext& C,
+              const formalParamList* s):
+            decl(signatureKind),
+            formalParamList_(0),
+            numParams_(s ? s->size() : 0),
+            returnByRef_(false),
+            anonymous_(true)
+    {
+        if (numParams_) {
+            formalParamList_ = new (C) stmt*[numParams_];
+            memcpy(formalParamList_, &(s->front()), numParams_ * sizeof(*formalParamList_));
+        }
+    }
+
 
     pStringRef name(void) const {
         return name_;
@@ -2342,6 +2359,41 @@ public:
     IMPLEMENT_SUPPORT_MEMBERS(conditionalExpr);
 
 };
+
+class lambda: public expr {
+
+    enum { SIG, BODY, END_EXPR };
+    stmt* children_[END_EXPR];
+
+protected:
+    lambda(const lambda& other, pParseContext& C): expr(other)
+    {
+        memset(children_, 0, sizeof(children_));
+        if(other.children_[SIG])
+            children_[SIG] = other.children_[SIG]->clone(C);
+        if(other.children_[BODY])
+            children_[BODY] = other.children_[BODY]->clone(C);
+    }
+
+public:
+    lambda(signature* sig, block* body):
+        expr(lambdaKind),
+        children_()
+    {
+        children_[SIG] = sig;
+        children_[BODY] = body;
+    }
+
+    signature* sig(void) { return static_cast<signature*>(children_[SIG]); }
+    block* body(void) { return static_cast<block*>(children_[BODY]); }
+
+    stmt::child_iterator child_begin() { return (stmt**)&children_[0]; }
+    stmt::child_iterator child_end() { return (stmt**)&children_[0]+END_EXPR; }
+
+    IMPLEMENT_SUPPORT_MEMBERS(lambda);
+
+};
+
 
 // This class is needed for some transforms. It represents a block of statements of which the last one needs to be an
 // expression. This class is used when lowering some expressions into some statements, which still have to evaluate to

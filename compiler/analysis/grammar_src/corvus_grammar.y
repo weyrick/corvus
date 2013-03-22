@@ -742,6 +742,14 @@ signature(A) ::= T_AND T_IDENTIFIER(NAME) T_LEFTPAREN formalParamList(PARAMS) T_
     delete PARAMS;
 }
 
+%type lambdaSignature {AST::signature*}
+lambdaSignature(A) ::= T_LEFTPAREN(LP) formalParamList(PARAMS) T_RIGHTPAREN.
+{
+    A = new (CTXT) AST::signature(CTXT, PARAMS);
+    A->setLine(TOKEN_LINE(LP));
+    delete PARAMS;
+}
+
 %type functionDecl {AST::functionDecl*}
 functionDecl(A) ::= T_FUNCTION signature(SIG) statementBlock(BODY).
 {
@@ -1032,6 +1040,14 @@ baseExpr(A) ::= conditionalExpr(B). { A = B; }
 baseExpr(A) ::= scalar(B). { A = B; }
 baseExpr(A) ::= literalArray(B). { A = B; }
 baseExpr(A) ::= T_LEFTPAREN expr(B) T_RIGHTPAREN. { A = B; }
+baseExpr(A) ::= lambda(B). { A = B; }
+
+%type lambda {AST::lambda*}
+lambda(A) ::= T_FUNCTION lambdaSignature(SIG) statementBlock(BODY).
+{
+    A = new (CTXT) AST::lambda(SIG, BODY);
+}
+
 
 %type expr {AST::expr*} // expr
 expr(A) ::= baseExpr(B). { A = B; }

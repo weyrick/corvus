@@ -66,6 +66,7 @@ EXPR(binaryOp,       expr)
 EXPR(preOp,          expr)
 EXPR(postOp,         expr)
 EXPR(conditionalExpr,expr)
+EXPR(lambda,         expr)
 EXPR(unaryOp,        expr)
 
 // literal (see literalExpr::first and last kind constants)
