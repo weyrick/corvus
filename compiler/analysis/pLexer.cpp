@@ -65,21 +65,23 @@ void pLexer::dumpTokens(void) {
             else if (match.state == 3) {
                 // assert we have a heredoc ID
                 assert(HEREDOC_ID.length() && "no heredoc id");
+                match.end--; // we need to reverse this once to check for the
+                             // case of a heredoc with no body, only a newline
                 look_for_id:
-                    while ((*match.end != '\n') && (match.end != sourceEnd_)) {
-                        match.end++;
-                    }
                 if (sourceEnd_ - match.end < HEREDOC_ID.length()) {
                     // the remaining source text is shorter than the heredocid length,
                     // which means we're never going to match it
-                    std::cout << "dangling HEREDOC" << std::endl;
+                    std::cout << "dangling HEREDOC looking for: \"" << HEREDOC_ID << "\"" << std::endl;
                     break;
                 }
-                match.end++; // skip newline
                 pSourceCharIterator ms = match.end;
                 pSourceCharIterator me = match.end+HEREDOC_ID.length();
                 std::string maybeID(ms, me);
                 if (maybeID != HEREDOC_ID) {
+                    while ((*match.end != '\n') && (match.end != sourceEnd_)) {
+                        match.end++;
+                    }
+                    match.end++; // skip newline
                     goto look_for_id;
                 }
                 // if we get here, we matched the heredoc id
@@ -103,9 +105,17 @@ void pLexer::dumpTokens(void) {
             if (match.id == T_HEREDOC_START) {
                 // save the heredoc id so we can match the end
                 pSourceCharIterator ms = match.start;
-                while (*ms == '<' || *ms == ' ' || *ms == '\t')
+                while (*ms == '<' ||
+                       *ms == ' ' ||
+                       *ms == '\t' ||
+                       *ms == '\'' ||
+                       *ms == '"'
+                       )
                     ms++;
-                HEREDOC_ID.assign(ms, match.end-1);
+                if (*(match.end-2) == '"' || *(match.end-2) == '\'')
+                    HEREDOC_ID.assign(ms, match.end-2); // cut end quote and newline
+                else
+                    HEREDOC_ID.assign(ms, match.end-1); // just cut newline
                 std::cout << std::string(match.start, match.end-1) << " T_HEREDOC_START" << std::endl;
                 continue;
             }

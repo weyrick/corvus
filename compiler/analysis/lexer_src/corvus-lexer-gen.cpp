@@ -113,7 +113,7 @@ int main(void) {
     langRules_.add("OBJPROP", "\\{", T_LEFTCURLY, "<");
 
 
-    langRules_.add("PHP", "<<<{SPACEORTAB}*{IDCHARS}{NEWLINE}", T_HEREDOC_START, ">HEREDOC");
+    langRules_.add("PHP", "<<<{SPACEORTAB}*[\\'\\\"]*{IDCHARS}[\\'\\\"]*{NEWLINE}", T_HEREDOC_START, ">HEREDOC");
     langRules_.add("HEREDOC", "{NEWLINE}{IDCHARS};", "<");
     // lexer actually manually switches back to PHP state. it has to because it has to
     // match on the identifier in the HEREDOC

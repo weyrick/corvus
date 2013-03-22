@@ -51,6 +51,25 @@ std::pair<pSourceCharIterator,pSourceCharIterator> find_heredoc_id(const std::st
                      lexer::rmatch& match,
                      pSourceModule* pMod) {
     AST::pParseContext& context = pMod->context();
+    match.end--;
+    look_for_id:
+    if (lexer.sourceEnd() - match.end < HEREDOC_ID.length()) {
+        // the remaining source text is shorter than the heredocid length,
+        // which means we're never going to match it
+        context.parseError("dangling HEREDOC");
+    }
+    pSourceCharIterator ms = match.end;
+    pSourceCharIterator me = match.end+HEREDOC_ID.length();
+    std::string maybeID(ms, me);
+    if (maybeID != HEREDOC_ID) {
+        while ((*match.end != '\n') && (match.end != lexer.sourceEnd())) {
+            match.end++;
+        }
+        match.end++; // skip newline
+        goto look_for_id;
+    }
+
+    /*
  look_for_id:
     while ((*match.end != '\n') && (match.end != lexer.sourceEnd())) {
         match.end++;
@@ -66,7 +85,7 @@ std::pair<pSourceCharIterator,pSourceCharIterator> find_heredoc_id(const std::st
     pSourceCharIterator me = match.end+HEREDOC_ID.length();
     std::string maybeID(ms, me);
     if (maybeID != HEREDOC_ID)
-        goto look_for_id;
+        goto look_for_id;*/
     return std::pair<pSourceCharIterator, pSourceCharIterator>(ms, me);
 }
 
@@ -174,10 +193,18 @@ void parseSourceFile(pSourceModule* pMod, bool debug=false) {
             {
                 // save the heredoc id so we can match the end
                 pSourceCharIterator ms = match.start;
-                while (*ms == '<' || *ms == ' ' || *ms == '\t')
+                while (*ms == '<' ||
+                       *ms == ' ' ||
+                       *ms == '\t' ||
+                       *ms == '\'' ||
+                       *ms == '"'
+                       )
                     ms++;
+                if (*(match.end-2) == '"' || *(match.end-2) == '\'')
+                    HEREDOC_ID.assign(ms, match.end-2);
+                else
+                    HEREDOC_ID.assign(ms, match.end-1);
                 countNewlines(context, match, lastNL);
-                HEREDOC_ID.assign(ms, match.end-1);
                 corvusParse(pParser, T_HEREDOC_START, curRange, pMod);
                 break;
             }

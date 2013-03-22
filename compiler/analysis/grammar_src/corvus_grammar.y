@@ -1306,6 +1306,13 @@ staticScalar(A) ::= T_MINUS staticScalar(R).
     A = new (CTXT) AST::unaryOp(R, AST::unaryOp::NEGATIVE);
     A->setLine(CURRENT_LINE);
 }
+staticScalar(A) ::= T_HEREDOC_START T_HEREDOC_STRING(B) T_HEREDOC_END.
+{
+  AST::literalString *hd = new (CTXT) AST::literalString(*B);
+  hd->setIsSimple(false);
+  hd->setLine(CURRENT_LINE);
+  A = hd;
+}
 
 %type literal {AST::literalExpr*} // common_scalar
 // literal string
