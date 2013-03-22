@@ -1301,26 +1301,36 @@ typeCast(A) ::= T_BOOL_CAST expr(rVal).
 %type scalar {AST::expr*}
 scalar(A) ::= literal(B). { A = B; }
 scalar(A) ::= literalMagic(B). { A = B; }
+scalar(A) ::= classConstant(B). { A = B; }
 // static constant
 scalar(A) ::= T_IDENTIFIER(B).
 {
     A = new (CTXT) AST::literalConstant(*B, CTXT);
     A->setLine(CURRENT_LINE);
 }
+
 // static class constant
-scalar(A) ::= namespaceName(TARGET) T_DBL_COLON T_IDENTIFIER(ID).
+%type classConstant {AST::expr*}
+classConstant(A) ::= namespaceName(TARGET) T_DBL_COLON T_IDENTIFIER(ID).
 {
     A = new (CTXT) AST::literalConstant(*ID, CTXT, new (CTXT) AST::literalID(TARGET, CTXT));
     A->setLine(CURRENT_LINE);
     delete TARGET;
 }
-scalar(A) ::= T_NS_SEPARATOR namespaceName(TARGET) T_DBL_COLON T_IDENTIFIER(ID).
+classConstant(A) ::= T_NS_SEPARATOR namespaceName(TARGET) T_DBL_COLON T_IDENTIFIER(ID).
 {
     TARGET->setAbsolute();
     A = new (CTXT) AST::literalConstant(*ID, CTXT, new (CTXT) AST::literalID(TARGET, CTXT));
     A->setLine(CURRENT_LINE);
     delete TARGET;
 }
+// variable class constant
+classConstant(A) ::= rVar(TARGET) T_DBL_COLON T_IDENTIFIER(ID).
+{
+    A = new (CTXT) AST::literalConstant(*ID, CTXT, TARGET);
+    A->setLine(CURRENT_LINE);
+}
+
 
 // same as a scalar except can be +, - and array
 %type staticScalar {AST::expr*}
@@ -2079,6 +2089,16 @@ functionInvoke(A) ::= T_NS_SEPARATOR namespaceName(TARGET) T_DBL_COLON varNoObje
     A->setLine(CURRENT_LINE);
     delete ARGS;
     delete TARGET;
+}
+functionInvoke(A) ::= rVar(TARGET) T_DBL_COLON T_IDENTIFIER(ID) T_LEFTPAREN argList(ARGS) T_RIGHTPAREN.
+{
+    A = new (CTXT) AST::functionInvoke(new (CTXT) AST::literalID(*ID, CTXT), // f name
+                                       CTXT,
+                                       ARGS,  // expression list: arguments, copied
+                                       TARGET
+                                       );
+    A->setLine(CURRENT_LINE);
+    delete ARGS;
 }
 functionInvoke(A) ::= varNoObjects(DNAME) T_LEFTPAREN argList(ARGS) T_RIGHTPAREN.
 {

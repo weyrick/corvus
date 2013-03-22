@@ -1770,7 +1770,7 @@ public:
 
 };
 
-// literal constant (always represents a runtime value symbol. optional target for static class)
+// literal constant (always represents a runtime value symbol. optional target for static or dynamic class)
 class literalConstant: public literalExpr {
 
     std::string name_;
