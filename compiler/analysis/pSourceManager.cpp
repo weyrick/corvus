@@ -17,32 +17,66 @@
 #include "corvus/analysis/passes/PrintAST.h"
 #include "corvus/analysis/passes/DumpStats.h"
 #include "corvus/analysis/passes/Trivial.h"
+#include "corvus/analysis/passes/ModelBuilder.h"
+
+#include <llvm/Support/PathV2.h>
+#include <llvm/Support/FileSystem.h>
+#include <llvm/Support/system_error.h>
+
+#include <stdlib.h>
 
 namespace corvus { 
 
 pSourceManager::~pSourceManager() {
-    for (unsigned i = 0; i != moduleList_.size(); ++i) {
-        delete moduleList_[i];
+    for (ModuleListType::iterator i = moduleList_.begin();
+         i != moduleList_.end();
+         i++) {
+        delete i->second;
     }
 }
 
 void pSourceManager::addSourceFile(pStringRef name) {
-    pSourceModule* unit(new pSourceModule(name));
-    moduleList_.push_back(unit);
+
+    // only add it once, based on realpath
+    char *rp = realpath(name.str().c_str(), NULL);
+    if (!rp)
+        return;
+
+    if (moduleList_.find(rp) != moduleList_.end()) {
+        free(rp);
+        return;
+    }
+
+    pSourceModule* unit(new pSourceModule(rp));
+    moduleList_[rp] = unit;
+
+    free(rp);
 }
 
 void pSourceManager::addSourceDir(pStringRef name, pStringRef glob) {
+
+    llvm::error_code ec;
+    for (llvm::sys::fs::recursive_directory_iterator dir(name, ec), dirEnd;
+         dir != dirEnd && !ec; dir.increment(ec)) {
+
+      if (llvm::sys::path::extension(dir->path()) != glob)
+        continue;
+
+      addSourceFile(dir->path());
+    }
 
 }
 
 void pSourceManager::runPasses(pPassManager *pm) {
 
-    for (unsigned i = 0; i != moduleList_.size(); ++i) {
+    for (ModuleListType::iterator i = moduleList_.begin();
+         i != moduleList_.end();
+         i++) {
 
         try {
             // catch parse errors
             // this is idempotent
-            moduleList_[i]->parse(debug_);
+            i->second->parse(debug_);
         }
         catch (std::exception& e) {
             std::cerr << e.what() << std::endl;
@@ -51,7 +85,7 @@ void pSourceManager::runPasses(pPassManager *pm) {
 
         try {
             // run selected passes
-            pm->run(moduleList_[i]);
+            pm->run(i->second);
         }
         catch (std::exception& e) {
             std::cerr << e.what() << std::endl;
@@ -75,9 +109,11 @@ void pSourceManager::printAST() {
 
 void pSourceManager::printToks() {
 
-    for (unsigned i = 0; i != moduleList_.size(); ++i) {
+    for (ModuleListType::iterator i = moduleList_.begin();
+         i != moduleList_.end();
+         i++) {
 
-        lexer::pLexer l(moduleList_[i]->source());
+        lexer::pLexer l(i->second->source());
         l.dumpTokens();
 
     }
@@ -85,13 +121,21 @@ void pSourceManager::printToks() {
 }
 
 
-void pSourceManager::refreshModel() {
+void pSourceManager::runDiagnostics() {
 
     pPassManager passManager;
 
-    // standard passes
+    // standard diag passes
     passManager.addPass<AST::Pass::Trivial>();
 
+    runPasses(&passManager);
+
+}
+
+void pSourceManager::refreshModel() {
+
+    pPassManager passManager;
+    passManager.addPass<AST::Pass::ModelBuilder>();
     runPasses(&passManager);
 
 }

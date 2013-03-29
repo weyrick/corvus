@@ -34,6 +34,7 @@ IF( Boost_VERSION LESS ${BOOST_MIN_VERSION} )
 ENDIF( Boost_VERSION LESS ${BOOST_MIN_VERSION} )
 
 Find_Package(LLVM REQUIRED)
+Find_Package(Sqlite3 REQUIRED)
 Find_Package(CppUnit) # optional
 Find_Package(Doxygen) # optional
 

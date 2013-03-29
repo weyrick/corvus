@@ -51,18 +51,23 @@ int main( int argc, char* argv[] )
         sys::fs::file_status stat;
         sys::fs::status(inputFiles[i], stat);
         if (sys::fs::is_directory(stat))
-            sm.addSourceDir(inputFiles[i], "*.php");
+            sm.addSourceDir(inputFiles[i], ".php");
         else if (sys::fs::is_regular_file(stat))
             sm.addSourceFile(inputFiles[i]);
 
     }
 
-    if (printToks)
+    if (printToks) {
         sm.printToks();
-    else if (printAST)
+        return 0;
+    }
+    else if (printAST) {
         sm.printAST();
-    else
-        sm.refreshModel();
+        return 0;
+    }
+
+    sm.refreshModel();
+    sm.runDiagnostics();
 
     // XXX code to render diagnostics
 

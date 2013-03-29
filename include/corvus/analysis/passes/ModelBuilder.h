@@ -14,6 +14,8 @@
 #include "corvus/analysis/pAST.h"
 #include "corvus/analysis/pBaseVisitor.h"
 
+#include <vector>
+
 namespace corvus {
 
 class pModelScope;
@@ -21,22 +23,36 @@ class pModelScope;
 namespace AST { namespace Pass {
 
 class ModelBuilder: public pBaseVisitor {
+public:
+    enum kind { MODULE, CLASS, FUNCTION, BLOCK };
 
 private:
-    pModelScope *rootNS_;
+    std::vector<kind> scope_;
+
+    void do_decl(const std::string& name);
+    void do_use(const std::string& name);
 
 public:
-    ModelBuilder(pModelScope *rootNS):
-            pBaseVisitor("NamespaceBuilder","Build the namespace model"),
-            rootNS_(rootNS)
+    ModelBuilder():
+            pBaseVisitor("ModelBuilder","Build the code model"),
+            scope_()
             { }
 
     void pre_run(void);
-    /*
     void post_run(void);
-    */
+
+    void visit_pre_namespaceDecl(namespaceDecl* n);
+
+    void visit_pre_classDecl(classDecl* n);
+    void visit_post_classDecl(classDecl* n);
 
     void visit_pre_signature(signature* n);
+    void visit_post_signature(signature* n);
+
+    void visit_pre_block(block* n);
+    void visit_post_block(block* n);
+
+    void visit_pre_assignment(assignment* n);
 
 };
 

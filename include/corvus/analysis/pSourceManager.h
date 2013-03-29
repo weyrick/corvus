@@ -14,7 +14,7 @@
 #include "corvus/pTypes.h"
 #include "corvus/analysis/pSourceModule.h"
 
-#include <vector>
+#include <map>
 
 namespace corvus {
 
@@ -25,7 +25,8 @@ class pSourceManager {
 private:
 
     bool debug_;
-    std::vector<pSourceModule*> moduleList_;
+    typedef std::map<std::string, pSourceModule*> ModuleListType;
+    ModuleListType moduleList_;
 
     void runPasses(pPassManager *pm);
 
@@ -43,6 +44,7 @@ public:
     void addSourceDir(pStringRef name, pStringRef glob);
 
     void refreshModel();
+    void runDiagnostics();
 
 };
 
