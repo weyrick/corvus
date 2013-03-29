@@ -1325,12 +1325,11 @@ classConstant(A) ::= T_NS_SEPARATOR namespaceName(TARGET) T_DBL_COLON T_IDENTIFI
     delete TARGET;
 }
 // variable class constant
-classConstant(A) ::= rVar(TARGET) T_DBL_COLON T_IDENTIFIER(ID).
+classConstant(A) ::= refVar(TARGET) T_DBL_COLON T_IDENTIFIER(ID).
 {
     A = new (CTXT) AST::literalConstant(*ID, CTXT, TARGET);
     A->setLine(CURRENT_LINE);
 }
-
 
 // same as a scalar except can be +, - and array
 %type staticScalar {AST::expr*}
@@ -1922,6 +1921,26 @@ staticMember(A) ::= namespaceName(TARGET) T_DBL_COLON varNoObjects(VAR).
     A = VAR;
     delete TARGET;
 }
+staticMember(A) ::= T_NS_SEPARATOR namespaceName(TARGET) T_DBL_COLON varNoObjects(VAR).
+{
+    TARGET->setAbsolute();
+    VAR->setTarget(new (CTXT) AST::literalID(TARGET, CTXT));
+    A = VAR;
+    delete TARGET;
+}
+// static::$foo
+staticMember(A) ::= T_STATIC T_DBL_COLON varNoObjects(VAR).
+{
+    VAR->setTarget(new (CTXT) AST::literalID("static", CTXT));
+    A = VAR;
+}
+// $cname::$prop
+staticMember(A) ::= refVar(TARGET) T_DBL_COLON varNoObjects(VAR).
+{
+    VAR->setTarget(new (CTXT) AST::dynamicID(TARGET));
+    A = VAR;
+}
+
 
 %type varWithFunCalls {AST::expr*}
 varWithFunCalls(A) ::= baseVar(VAR). { A = VAR; }
@@ -2090,7 +2109,8 @@ functionInvoke(A) ::= T_NS_SEPARATOR namespaceName(TARGET) T_DBL_COLON varNoObje
     delete ARGS;
     delete TARGET;
 }
-functionInvoke(A) ::= rVar(TARGET) T_DBL_COLON T_IDENTIFIER(ID) T_LEFTPAREN argList(ARGS) T_RIGHTPAREN.
+// $foo::bar()
+functionInvoke(A) ::= refVar(TARGET) T_DBL_COLON T_IDENTIFIER(ID) T_LEFTPAREN argList(ARGS) T_RIGHTPAREN.
 {
     A = new (CTXT) AST::functionInvoke(new (CTXT) AST::literalID(*ID, CTXT), // f name
                                        CTXT,
@@ -2100,6 +2120,7 @@ functionInvoke(A) ::= rVar(TARGET) T_DBL_COLON T_IDENTIFIER(ID) T_LEFTPAREN argL
     A->setLine(CURRENT_LINE);
     delete ARGS;
 }
+// $foo()
 functionInvoke(A) ::= varNoObjects(DNAME) T_LEFTPAREN argList(ARGS) T_RIGHTPAREN.
 {
     A = new (CTXT) AST::functionInvoke(DNAME, // f name
