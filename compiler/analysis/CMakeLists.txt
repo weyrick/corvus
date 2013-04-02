@@ -97,3 +97,6 @@ set_target_properties(corvus-analysis
                       PROPERTIES
                       OUTPUT_NAME corvus
                      )
+target_link_libraries ( corvus-analysis
+                        ${SQLITE3_LIBRARIES}
+                        )

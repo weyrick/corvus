@@ -23,11 +23,18 @@
 #include <llvm/Support/FileSystem.h>
 #include <llvm/Support/system_error.h>
 
+#include <sqlite3.h>
+
 #include <stdlib.h>
+#include <assert.h>
 
 namespace corvus { 
 
 pSourceManager::~pSourceManager() {
+
+    if (db)
+        sqlite3_close(db);
+
     for (ModuleListType::iterator i = moduleList_.begin();
          i != moduleList_.end();
          i++) {
@@ -134,9 +141,29 @@ void pSourceManager::runDiagnostics() {
 
 void pSourceManager::refreshModel() {
 
+    if (!db)
+        openDB();
+
+    AST::Pass::ModelBuilder *builder = new AST::Pass::ModelBuilder(db);
+
     pPassManager passManager;
-    passManager.addPass<AST::Pass::ModelBuilder>();
+    passManager.addPass(builder);
     runPasses(&passManager);
+
+}
+
+void pSourceManager::openDB() {
+
+    assert(!db);
+
+    std::string filename = "corvus.db";
+
+    int rc = sqlite3_open(filename.c_str(), &db);
+    if (rc) {
+        std::cerr << "unable to open model db " << filename << ": " <<
+                     sqlite3_errmsg(db);
+        exit(1);
+    }
 
 }
 

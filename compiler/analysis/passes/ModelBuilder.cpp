@@ -10,6 +10,9 @@
 
 #include "corvus/analysis/passes/ModelBuilder.h"
 
+#include <sqlite3.h>
+#include <sstream>
+
 namespace corvus { namespace AST { namespace Pass {
 
 
@@ -17,6 +20,27 @@ void ModelBuilder::pre_run(void) {
 
     scope_.push_back(MODULE);
     std::cout << "modelling " << module_->fileName() << "\n";
+
+    // create tables if not exist
+    const char *CREATE = "CREATE TABLE IF NOT EXISTS sourceModules (" \
+                         "realpath TEXT UNIQUE," \
+                         "hash TEXT" \
+                         ")";
+
+    char *errMsg;
+    int rc = sqlite3_exec(db, CREATE, NULL, NULL, &errMsg);
+    if (rc != SQLITE_OK) {
+        std::cerr << "sqlite error: " << errMsg << "\n";
+        exit(1);
+    }
+
+    std::stringstream ins;
+    ins << "INSERT INTO sourceModules VALUES ('" << module_->fileName() << "', '')";
+    rc = sqlite3_exec(db, ins.str().c_str(), NULL, NULL, &errMsg);
+    if (rc != SQLITE_OK) {
+        std::cerr << "sqlite error: " << errMsg << "\n";
+        exit(1);
+    }
 
 }
 
@@ -27,7 +51,7 @@ void ModelBuilder::post_run(void) {
 void ModelBuilder::visit_pre_namespaceDecl(namespaceDecl* n) {
 
     std::cout << "now in namespace: " << n->name().str() << "\n";
-    scope_.push_back(CLASS);
+    namespace_ = n->name();
 
 }
 
@@ -99,6 +123,7 @@ void ModelBuilder::visit_pre_assignment(assignment* n) {
 
 void ModelBuilder::do_decl(const std::string& name) {
 
+    std::string fqs(name);
     kind cur_scope = scope_.back();
     switch (cur_scope) {
         case MODULE:
@@ -106,15 +131,17 @@ void ModelBuilder::do_decl(const std::string& name) {
             break;
         case CLASS:
             std::cout << "in scope CLASS ";
+            fqs = namespace_ + "\\" + name;
             break;
         case FUNCTION:
             std::cout << "in scope FUNCTION ";
+            fqs = namespace_ + "\\" + name;
             break;
         case BLOCK:
             std::cout << "in scope BLOCK ";
             break;
     }
-    std::cout << "DECL: " << name << "\n";
+    std::cout << "DECL: " << fqs << "\n";
 
 }
 

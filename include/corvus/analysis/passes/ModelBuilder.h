@@ -16,6 +16,8 @@
 
 #include <vector>
 
+class sqlite3;
+
 namespace corvus {
 
 class pModelScope;
@@ -32,9 +34,13 @@ private:
     void do_decl(const std::string& name);
     void do_use(const std::string& name);
 
+    std::string namespace_;
+    sqlite3 *db;
+
 public:
-    ModelBuilder():
+    ModelBuilder(sqlite3 *db):
             pBaseVisitor("ModelBuilder","Build the code model"),
+            db(db),
             scope_()
             { }
 
