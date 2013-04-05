@@ -86,7 +86,7 @@ void pSourceManager::runPasses(pPassManager *pm) {
         try {
             // catch parse errors
             // this is idempotent
-            i->second->parse(debug_);
+            i->second->parse(debugParse_);
         }
         catch (std::exception& e) {
             std::cerr << e.what() << std::endl;
@@ -110,7 +110,7 @@ void pSourceManager::printAST() {
     pPassManager passManager;
 
     passManager.addPass<AST::Pass::PrintAST>();
-    if (debug_)
+    if (debugParse_)
         passManager.addPass<AST::Pass::DumpStats>();
 
     runPasses(&passManager);
@@ -169,7 +169,7 @@ void pSourceManager::openModel() {
         exit(1);
     }
 
-    model_ = new pModel(db_);
+    model_ = new pModel(db_, debugModel_);
 
 }
 

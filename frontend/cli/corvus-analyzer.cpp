@@ -39,12 +39,13 @@ int main( int argc, char* argv[] )
     cl::opt<bool> printToks ("print-toks", cl::desc("Print tokens from lexer"));
     cl::opt<bool> printAST ("print-ast", cl::desc("Print AST in XML format"));
     cl::opt<bool> debugParse ("debug-parse", cl::desc("Debug output from parser"));
+    cl::opt<bool> debugModel ("debug-model", cl::desc("Debug the model builder"));
 
     cl::SetVersionPrinter(&corvusVersion);
     cl::ParseCommandLineOptions(argc, argv, "corvus analyzer");
 
     pSourceManager sm;
-    sm.setDebug(debugParse);
+    sm.setDebug(debugParse, debugModel);
 
     for (unsigned i = 0; i != inputFiles.size(); ++i) {
 

@@ -27,7 +27,7 @@ class pSourceManager {
 
 private:
 
-    bool debug_;
+    bool debugParse_, debugModel_;
     typedef std::map<std::string, pSourceModule*> ModuleListType;
     ModuleListType moduleList_;
 
@@ -40,10 +40,13 @@ private:
 
 public:
 
-    pSourceManager(): debug_(false), db_(NULL), model_(NULL) { }
+    pSourceManager(): debugParse_(false), debugModel_(false), db_(NULL), model_(NULL) { }
     ~pSourceManager();
 
-    void setDebug(bool debug) { debug_ = debug; }
+    void setDebug(bool debugParse, bool debugModel) {
+        debugParse_ = debugParse;
+        debugModel_ = debugModel;
+    }
 
     void printAST();
     void printToks();

@@ -23,25 +23,22 @@ namespace AST { namespace Pass {
 
 class ModelBuilder: public pBaseVisitor {
 public:
-    enum kind { MODULE, CLASS, FUNCTION, BLOCK };
+    enum SCOPES { MODULE, CLASS, FUNCTION, BLOCK };
 
 private:
-    std::vector<kind> scope_;
-
-    void do_decl(const std::string& name);
-    void do_use(const std::string& name);
 
     pModel &model_;
 
-    pModel::oid module_id_;
+    std::vector<SCOPES> scope_;
 
-    std::string namespace_;
+    pModel::oid module_id_;
+    pModel::oid namespace_id_;
+    std::vector<pModel::oid> context_;
 
 public:
     ModelBuilder(pModel& model):
             pBaseVisitor("ModelBuilder","Build the code model"),
-            model_(model),
-            scope_()
+            model_(model)
             { }
 
     void pre_run(void);

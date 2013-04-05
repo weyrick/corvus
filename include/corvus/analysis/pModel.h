@@ -23,18 +23,29 @@ public:
     typedef sqlite3_int64 oid;
 
 private:
-    sqlite3_int64 namespace_id_;
 
     sqlite3 *db_;
+    bool trace_;
 
-    void sql_execute(pStringRef query);
-    oid sql_insert(pStringRef query);
+    void sql_execute(pStringRef ref, pStringRef query);
+    oid sql_insert(pStringRef ref, pStringRef query);
+    void sql_setup();
+
+    void makeTables();
 
 public:
 
-    pModel(sqlite3 *db): db_(db) { }
+    pModel(sqlite3 *db, bool trace=false): db_(db), trace_(trace) {
+        sql_setup();
+    }
 
     oid getSourceModule(pStringRef realPath);
+    oid getNamespace(pStringRef ns);
+    /*
+    oid getContext(oid module_id, oid parent_context_id,
+                   int scope, int start_line, int end_line,
+                   int start_col, int end_col);
+                   */
 
 };
 
