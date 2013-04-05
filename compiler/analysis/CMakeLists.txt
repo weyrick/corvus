@@ -78,6 +78,7 @@ set(PARSER_SRC_FILES
   pSourceManager.cpp
   pPass.cpp
   pPassManager.cpp
+  pModel.cpp
   # passes
   passes/PrintAST.cpp
   passes/DumpStats.cpp

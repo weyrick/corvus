@@ -13,6 +13,7 @@
 #include "corvus/analysis/pLexer.h"
 #include "corvus/analysis/pSourceModule.h"
 #include "corvus/analysis/pPassManager.h"
+#include "corvus/analysis/pModel.h"
 
 #include "corvus/analysis/passes/PrintAST.h"
 #include "corvus/analysis/passes/DumpStats.h"
@@ -32,8 +33,10 @@ namespace corvus {
 
 pSourceManager::~pSourceManager() {
 
-    if (db)
-        sqlite3_close(db);
+    if (db_)
+        sqlite3_close(db_);
+    if (model_)
+        delete model_;
 
     for (ModuleListType::iterator i = moduleList_.begin();
          i != moduleList_.end();
@@ -141,10 +144,10 @@ void pSourceManager::runDiagnostics() {
 
 void pSourceManager::refreshModel() {
 
-    if (!db)
-        openDB();
+    if (!model_)
+        openModel();
 
-    AST::Pass::ModelBuilder *builder = new AST::Pass::ModelBuilder(db);
+    AST::Pass::ModelBuilder *builder = new AST::Pass::ModelBuilder(*model_);
 
     pPassManager passManager;
     passManager.addPass(builder);
@@ -152,18 +155,21 @@ void pSourceManager::refreshModel() {
 
 }
 
-void pSourceManager::openDB() {
+void pSourceManager::openModel() {
 
-    assert(!db);
+    assert(!model_);
+    assert(!db_);
 
     std::string filename = "corvus.db";
 
-    int rc = sqlite3_open(filename.c_str(), &db);
+    int rc = sqlite3_open(filename.c_str(), &db_);
     if (rc) {
         std::cerr << "unable to open model db " << filename << ": " <<
-                     sqlite3_errmsg(db);
+                     sqlite3_errmsg(db_);
         exit(1);
     }
+
+    model_ = new pModel(db_);
 
 }
 

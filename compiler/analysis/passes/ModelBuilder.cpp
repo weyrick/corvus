@@ -10,9 +10,6 @@
 
 #include "corvus/analysis/passes/ModelBuilder.h"
 
-#include <sqlite3.h>
-#include <sstream>
-
 namespace corvus { namespace AST { namespace Pass {
 
 
@@ -21,26 +18,7 @@ void ModelBuilder::pre_run(void) {
     scope_.push_back(MODULE);
     std::cout << "modelling " << module_->fileName() << "\n";
 
-    // create tables if not exist
-    const char *CREATE = "CREATE TABLE IF NOT EXISTS sourceModules (" \
-                         "realpath TEXT UNIQUE," \
-                         "hash TEXT" \
-                         ")";
-
-    char *errMsg;
-    int rc = sqlite3_exec(db, CREATE, NULL, NULL, &errMsg);
-    if (rc != SQLITE_OK) {
-        std::cerr << "sqlite error: " << errMsg << "\n";
-        exit(1);
-    }
-
-    std::stringstream ins;
-    ins << "INSERT INTO sourceModules VALUES ('" << module_->fileName() << "', '')";
-    rc = sqlite3_exec(db, ins.str().c_str(), NULL, NULL, &errMsg);
-    if (rc != SQLITE_OK) {
-        std::cerr << "sqlite error: " << errMsg << "\n";
-        exit(1);
-    }
+    module_id_ = model_.getSourceModule(module_->fileName());
 
 }
 
@@ -60,6 +38,8 @@ void ModelBuilder::visit_pre_classDecl(classDecl* n) {
 
     std::cout << "class: " << n->name().str() << ", moving to class scope\n";
     scope_.push_back(CLASS);
+
+    do_decl(n->name().str());
 
 }
 

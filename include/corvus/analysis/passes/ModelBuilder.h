@@ -13,14 +13,11 @@
 
 #include "corvus/analysis/pAST.h"
 #include "corvus/analysis/pBaseVisitor.h"
+#include "corvus/analysis/pModel.h"
 
 #include <vector>
 
-class sqlite3;
-
 namespace corvus {
-
-class pModelScope;
 
 namespace AST { namespace Pass {
 
@@ -34,13 +31,16 @@ private:
     void do_decl(const std::string& name);
     void do_use(const std::string& name);
 
+    pModel &model_;
+
+    pModel::oid module_id_;
+
     std::string namespace_;
-    sqlite3 *db;
 
 public:
-    ModelBuilder(sqlite3 *db):
+    ModelBuilder(pModel& model):
             pBaseVisitor("ModelBuilder","Build the code model"),
-            db(db),
+            model_(model),
             scope_()
             { }
 

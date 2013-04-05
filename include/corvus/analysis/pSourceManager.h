@@ -21,6 +21,7 @@ class sqlite3;
 namespace corvus {
 
 class pPassManager;
+class pModel;
 
 class pSourceManager {
 
@@ -30,15 +31,16 @@ private:
     typedef std::map<std::string, pSourceModule*> ModuleListType;
     ModuleListType moduleList_;
 
-    sqlite3 *db;
+    sqlite3 *db_;
+    pModel *model_;
 
     void runPasses(pPassManager *pm);
 
-    void openDB();
+    void openModel();
 
 public:
 
-    pSourceManager(): debug_(false), db(NULL) { }
+    pSourceManager(): debug_(false), db_(NULL), model_(NULL) { }
     ~pSourceManager();
 
     void setDebug(bool debug) { debug_ = debug; }
