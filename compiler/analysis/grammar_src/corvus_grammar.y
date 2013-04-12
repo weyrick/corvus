@@ -277,7 +277,9 @@ namespaceName(A) ::= namespaceName(PARTS) T_NS_SEPARATOR T_IDENTIFIER(PART).
 %type namespaceDecl{AST::namespaceDecl*}
 namespaceDecl(A) ::= T_NAMESPACE namespaceName(NSNAME) T_SEMI.
 {
+    NSNAME->setAbsolute();
     A = new (CTXT) AST::namespaceDecl(NSNAME, CTXT);
+    // namespace decls are always absolute?
     A->setLine(CURRENT_LINE);
     delete NSNAME;
 }

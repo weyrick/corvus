@@ -23,22 +23,24 @@ namespace AST { namespace Pass {
 
 class ModelBuilder: public pBaseVisitor {
 public:
-    enum SCOPES { MODULE, CLASS, FUNCTION, BLOCK };
+//    enum SCOPES { MODULE, CLASS, FUNCTION, BLOCK };
 
 private:
 
     pModel &model_;
 
-    std::vector<SCOPES> scope_;
+//    std::vector<SCOPES> scope_;
 
-    pModel::oid module_id_;
-    pModel::oid namespace_id_;
-    std::vector<pModel::oid> context_;
+    pModel::oid m_id_;
+    pModel::oid ns_id_;
+    pModel::oid c_id_;
+    std::vector<pModel::oid> f_id_list;
 
 public:
     ModelBuilder(pModel& model):
             pBaseVisitor("ModelBuilder","Build the code model"),
-            model_(model)
+            model_(model),
+            c_id_(pModel::NULLID)
             { }
 
     void pre_run(void);
@@ -49,11 +51,13 @@ public:
     void visit_pre_classDecl(classDecl* n);
     void visit_post_classDecl(classDecl* n);
 
-    void visit_pre_signature(signature* n);
-    void visit_post_signature(signature* n);
+    void visit_pre_signature(signature* n);    
+    void visit_post_functionDecl(functionDecl *n);
 
+    /*
     void visit_pre_block(block* n);
     void visit_post_block(block* n);
+    */
 
     void visit_pre_assignment(assignment* n);
 

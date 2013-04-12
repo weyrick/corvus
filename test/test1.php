@@ -2,6 +2,9 @@
 
 namespace myns;
 
+//const MYSTATIC = 7;
+define('MYSECOND', 6);
+
 class myclass {
   const FOO = 1;
   public function bar($one) {

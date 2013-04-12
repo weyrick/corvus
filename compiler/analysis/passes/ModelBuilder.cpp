@@ -15,68 +15,80 @@ namespace corvus { namespace AST { namespace Pass {
 
 void ModelBuilder::pre_run(void) {
 
-    scope_.push_back(MODULE);
-    module_id_ = model_.getSourceModule(module_->fileName());
-    namespace_id_ = model_.getNamespace("\\");
+    //scope_.push_back(MODULE);
+    m_id_ = model_.getSourceModule(module_->fileName());
+    ns_id_ = model_.getNamespace("\\");
 
 }
 
 void ModelBuilder::post_run(void) {
 
+    model_.commit();
+
 }
 
 void ModelBuilder::visit_pre_namespaceDecl(namespaceDecl* n) {
 
-    namespace_id_ = model_.getNamespace(n->name());
+    ns_id_ = model_.getNamespace(n->name());
 
 }
 
 
 void ModelBuilder::visit_pre_classDecl(classDecl* n) {
 
-    scope_.push_back(CLASS);
-
-    //do_decl(n->name().str());
+    //scope_.push_back(CLASS);
 
 }
 
 void ModelBuilder::visit_post_classDecl(classDecl* n) {
 
-    scope_.pop_back();
+    //scope_.pop_back();
 
 }
 
 void ModelBuilder::visit_pre_signature(signature* n) {
 
 
-    scope_.push_back(FUNCTION);
+    //scope_.push_back(FUNCTION);
 
-    pModel::oid parent_id = 0;
-    if (context_.size())
-        parent_id = context_.back();
-/*
-    pModel::oid c = model_.getContext(module_id_,
-                                      parent_id,
-                                      scope_.back(),
-                                      n->startLineNum(),
-                                      n->startCol(),
-                                      n->endLineNum(),
-                                      n->endCol());
-    context_.push_back(c);
-*/
+    f_id_list.push_back(model_.defineFunction(ns_id_,
+                          m_id_,
+                          c_id_,
+                          n->name(),
+                          pModel::FUNCTION,
+                          pModel::NO_FLAGS,
+                          pModel::PUBLIC,
+                          n->startLineNum(),
+                          n->startCol(),
+                          n->endLineNum(),
+                          n->endCol()
+                          ));
+
     for (int i = 0; i < n->numParams(); i++) {
-        //do_decl(n->getParam(i)->name());
+        formalParam *p = n->getParam(i);
+        model_.defineFunctionVar(f_id_list.back(),
+                                 p->name(),
+                                 pModel::PARAM,
+                                 pModel::NO_FLAGS,
+                                 pModel::T_UNKNOWN,
+                                 "", // XXX datatype obj
+                                 "", // XXX default
+                                 p->startLineNum(),
+                                 p->endLineNum()
+                    );
     }
 
 }
 
-void ModelBuilder::visit_post_signature(signature* n) {
+void ModelBuilder::visit_post_functionDecl(functionDecl *n) {
 
 
-    scope_.pop_back();
+    //scope_.pop_back();
+    f_id_list.pop_back();
 
 }
 
+/*
 void ModelBuilder::visit_pre_block(block* n) {
 
     // we only push a BLOCK context if the parent is BLOCK
@@ -92,6 +104,7 @@ void ModelBuilder::visit_post_block(block* n) {
         scope_.pop_back();
 
 }
+*/
 
 void ModelBuilder::visit_pre_assignment(assignment* n) {
 
