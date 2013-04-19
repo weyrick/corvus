@@ -15,49 +15,56 @@ namespace corvus { namespace AST { namespace Pass {
 
 void ModelBuilder::pre_run(void) {
 
-    //scope_.push_back(MODULE);
-    m_id_ = model_.getSourceModule(module_->fileName());
-    ns_id_ = model_.getNamespace("\\");
+    m_id_ = model_->getSourceModuleOID(module_->fileName());
+    ns_id_ = model_->getNamespaceOID("\\");
 
 }
 
 void ModelBuilder::post_run(void) {
 
-    model_.commit();
+    model_->commit();
 
 }
 
 void ModelBuilder::visit_pre_namespaceDecl(namespaceDecl* n) {
 
-    ns_id_ = model_.getNamespace(n->name());
+    ns_id_ = model_->getNamespaceOID(n->name());
 
 }
 
 
 void ModelBuilder::visit_pre_classDecl(classDecl* n) {
 
-    //scope_.push_back(CLASS);
+    c_id_ = model_->defineClass(ns_id_, m_id_, n->name());
 
 }
 
 void ModelBuilder::visit_post_classDecl(classDecl* n) {
 
-    //scope_.pop_back();
+    c_id_ = pModel::NULLID;
 
 }
 
 void ModelBuilder::visit_pre_signature(signature* n) {
 
 
-    //scope_.push_back(FUNCTION);
+    int minArity = 0;
+    for (int i = 0; i < n->numParams(); i++) {
+        formalParam *p = n->getParam(i);
+        if (p->hasDefault())
+            break;
+        minArity++;
+    }
 
-    f_id_list.push_back(model_.defineFunction(ns_id_,
+    f_id_list.push_back(model_->defineFunction(ns_id_,
                           m_id_,
                           c_id_,
                           n->name(),
                           pModel::FUNCTION,
                           pModel::NO_FLAGS,
                           pModel::PUBLIC,
+                          minArity,
+                          n->numParams(),
                           n->startLineNum(),
                           n->startCol(),
                           n->endLineNum(),
@@ -66,7 +73,7 @@ void ModelBuilder::visit_pre_signature(signature* n) {
 
     for (int i = 0; i < n->numParams(); i++) {
         formalParam *p = n->getParam(i);
-        model_.defineFunctionVar(f_id_list.back(),
+        model_->defineFunctionVar(f_id_list.back(),
                                  p->name(),
                                  pModel::PARAM,
                                  pModel::NO_FLAGS,
@@ -83,28 +90,9 @@ void ModelBuilder::visit_pre_signature(signature* n) {
 void ModelBuilder::visit_post_functionDecl(functionDecl *n) {
 
 
-    //scope_.pop_back();
     f_id_list.pop_back();
 
 }
-
-/*
-void ModelBuilder::visit_pre_block(block* n) {
-
-    // we only push a BLOCK context if the parent is BLOCK
-    if (scope_.back() == BLOCK)
-        scope_.push_back(BLOCK);
-
-}
-
-void ModelBuilder::visit_post_block(block* n) {
-
-    // we only pop if parent is BLOCK
-    if (scope_.back() == BLOCK)
-        scope_.pop_back();
-
-}
-*/
 
 void ModelBuilder::visit_pre_assignment(assignment* n) {
 

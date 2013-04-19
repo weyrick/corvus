@@ -265,12 +265,13 @@ statementBlock(A) ::= T_LEFTCURLY(LC) statement_list(B) T_RIGHTCURLY(RC).
 %type namespaceName {AST::namespaceName*}
 namespaceName(A) ::= T_IDENTIFIER(PART).
 {
-    A = new AST::namespaceName();
+    A = new AST::namespaceName(TOKEN_COL(PART).first);
     A->push_back(*PART);
 }
 namespaceName(A) ::= namespaceName(PARTS) T_NS_SEPARATOR T_IDENTIFIER(PART).
 {
     PARTS->push_back(*PART);
+    PARTS->setEndCol(TOKEN_COL(PART).second);
     A = PARTS;
 }
 
@@ -819,8 +820,9 @@ classDecl(A) ::= T_INTERFACE(C) T_IDENTIFIER(NAME) interfaceExtends(EXTENDS)
                                   NULL, /* interfaces can't implement */
                                   new (CTXT) AST::block(CTXT, MEMBERS));
     A->setLine(TOKEN_LINE(C), TOKEN_LINE(RC));
-    if (EXTENDS)
-        delete EXTENDS;
+    // XXX this is double freeing??
+    //if (EXTENDS)
+        //delete EXTENDS;
     delete MEMBERS;
 }
 
@@ -2062,6 +2064,7 @@ functionInvoke(A) ::= maybeDynamicID(ID) T_LEFTPAREN argList(ARGS) T_RIGHTPAREN.
                                        ARGS  // expression list: arguments, copied
                                        );
     A->setLine(CURRENT_LINE);
+    A->setCol(ID->cols());
     delete ARGS;
 }
 // foo::bar() (or self:: or parent::)
@@ -2073,6 +2076,7 @@ functionInvoke(A) ::= namespaceName(TARGET) T_DBL_COLON T_IDENTIFIER(ID) T_LEFTP
                                        new (CTXT) AST::literalID(TARGET, CTXT)
                                        );
     A->setLine(CURRENT_LINE);
+    A->setCol(TOKEN_COL(ID));
     delete ARGS;
     delete TARGET;
 }
@@ -2096,6 +2100,7 @@ functionInvoke(A) ::= T_NS_SEPARATOR namespaceName(TARGET) T_DBL_COLON T_IDENTIF
                                        new (CTXT) AST::literalID(TARGET, CTXT)
                                        );
     A->setLine(CURRENT_LINE);
+    A->setCol(TOKEN_COL(ID));
     delete ARGS;
     delete TARGET;
 }
@@ -2120,6 +2125,7 @@ functionInvoke(A) ::= refVar(TARGET) T_DBL_COLON T_IDENTIFIER(ID) T_LEFTPAREN ar
                                        TARGET
                                        );
     A->setLine(CURRENT_LINE);
+    A->setCol(TOKEN_COL(ID));
     delete ARGS;
 }
 // $foo()
@@ -2163,6 +2169,7 @@ literalID(A) ::= namespaceName(NSNAME).
 {
     A = new (CTXT) AST::literalID(NSNAME, CTXT);
     A->setLine(CURRENT_LINE);
+    A->setCol(NSNAME->cols());
     delete NSNAME;
 }
 literalID(A) ::= T_NS_SEPARATOR namespaceName(NSNAME).
@@ -2170,6 +2177,7 @@ literalID(A) ::= T_NS_SEPARATOR namespaceName(NSNAME).
     NSNAME->setAbsolute();
     A = new (CTXT) AST::literalID(NSNAME, CTXT);
     A->setLine(CURRENT_LINE);
+    A->setCol(NSNAME->cols());
     delete NSNAME;
 }
 %type maybeDynamicID {AST::expr*}

@@ -37,6 +37,7 @@ void pPassManager::run(pSourceModule* mod) {
 }
 
 void pPassManager::addPass(AST::pPass* p) {
+    p->setModel(model_);
     passQueue_.push_back(p);
 }
 

@@ -84,6 +84,7 @@ set(PARSER_SRC_FILES
   passes/DumpStats.cpp
   passes/Trivial.cpp
   passes/ModelBuilder.cpp
+  passes/ModelChecker.cpp
 )
 
 # PASSES

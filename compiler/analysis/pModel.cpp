@@ -21,6 +21,7 @@ void pModel::sql_execute(pStringRef query) {
     if (rc != SQLITE_OK) {
         std::cerr << "sqlite error: " << query.str()
                   << "\n" << errMsg << "\n";
+        sqlite3_free(errMsg);
         exit(1);
     }
     else if (trace_) {
@@ -186,6 +187,8 @@ void pModel::makeTables() {
                          "type INTEGER NOT NULL," \
                          "flags INTEGER NOT NULL," \
                          "visibility INTEGER NOT NULL," \
+                         "minArity INTEGER NOT NULL," \
+                         "maxArity INTEGER NOT NULL," \
                          "start_line INTEGER NOT NULL," \
                          "start_col INTEGER NOT NULL," \
                          "end_line INTEGER NOT NULL," \
@@ -254,7 +257,7 @@ void pModel::makeTables() {
 
 }
 
-pModel::oid pModel::getSourceModule(pStringRef realPath) {
+pModel::oid pModel::getSourceModuleOID(pStringRef realPath) {
 
     if (modules_.find(realPath) != modules_.end()) {
         return modules_[realPath];
@@ -270,7 +273,7 @@ pModel::oid pModel::getSourceModule(pStringRef realPath) {
 
 }
 
-pModel::oid pModel::getNamespace(pStringRef ns) {
+pModel::oid pModel::getNamespaceOID(pStringRef ns) {
 
     if (namespaces_.find(ns) != namespaces_.end()) {
         return namespaces_[ns];
@@ -286,8 +289,41 @@ pModel::oid pModel::getNamespace(pStringRef ns) {
 
 }
 
-pModel::oid pModel::defineClass(pModel::oid ns, pStringRef name) {
+pModel::oid pModel::defineClass(pModel::oid ns_id, pModel::oid m_id, pStringRef name) {
 
+/*
+    "sourceModule_id INTEGER NOT NULL," \
+    "namespace_id INTEGER NULL," \
+    "name TEXT NOT NULL,"
+    "type INTEGER NOT NULL," \
+    "flags INTEGER NOT NULL," \
+    "start_line INTEGER NOT NULL," \
+    "start_col INTEGER NOT NULL," \
+    "end_line INTEGER NOT NULL," \
+    "end_col INTEGER NOT NULL," \
+    // text versions
+    "extends TEXT NULL," \
+    "implements TEXT NULL," \
+*/
+
+    int type = pModel::CLASS;
+    int flags = pModel::NO_FLAGS;
+    int sl = 0;
+    int sc = 0;
+    int el = 0;
+    int ec = 0;
+
+    std::stringstream ins;
+    ins << "INSERT INTO class VALUES (NULL,"
+        << m_id << ','
+        << ns_id
+        << ",'" << name.str() << "',"
+        << type << ','
+        << flags << ','
+        << sl  << ',' << sc  << ',' << el  << ',' << ec
+        << ",'',''" // extends, implements
+        << ")";
+    return sql_insert(ins.str().c_str());
 
 }
 
@@ -314,7 +350,7 @@ pStringRef pModel::strOrNull(pStringRef val) {
 }
 
 pModel::oid pModel::defineFunction(oid ns_id, oid m_id, oid c_id, pStringRef name,
-                    int type, int flags, int vis, int sl, int sc,
+                    int type, int flags, int vis, int minA, int maxA, int sl, int sc,
                     int el, int ec) {
 
     std::stringstream ins;
@@ -326,6 +362,8 @@ pModel::oid pModel::defineFunction(oid ns_id, oid m_id, oid c_id, pStringRef nam
         << type << ','
         << flags << ','
         << vis << ','
+        << minA << ','
+        << maxA << ','
         << sl  << ',' << sc  << ',' << el  << ',' << ec
         << ")";
     return sql_insert(ins.str().c_str());
@@ -350,6 +388,56 @@ void pModel::defineFunctionVar(oid f_id, pStringRef name,
         << sl  << ',' << sc
         << ")";
     sql_insert(ins.str().c_str());
+
+}
+
+pModel::FunctionList pModel::queryFunctions(oid ns_id, oid c_id, pStringRef name) {
+
+    FunctionList result;
+    std::stringstream query;
+
+    query << "SELECT name, type, flags, visibility, minArity, maxArity, " \
+             " start_line, start_col, sourceModule.realPath FROM " \
+             " function, sourceModule WHERE sourceModule.id=sourceModule_id AND" \
+             " " \
+             " (namespace_id=" << ns_id << " OR namespace_id=1) AND class_id ";
+    if (c_id) {
+        query << " = " << c_id;
+    }
+    else {
+        query << " IS NULL ";
+    }
+
+    query << " AND name='" << name.str() << "'";
+
+    if (trace_) {
+        std::cerr << "TRACE: " << query.str() << std::endl;
+    }
+
+    sqlite3_stmt *stmt;
+    int rc = sqlite3_prepare_v2(db_, query.str().c_str(), -1, &stmt, NULL);
+    if (rc != SQLITE_OK) {
+        std::cerr << "sqlite error: " << query.str() << "\n";
+        exit(1);
+    }
+
+    while ((rc = sqlite3_step(stmt)) == SQLITE_ROW) {
+        model::function f;
+        f.name = (char*)sqlite3_column_text(stmt, 0);
+        f.ftype = sqlite3_column_int(stmt, 1);
+        f.flags = sqlite3_column_int(stmt, 2);
+        f.visibility = sqlite3_column_int(stmt, 3);
+        f.minArity = sqlite3_column_int(stmt, 4);
+        f.maxArity = sqlite3_column_int(stmt, 5);
+        f.startLine = sqlite3_column_int(stmt, 6);
+        f.startCol = sqlite3_column_int(stmt, 7);
+        f.sourceModule = (char*)sqlite3_column_text(stmt, 8);
+        result.push_back(f);
+    }
+
+    sqlite3_finalize(stmt);
+
+    return result;
 
 }
 

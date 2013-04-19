@@ -15,6 +15,7 @@
 #include "corvus/analysis/pSourceModule.h"
 
 #include <map>
+#include <string>
 
 class sqlite3;
 
@@ -42,6 +43,8 @@ public:
 
     pSourceManager(): debugParse_(false), debugModel_(false), db_(NULL), model_(NULL) { }
     ~pSourceManager();
+
+    void readStubs(pStringRef dirName);
 
     void setDebug(bool debugParse, bool debugModel) {
         debugParse_ = debugParse;

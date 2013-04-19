@@ -15,13 +15,33 @@
 
 #include <sqlite3.h>
 #include <map>
+#include <vector>
 
 namespace corvus {
+
+// these are for caching data retrieved from sqlite
+namespace model {
+
+struct function {
+    std::string name;
+    std::string sourceModule;
+    int ftype;
+    int flags;
+    int visibility;
+    int minArity;
+    int maxArity;
+    int startLine;
+    int startCol;
+};
+
+} // end model namespace
 
 class pModel {
 public:
 
     typedef sqlite3_int64 oid;
+    typedef std::vector<model::function> FunctionList;
+    typedef std::map<std::string, oid> IDMap;
 
     // general
     const static int NULLID   = 0;
@@ -45,18 +65,21 @@ public:
     const static int PROTECTED = 1;
     const static int PRIVATE   = 2;
 
-    // types
+    // data types
     const static int T_UNKNOWN = 0;
+    // array, str, bool, etc
+
+    // class types
+    const static int CLASS   = 0;
+    const static int IFACE   = 1;
 
 private:
-
-    typedef std::map<std::string, oid> IDMAP;
 
     sqlite3 *db_;
     bool trace_;
 
-    IDMAP modules_;
-    IDMAP namespaces_;
+    IDMap modules_;
+    IDMap namespaces_;
 
     void sql_execute(pStringRef query);
     oid sql_insert(pStringRef query);
@@ -76,17 +99,19 @@ public:
 
     void commit(bool begin=true);
 
-    oid getSourceModule(pStringRef realPath);
-    oid getNamespace(pStringRef ns);
+    oid getSourceModuleOID(pStringRef realPath);
+    oid getNamespaceOID(pStringRef ns);
 
-    oid defineClass(oid ns, pStringRef name);
+    oid defineClass(oid ns_id, oid m_id, pStringRef name);
     oid defineFunction(oid ns_id, oid m_id, oid c_id, pStringRef name,
-                        int type, int flags, int vis, int sl, int sc,
+                        int type, int flags, int vis, int minA, int maxA, int sl, int sc,
                         int el, int ec);
     void defineFunctionVar(oid f_id, pStringRef name,
                           int type, int flags, int datatype, pStringRef datatype_obj,
                           pStringRef defaultVal,
                           int sl, int sc);
+
+    FunctionList queryFunctions(oid ns_id, oid c_id, pStringRef name);
 
 };
 

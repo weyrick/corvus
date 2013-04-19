@@ -19,6 +19,7 @@
 #include "corvus/analysis/passes/DumpStats.h"
 #include "corvus/analysis/passes/Trivial.h"
 #include "corvus/analysis/passes/ModelBuilder.h"
+#include "corvus/analysis/passes/ModelChecker.h"
 
 #include <llvm/Support/PathV2.h>
 #include <llvm/Support/FileSystem.h>
@@ -107,7 +108,7 @@ void pSourceManager::runPasses(pPassManager *pm) {
 
 void pSourceManager::printAST() {
 
-    pPassManager passManager;
+    pPassManager passManager(NULL);
 
     passManager.addPass<AST::Pass::PrintAST>();
     if (debugParse_)
@@ -133,25 +134,82 @@ void pSourceManager::printToks() {
 
 void pSourceManager::runDiagnostics() {
 
-    pPassManager passManager;
+    pPassManager passManager(model_);
 
     // standard diag passes
     passManager.addPass<AST::Pass::Trivial>();
+    passManager.addPass<AST::Pass::ModelChecker>();
 
     runPasses(&passManager);
 
 }
 
+void pSourceManager::readStubs(pStringRef dirName) {
+
+    if (!model_) {
+        openModel();
+    }
+
+    std::string glob = ".php";
+
+    std::vector<pSourceModule*> stubList;
+
+    llvm::error_code ec;
+    for (llvm::sys::fs::recursive_directory_iterator dir(dirName, ec), dirEnd;
+         dir != dirEnd && !ec; dir.increment(ec)) {
+
+      if (llvm::sys::path::extension(dir->path()) != glob)
+        continue;
+
+      stubList.push_back(new pSourceModule(dir->path()));
+    }
+
+    pPassManager passManager(model_);
+    passManager.addPass<AST::Pass::ModelBuilder>();
+    for (std::vector<pSourceModule*>::iterator i = stubList.begin();
+         i != stubList.end();
+         i++) {
+
+        try {
+            // catch parse errors
+            // this is idempotent
+            (*i)->parse(debugParse_);
+        }
+        catch (std::exception& e) {
+            std::cerr << e.what() << std::endl;
+            continue;
+        }
+
+        try {
+            // run selected passes
+            passManager.run(*i);
+        }
+        catch (std::exception& e) {
+            std::cerr << e.what() << std::endl;
+        }
+
+    }
+
+    for (std::vector<pSourceModule*>::iterator i = stubList.begin();
+         i != stubList.end();
+         i++) {
+        delete (*i);
+    }
+
+    model_->commit();
+
+}
+
 void pSourceManager::refreshModel() {
 
-    if (!model_)
+    if (!model_) {
         openModel();
+    }
 
-    AST::Pass::ModelBuilder *builder = new AST::Pass::ModelBuilder(*model_);
-
-    pPassManager passManager;
-    passManager.addPass(builder);
+    pPassManager passManager(model_);
+    passManager.addPass<AST::Pass::ModelBuilder>();
     runPasses(&passManager);
+    model_->commit();
 
 }
 
@@ -160,7 +218,9 @@ void pSourceManager::openModel() {
     assert(!model_);
     assert(!db_);
 
-    std::string filename = "corvus.db";
+    //std::string filename = "corvus.db";
+    //std::string filename = ":memory:";
+    std::string filename = ""; // tmp db, mostly in memory except for spillover
 
     int rc = sqlite3_open(filename.c_str(), &db_);
     if (rc) {

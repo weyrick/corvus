@@ -13,7 +13,8 @@
 #define COR_PPASS_H_
 
 #include <string>
-#include <corvus/analysis/pSourceModule.h>
+#include "corvus/analysis/pSourceModule.h"
+#include "corvus/analysis/pModel.h"
 
 namespace corvus {
 
@@ -30,13 +31,16 @@ protected:
     std::string passDesc_;
 
     pSourceModule* module_;
+    pModel* model_;
 
     static const char* nodeDescTable_[];
 public:
 
-    pPass(const char* n, const char* d): passName_(n), passDesc_(d) { }
+    pPass(const char* n, const char* d): passName_(n), passDesc_(d), model_(0) { }
 
     virtual ~pPass(void) { }
+
+    void setModel(pModel* m) { model_ = m; }
 
     void do_pre_run(pSourceModule *mod) { module_ = mod; pre_run(); module_ = NULL; }
     void do_run(pSourceModule *mod) { module_ = mod; run(); module_ = NULL; }

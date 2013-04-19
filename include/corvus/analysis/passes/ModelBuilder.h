@@ -27,8 +27,6 @@ public:
 
 private:
 
-    pModel &model_;
-
 //    std::vector<SCOPES> scope_;
 
     pModel::oid m_id_;
@@ -37,9 +35,8 @@ private:
     std::vector<pModel::oid> f_id_list;
 
 public:
-    ModelBuilder(pModel& model):
+    ModelBuilder():
             pBaseVisitor("ModelBuilder","Build the code model"),
-            model_(model),
             c_id_(pModel::NULLID)
             { }
 

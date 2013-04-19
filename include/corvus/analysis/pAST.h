@@ -247,6 +247,7 @@ public:
     pUInt endLineNum(void) const { return endLineNum_; }
     pUInt startCol(void) const { return startCol_; }
     pUInt endCol(void) const { return endCol_; }
+    pColRange cols(void) const { return pColRange(startCol_, endCol_); }
 
     // Polymorphic deep copying.
     virtual stmt* clone(pParseContext& C) const = 0;
@@ -428,11 +429,20 @@ public:
     typedef std::vector<std::string> partsType;
 
 protected:
+    pColRange cols_;
     partsType parts_;
     bool absolute_;
 
 public:
-    namespaceName(void): absolute_(false) { }
+    namespaceName(int startCol): absolute_(false) {
+        cols_.first = startCol;
+    }
+
+    void setEndCol(int endCol) {
+        cols_.second = endCol;
+    }
+
+    pColRange cols() const { return cols_; }
 
     void push_back(pStringRef part) {
         parts_.push_back(part);
@@ -2121,6 +2131,10 @@ public:
 
     bool isDynamic(void) const { return isa<dynamicID>(children_[NAME]); }
 
+    bool hasLiteralTarget(void) const {
+        return (children_[TARGET] != NULL && isa<literalID>(children_[TARGET]));
+    }
+
     void setTarget(expr *t) {
         children_[TARGET] = t;
     }
@@ -2130,12 +2144,26 @@ public:
         return static_cast<expr*>(children_[NAME]);
     }
 
+    // for when !isDynamic()
+    pStringRef literalName(void) {
+        assert(isa<literalID>(children_[NAME]));
+        literalID *n = cast<literalID>(children_[NAME]);
+        return n->name();
+    }
+
+    // for when hasLiteralTarget()
+    pStringRef literalTargetName(void) {
+        assert(isa<literalID>(children_[TARGET]));
+        literalID *n = cast<literalID>(children_[TARGET]);
+        return n->name();
+    }
+
     expr* target(void) {
         assert((children_[TARGET] == NULL || isa<expr>(children_[TARGET])) && "unknown object in target");
         return static_cast<expr*>(children_[TARGET]);
     }
 
-    pUInt numArgs(void) const { return numChildren_-1; }
+    pUInt numArgs(void) const { return numChildren_-2; }
 
     stmt::child_iterator child_begin() { return &children_[0]; }
     stmt::child_iterator child_end() { return &children_[0]+numChildren_; }

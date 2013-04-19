@@ -23,6 +23,8 @@ void pPass::addDiagnostic(AST::stmt* s, pStringRef msg) {
     // XXX this is temporary
     const pParseContext &C_ = module_->context();
     std::cout << C_.getOwner()->fileName() << ":" << s->startLineNum() << ":" << s->startCol() << ": " << msg.data() << std::endl;
+    if (!s->startLineNum() || !s->startCol())
+        return;
     // diag source line
     pSourceCharIterator i = C_.getOwner()->source()->contents()->getBufferStart();
     pSourceCharIterator end = C_.getOwner()->source()->contents()->getBufferEnd();

@@ -33,19 +33,28 @@ int main( int argc, char* argv[] )
     cl::list<std::string> inputFiles(cl::Positional,
                                      cl::desc("<input files/dirs>"),
                                      cl::OneOrMore,
-                                     cl::ValueRequired
+                                     cl::Required
                                     );
 
-    cl::opt<bool> printToks ("print-toks", cl::desc("Print tokens from lexer"));
-    cl::opt<bool> printAST ("print-ast", cl::desc("Print AST in XML format"));
-    cl::opt<bool> debugParse ("debug-parse", cl::desc("Debug output from parser"));
-    cl::opt<bool> debugModel ("debug-model", cl::desc("Debug the model builder"));
+    cl::opt<bool> printToks ("print-toks", cl::desc("Print tokens from lexer"), cl::ValueDisallowed);
+    cl::opt<bool> printAST ("print-ast", cl::desc("Print AST in XML format"), cl::ValueDisallowed);
+    cl::opt<bool> debugParse ("debug-parse", cl::desc("Debug output from parser"), cl::ValueDisallowed);
+    cl::opt<bool> debugModel ("debug-model", cl::desc("Debug the model builder"), cl::ValueDisallowed);
+
+    cl::opt<std::string> stubs ("stubs",
+                                cl::desc("Directory to find stub definitions"),
+                                cl::value_desc("directory"),
+                                cl::ValueRequired);
 
     cl::SetVersionPrinter(&corvusVersion);
     cl::ParseCommandLineOptions(argc, argv, "corvus analyzer");
 
     pSourceManager sm;
     sm.setDebug(debugParse, debugModel);
+
+    if (!stubs.empty()) {
+        sm.readStubs(stubs);
+    }
 
     for (unsigned i = 0; i != inputFiles.size(); ++i) {
 

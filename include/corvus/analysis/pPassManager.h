@@ -16,6 +16,7 @@
 namespace corvus {
 
 class pSourceModule;
+class pModel;
 
 namespace AST {
 class pPass;
@@ -28,13 +29,14 @@ public:
 private:
 
     queueType passQueue_;
+    pModel *model_;
 
     // no copy constructor
     pPassManager(const pPassManager&);
 
 public:
 
-    pPassManager(): passQueue_() { }
+    pPassManager(pModel *m): model_(m), passQueue_() { }
     ~pPassManager(void);
 
     /// add a pass. takes ownership.
