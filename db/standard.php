@@ -44,6 +44,11 @@ class Directory  {
 }
 
 /**
+ * exit the program
+ */
+function die($status=NULL) {}
+
+/**
  * (PHP 4 &gt;= 4.0.4, PHP 5)<br/>
  * Returns the value of a constant
  * @link http://php.net/manual/en/function.constant.php
@@ -2320,7 +2325,7 @@ function explode ($delimiter, $string, $limit = null) {}
  * @return string a string containing a string representation of all the array
  * elements in the same order, with the glue string between each element.
  */
-function implode ($glue, array $pieces) {}
+function implode ($glue, array $pieces = null) {}
 
 /**
  * (PHP 4, PHP 5)<br/>
@@ -2774,7 +2779,7 @@ function chop ($str, $character_mask) {}
  * @param $needle
  * @param $part [optional]
  */
-function strchr ($haystack, $needle, $part) {}
+function strchr ($haystack, $needle, $part=null) {}
 
 /**
  * (PHP 4, PHP 5)<br/>
@@ -3440,7 +3445,7 @@ function proc_nice ($increment) {}
  * @return int A pseudo random value between <i>min</i>
  * (or 0) and <i>max</i> (or <b>getrandmax</b>, inclusive).
  */
-function rand ($min, $max) {}
+function rand ($min=NULL, $max=NULL) {}
 
 /**
  * (PHP 4, PHP 5)<br/>
@@ -3470,7 +3475,7 @@ function getrandmax () {}
  * @return int A random integer value between <i>min</i> (or 0)
  * and <i>max</i> (or <b>mt_getrandmax</b>, inclusive)
  */
-function mt_rand ($min, $max) {}
+function mt_rand ($min=null, $max=null) {}
 
 /**
  * (PHP 4, PHP 5)<br/>
@@ -6574,7 +6579,7 @@ function fwrite ($handle, $string, $length = null) {}
  * @param $str
  * @param $length [optional]
  */
-function fputs ($fp, $str, $length) {}
+function fputs ($fp, $str, $length = null) {}
 
 /**
  * (PHP 4, PHP 5)<br/>
@@ -10834,7 +10839,7 @@ function pos (&$arg) {}
  * @param $var
  * @param $mode [optional]
  */
-function sizeof ($var, $mode) {}
+function sizeof ($var, $mode=NULL) {}
 
 /**
  * @param $key

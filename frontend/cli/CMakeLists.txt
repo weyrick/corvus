@@ -21,6 +21,7 @@ set_target_properties( corvus
 target_link_libraries ( corvus
                         corvus-analysis
                         tinyxml
+                        corvus_md5
                         boost_system-mt
                        ${LLVM_LIBS_SUPPORT}
                         dl pthread

@@ -29,24 +29,30 @@ class pSourceManager {
 private:
 
     bool debugParse_, debugModel_;
+    int verbosity_;
     typedef std::map<std::string, pSourceModule*> ModuleListType;
     ModuleListType moduleList_;
 
     sqlite3 *db_;
     pModel *model_;
+    std::string dbName_;
 
     void runPasses(pPassManager *pm);
-
     void openModel();
 
 public:
 
-    pSourceManager(): debugParse_(false), debugModel_(false), db_(NULL), model_(NULL) { }
+    pSourceManager(): debugParse_(false),
+        debugModel_(false),
+        db_(NULL),
+        model_(NULL),
+        dbName_() { }
     ~pSourceManager();
 
-    void readStubs(pStringRef dirName);
+    void setModelDBName(pStringRef db)  { dbName_ = db; }
 
-    void setDebug(bool debugParse, bool debugModel) {
+    void setDebug(int verbosity, bool debugParse, bool debugModel) {
+        verbosity_ = verbosity;
         debugParse_ = debugParse;
         debugModel_ = debugModel;
     }
@@ -55,7 +61,8 @@ public:
     void printToks();
 
     void addSourceFile(pStringRef name);
-    void addSourceDir(pStringRef name, pStringRef glob);
+    void addSourceDir(pStringRef name, pStringRef exts);
+    void addIncludeDir(pStringRef name, pStringRef exts);
 
     void refreshModel();
     void runDiagnostics();

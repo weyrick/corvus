@@ -44,6 +44,7 @@ include_directories(${COR_INCLUDE_DIR} ${Boost_INCLUDE_DIR} ${LLVM_INCLUDE_DIR})
 link_directories(${Boost_LIBRARY_DIRS})
 
 set(TINYXML_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/3rdparty/tinyxml")
+set(MD5_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/3rdparty/md5")
 
 IF( LLVM_VERSION LESS ${LLVM_MIN_VERSION} )
   MESSAGE(FATAL_ERROR "LLVM version ${LLVM_STRING_VERSION} is too old, please install ${LLVM_MIN_VERSION_TEXT} of greater!")

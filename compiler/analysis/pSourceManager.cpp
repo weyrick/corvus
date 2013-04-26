@@ -24,6 +24,7 @@
 #include <llvm/Support/PathV2.h>
 #include <llvm/Support/FileSystem.h>
 #include <llvm/Support/system_error.h>
+#include <llvm/ADT/SmallVector.h>
 
 #include <sqlite3.h>
 
@@ -58,22 +59,36 @@ void pSourceManager::addSourceFile(pStringRef name) {
         return;
     }
 
+    if (verbosity_ > 2) {
+        std::cerr << "adding source file: " << name.str() << std::endl;
+    }
+
     pSourceModule* unit(new pSourceModule(rp));
     moduleList_[rp] = unit;
 
     free(rp);
 }
 
-void pSourceManager::addSourceDir(pStringRef name, pStringRef glob) {
+void pSourceManager::addSourceDir(pStringRef name, pStringRef exts) {
+
+    llvm::SmallVector<pStringRef, 8> extList;
+    exts.split(extList, ",");
 
     llvm::error_code ec;
     for (llvm::sys::fs::recursive_directory_iterator dir(name, ec), dirEnd;
          dir != dirEnd && !ec; dir.increment(ec)) {
 
-      if (llvm::sys::path::extension(dir->path()) != glob)
-        continue;
+        bool found = false;
+        for (int i = 0; i < extList.size(); i++) {
+            llvm::Twine final(".",extList[i]);
+            if (llvm::sys::path::extension(dir->path()) == final.str()) {
+                found = true;
+                break;
+            }
+        }
 
-      addSourceFile(dir->path());
+        if (found)
+            addSourceFile(dir->path());
     }
 
 }
@@ -87,6 +102,9 @@ void pSourceManager::runPasses(pPassManager *pm) {
         try {
             // catch parse errors
             // this is idempotent
+            if (verbosity_ > 1 && i->second->getAST()) {
+                std::cerr << "parsing: " << i->second->fileName() << std::endl;
+            }
             i->second->parse(debugParse_);
         }
         catch (std::exception& e) {
@@ -96,7 +114,7 @@ void pSourceManager::runPasses(pPassManager *pm) {
 
         try {
             // run selected passes
-            pm->run(i->second);
+            pm->run(i->second, verbosity_);
         }
         catch (std::exception& e) {
             std::cerr << e.what() << std::endl;
@@ -144,35 +162,45 @@ void pSourceManager::runDiagnostics() {
 
 }
 
-void pSourceManager::readStubs(pStringRef dirName) {
+void pSourceManager::addIncludeDir(pStringRef name, pStringRef exts) {
 
     if (!model_) {
         openModel();
     }
 
-    std::string glob = ".php";
-
-    std::vector<pSourceModule*> stubList;
+    std::vector<pSourceModule*> includeList;
+    llvm::SmallVector<pStringRef, 8> extList;
+    exts.split(extList, ",");
 
     llvm::error_code ec;
-    for (llvm::sys::fs::recursive_directory_iterator dir(dirName, ec), dirEnd;
+    for (llvm::sys::fs::recursive_directory_iterator dir(name, ec), dirEnd;
          dir != dirEnd && !ec; dir.increment(ec)) {
 
-      if (llvm::sys::path::extension(dir->path()) != glob)
-        continue;
+        bool found = false;
+        for (int i = 0; i < extList.size(); i++) {
+            llvm::Twine final(".",extList[i]);
+            if (llvm::sys::path::extension(dir->path()) == final.str()) {
+                found = true;
+                break;
+            }
+        }
 
-      stubList.push_back(new pSourceModule(dir->path()));
+        if (found)
+            includeList.push_back(new pSourceModule(dir->path()));
     }
 
     pPassManager passManager(model_);
     passManager.addPass<AST::Pass::ModelBuilder>();
-    for (std::vector<pSourceModule*>::iterator i = stubList.begin();
-         i != stubList.end();
+    for (std::vector<pSourceModule*>::iterator i = includeList.begin();
+         i != includeList.end();
          i++) {
 
         try {
             // catch parse errors
             // this is idempotent
+            if (verbosity_ > 1) {
+                std::cerr << "parsing include file: " << (*i)->fileName() << std::endl;
+            }
             (*i)->parse(debugParse_);
         }
         catch (std::exception& e) {
@@ -182,7 +210,7 @@ void pSourceManager::readStubs(pStringRef dirName) {
 
         try {
             // run selected passes
-            passManager.run(*i);
+            passManager.run(*i, verbosity_);
         }
         catch (std::exception& e) {
             std::cerr << e.what() << std::endl;
@@ -190,8 +218,8 @@ void pSourceManager::readStubs(pStringRef dirName) {
 
     }
 
-    for (std::vector<pSourceModule*>::iterator i = stubList.begin();
-         i != stubList.end();
+    for (std::vector<pSourceModule*>::iterator i = includeList.begin();
+         i != includeList.end();
          i++) {
         delete (*i);
     }
@@ -204,8 +232,7 @@ void pSourceManager::refreshModel() {
 
     if (!model_) {
         openModel();
-    }
-
+    }    
     pPassManager passManager(model_);
     passManager.addPass<AST::Pass::ModelBuilder>();
     runPasses(&passManager);
@@ -218,13 +245,13 @@ void pSourceManager::openModel() {
     assert(!model_);
     assert(!db_);
 
-    //std::string filename = "corvus.db";
-    //std::string filename = ":memory:";
-    std::string filename = ""; // tmp db, mostly in memory except for spillover
+    if (verbosity_ > 1) {
+        std::cerr << "opening model at: " << ((!dbName_.length()) ? "tmpdb" : dbName_) << std::endl;
+    }
 
-    int rc = sqlite3_open(filename.c_str(), &db_);
+    int rc = sqlite3_open(dbName_.c_str(), &db_);
     if (rc) {
-        std::cerr << "unable to open model db " << filename << ": " <<
+        std::cerr << "unable to open model db " << dbName_ << ": " <<
                      sqlite3_errmsg(db_);
         exit(1);
     }

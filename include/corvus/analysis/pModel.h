@@ -83,6 +83,7 @@ private:
 
     void sql_execute(pStringRef query);
     oid sql_insert(pStringRef query);
+    oid sql_select_single_id(pStringRef query);
     void sql_setup();
     void sql_done();
 
@@ -99,7 +100,8 @@ public:
 
     void commit(bool begin=true);
 
-    oid getSourceModuleOID(pStringRef realPath);
+    bool sourceModuleDirty(pStringRef realPath, pStringRef hash);
+    oid getSourceModuleOID(pStringRef realPath, pStringRef hash, bool deleteFirst);
     oid getNamespaceOID(pStringRef ns);
 
     oid defineClass(oid ns_id, oid m_id, pStringRef name);

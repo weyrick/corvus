@@ -25,13 +25,20 @@ pPassManager::~pPassManager(void) {
 
 }
 
-void pPassManager::run(pSourceModule* mod) {
+void pPassManager::run(pSourceModule* mod, int verbosity) {
 
     for (queueType::iterator i = passQueue_.begin();
          i != passQueue_.end();
          ++i) {
+        if (verbosity > 1) {
+            std::cerr << "running pass [" << (*i)->name().str() << "] on " << mod->fileName() << std::endl;
+        }
         (*i)->do_pre_run(mod);
+        if ((*i)->aborted())
+                return;
         (*i)->do_run(mod);
+        if ((*i)->aborted())
+                return;
         (*i)->do_post_run(mod);
     }
 }

@@ -30,15 +30,22 @@ protected:
     std::string passName_;
     std::string passDesc_;
 
+    bool aborted_;
     pSourceModule* module_;
     pModel* model_;
 
     static const char* nodeDescTable_[];
 public:
 
-    pPass(const char* n, const char* d): passName_(n), passDesc_(d), model_(0) { }
+    pPass(const char* n, const char* d): passName_(n), passDesc_(d), model_(0), aborted_(false) { }
 
     virtual ~pPass(void) { }
+
+    pStringRef name() const { return passName_; }
+    pStringRef desc() const { return passDesc_; }
+
+    void abortPass(void) { aborted_ = true; }
+    bool aborted(void) const { return aborted_; }
 
     void setModel(pModel* m) { model_ = m; }
 

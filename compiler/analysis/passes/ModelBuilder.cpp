@@ -8,14 +8,42 @@
    ***** END LICENSE BLOCK *****
 */
 
+#include "md5.h"
+
 #include "corvus/analysis/passes/ModelBuilder.h"
+
+#include "corvus/analysis/pSourceModule.h"
+#include "corvus/analysis/pSourceFile.h"
+#include <stdio.h>
 
 namespace corvus { namespace AST { namespace Pass {
 
 
 void ModelBuilder::pre_run(void) {
 
-    m_id_ = model_->getSourceModuleOID(module_->fileName());
+    // generate the source hash
+    md5_byte_t digest[16];
+    md5_state_t state;
+    md5_init(&state);
+    md5_append(&state,
+               reinterpret_cast<const md5_byte_t *>(module_->source()->contents()->getBufferStart()),
+               module_->source()->contents()->getBufferSize());
+    md5_finish(&state, digest);
+    char hash[32];
+    for (int di = 0; di < 16; ++di)
+        sprintf(hash + di * 2, "%02x", digest[di]);
+
+    // is the source module dirty? i.e. does it exist in the model already and
+    // has it changed since we last built it?
+    if (!model_->sourceModuleDirty(module_->fileName(), hash)) {
+        // don't run the pass
+        abortPass();
+    }
+
+    m_id_ = model_->getSourceModuleOID(module_->fileName(),
+                                       hash,
+                                       true /* delete first */
+                                       );
     ns_id_ = model_->getNamespaceOID("\\");
 
 }
@@ -55,7 +83,6 @@ void ModelBuilder::visit_pre_signature(signature* n) {
             break;
         minArity++;
     }
-
     f_id_list.push_back(model_->defineFunction(ns_id_,
                           m_id_,
                           c_id_,

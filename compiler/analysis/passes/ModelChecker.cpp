@@ -31,14 +31,27 @@ void ModelChecker::visit_pre_namespaceDecl(namespaceDecl* n) {
 
 void ModelChecker::visit_pre_functionInvoke(functionInvoke* n) {
 
-    // can't do anything with dynamic function invokes
-    if (n->isDynamic())
+    // can't do anything with dynamic function invokes, i.e. $foo()
+    if (!n->hasLiteralName())
         return;
+
+    // constructor?
+    if (n->constructor()) {
+        // XXX check that the class exists and check constructor args
+        return;
+    }
 
     // method?
     pModel::oid c_id = pModel::NULLID;
-    if (n->hasLiteralTarget()) {
-        // XXX get class oid
+    if (n->target()) {
+        if (n->hasLiteralTarget()) {
+            // XXX static call: get class oid
+            return;
+        }
+        else {
+            // a dynamic method call. we can't diag this without type analysis
+            return;
+        }
     }
 
     // find the function in the model
@@ -57,7 +70,7 @@ void ModelChecker::visit_pre_functionInvoke(functionInvoke* n) {
         diag << "function '" << n->literalName().str() << "' defined in multiple locations:";
         addDiagnostic(n, diag.str());
         for (int i = 0; i < list.size(); i++) {
-            std::cout << "\t" << list[i].sourceModule << ":" << list[i].startCol << std::endl;
+            std::cout << "\t" << list[i].sourceModule << ":" << list[i].startLine << std::endl;
         }
         return;
     }
@@ -65,9 +78,15 @@ void ModelChecker::visit_pre_functionInvoke(functionInvoke* n) {
     // one hit, check arity
     pUInt arity = n->numArgs();
     if (arity < list[0].minArity || arity > list[0].maxArity) {
-        diag << "wrong number of arguments: function '" << n->literalName().str()
-             << "' takes between " << list[0].minArity << " and "
-             << list[0].maxArity << " arguments (" << arity << " are specified)";
+        if (list[0].minArity == list[0].maxArity) {
+            diag << "wrong number of arguments: function '" << n->literalName().str()
+                 << "' requires " << list[0].minArity << " arguments (" << arity << " specified)";
+        }
+        else {
+            diag << "wrong number of arguments: function '" << n->literalName().str()
+                 << "' takes between " << list[0].minArity << " and "
+                 << list[0].maxArity << " arguments (" << arity << " specified)";
+        }
         addDiagnostic(n, diag.str());
     }
 

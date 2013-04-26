@@ -5,7 +5,8 @@ include_directories (
                      ${COR_INCLUDE_DIR}
                      ${Boost_INCLUDE_DIRS}
                      ${LLVM_INCLUDE_DIR}
-		     ${TINYXML_INCLUDE_DIR} # dumpast
+                     ${MD5_INCLUDE_DIR}
+                     ${TINYXML_INCLUDE_DIR} # dumpast
                      # this one is for corvus_grammar generated files
                      ${CMAKE_CURRENT_BINARY_DIR}
                     )

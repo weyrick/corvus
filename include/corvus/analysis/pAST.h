@@ -2089,6 +2089,10 @@ class functionInvoke: public expr {
     stmt** children_;
     pUInt numChildren_;
 
+    // true if this is a constructor invoke, i.e. they used 'new' and the
+    // function NAME should resolve to a class name
+    bool constructor_;
+
 protected:
     functionInvoke(const functionInvoke& other, pParseContext& C): expr(other),
             children_(0), numChildren_(other.numChildren_)
@@ -2100,7 +2104,8 @@ public:
     functionInvoke(expr* name, pParseContext& C):
         expr(functionInvokeKind),
         children_(NULL),
-        numChildren_(2)
+        numChildren_(2),
+        constructor_(false)
     {
         children_ = new (C) stmt*[numChildren_];
         children_[NAME] = name;
@@ -2109,7 +2114,8 @@ public:
     functionInvoke(expr* name, pParseContext& C, expressionList* argList, expr* target = NULL):
         expr(functionInvokeKind),
         children_(NULL),
-        numChildren_(2+argList->size())
+        numChildren_(2+argList->size()),
+        constructor_(false)
     {
         children_ = new (C) stmt*[numChildren_];
         children_[NAME] = name;
@@ -2121,7 +2127,8 @@ public:
     functionInvoke(expr* name, pParseContext& C, expr* arg1, expr* target = NULL):
         expr(functionInvokeKind),
         children_(NULL),
-        numChildren_(3)
+        numChildren_(3),
+        constructor_(false)
     {
         children_ = new (C) stmt*[numChildren_];
         children_[NAME] = name;
@@ -2129,7 +2136,11 @@ public:
         memcpy(children_+2, &arg1, sizeof(stmt*));
     }
 
-    bool isDynamic(void) const { return isa<dynamicID>(children_[NAME]); }
+    void setConstructor(void) { constructor_ = true; }
+
+    bool constructor(void) const { return constructor_; }
+
+    bool hasLiteralName(void) const { return isa<literalID>(children_[NAME]); }
 
     bool hasLiteralTarget(void) const {
         return (children_[TARGET] != NULL && isa<literalID>(children_[TARGET]));
@@ -2144,16 +2155,16 @@ public:
         return static_cast<expr*>(children_[NAME]);
     }
 
-    // for when !isDynamic()
+    // for when hasLiteralName()
     pStringRef literalName(void) {
-        assert(isa<literalID>(children_[NAME]));
+        assert(isa<literalID>(children_[NAME]) && "liternalName expected literalID in NAME");
         literalID *n = cast<literalID>(children_[NAME]);
         return n->name();
     }
 
     // for when hasLiteralTarget()
     pStringRef literalTargetName(void) {
-        assert(isa<literalID>(children_[TARGET]));
+        assert(isa<literalID>(children_[TARGET]) && "liternalTargetName expected literalID in TARGET");
         literalID *n = cast<literalID>(children_[TARGET]);
         return n->name();
     }

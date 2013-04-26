@@ -2149,6 +2149,8 @@ constructorInvoke(A) ::= T_NEW maybeDynamicID(ID) T_LEFTPAREN argList(C) T_RIGHT
                                        C  // expression list: arguments, copied
                                        );
     A->setLine(CURRENT_LINE);
+    A->setCol(ID->cols());
+    A->setConstructor();
     delete C;
 }
 constructorInvoke(A) ::= T_NEW maybeDynamicID(ID).
@@ -2157,6 +2159,8 @@ constructorInvoke(A) ::= T_NEW maybeDynamicID(ID).
                                        CTXT
                                        );
     A->setLine(CURRENT_LINE);
+    A->setCol(ID->cols());
+    A->setConstructor();
 }
 
 

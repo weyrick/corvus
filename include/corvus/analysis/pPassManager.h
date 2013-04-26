@@ -48,7 +48,7 @@ public:
         addPass(P);
     }
 
-    void run(pSourceModule *mod);
+    void run(pSourceModule *mod, int verbosity);
 
 };
 

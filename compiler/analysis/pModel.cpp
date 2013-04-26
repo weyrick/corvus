@@ -38,6 +38,31 @@ pModel::oid pModel::sql_insert(pStringRef query) {
     return r;
 }
 
+pModel::oid pModel::sql_select_single_id(pStringRef query) {
+
+    sqlite3_stmt *stmt;
+    pModel::oid result = pModel::NULLID;
+
+    int rc = sqlite3_prepare_v2(db_, query.str().c_str(), -1, &stmt, NULL);
+    if (rc != SQLITE_OK) {
+        std::cerr << "sqlite error: " << query.str() << "\n";
+        exit(1);
+    }
+    else if (trace_) {
+        std::cerr << "TRACE: " << query.str() << std::endl;
+    }
+
+    rc = sqlite3_step(stmt);
+    if (rc == SQLITE_ROW) {
+        result = sqlite3_column_int(stmt, 0);
+    }
+
+    sqlite3_finalize(stmt);
+
+    return result;
+
+}
+
 void pModel::sql_setup() {
     sql_execute("PRAGMA foreign_keys = ON");
     sql_execute("BEGIN");
@@ -257,17 +282,70 @@ void pModel::makeTables() {
 
 }
 
-pModel::oid pModel::getSourceModuleOID(pStringRef realPath) {
+bool pModel::sourceModuleDirty(pStringRef realPath, pStringRef hash) {
+
+    std::stringstream sql;
+
+    sql << "SELECT oid, hash FROM sourceModule WHERE realPath='" << realPath.str() << "'";
+
+    sqlite3_stmt *stmt;
+    pModel::oid existing = pModel::NULLID;
+    std::string existing_hash;
+
+    int rc = sqlite3_prepare_v2(db_, sql.str().c_str(), -1, &stmt, NULL);
+    if (rc != SQLITE_OK) {
+        std::cerr << "sqlite error: " << sql.str() << "\n";
+        exit(1);
+    }
+    else if (trace_) {
+        std::cerr << "TRACE: " << sql.str() << std::endl;
+    }
+
+    rc = sqlite3_step(stmt);
+    if (rc == SQLITE_ROW) {
+        existing = sqlite3_column_int(stmt, 0);
+        existing_hash = (char*)sqlite3_column_text(stmt, 1);
+    }
+
+    sqlite3_finalize(stmt);
+
+    if (existing != pModel::NULLID) {
+        // not in our local cache but it's in the db model
+        // we have it in the db. check hash to see if we should remodel it
+        return (pStringRef(hash) != existing_hash);
+    }
+    else {
+        // not in model, it's dirty
+        return true;
+    }
+
+}
+
+pModel::oid pModel::getSourceModuleOID(pStringRef realPath, pStringRef hash, bool deleteFirst) {
 
     if (modules_.find(realPath) != modules_.end()) {
         return modules_[realPath];
+    }    
+
+    std::stringstream sql;
+
+    if (!deleteFirst) {
+        sql << "SELECT oid FROM sourceModule WHERE realPath='" << realPath.str() << "'";
+
+        pModel::oid existing = sql_select_single_id(sql.str());
+        if (existing != pModel::NULLID) {
+            modules_[realPath] = existing;
+            return existing;
+        }
     }
+    else {
+        sql << "DELETE FROM sourceModule WHERE realPath='" << realPath.str() << "'";
+        sql_execute(sql.str());
+    }
+    sql.str("");
 
-    // XXX SELECT, CACHE
-
-    std::stringstream ins;
-    ins << "INSERT INTO sourceModule VALUES (NULL, '" << realPath.str() << "', '')";
-    oid result = sql_insert(ins.str().c_str());
+    sql << "INSERT INTO sourceModule VALUES (NULL, '" << realPath.str() << "', '" << hash.str() << "')";
+    oid result = sql_insert(sql.str().c_str());
     modules_[realPath] = result;
     return result;
 
@@ -279,11 +357,20 @@ pModel::oid pModel::getNamespaceOID(pStringRef ns) {
         return namespaces_[ns];
     }
 
-    // XXX SELECT, CACHE
+    std::stringstream sql;
 
-    std::stringstream ins;
-    ins << "INSERT INTO namespace VALUES (NULL, '" << ns.str() << "')";
-    oid result = sql_insert(ins.str().c_str());
+    sql << "SELECT oid FROM namespace WHERE namespace='" << ns.str() << "'";
+
+    pModel::oid existing = sql_select_single_id(sql.str());
+    if (existing != pModel::NULLID) {
+        namespaces_[ns] = existing;
+        return existing;
+    }
+
+    sql.str("");
+
+    sql << "INSERT INTO namespace VALUES (NULL, '" << ns.str() << "')";
+    oid result = sql_insert(sql.str().c_str());
     namespaces_[ns] = result;
     return result;
 
@@ -313,8 +400,8 @@ pModel::oid pModel::defineClass(pModel::oid ns_id, pModel::oid m_id, pStringRef 
     int el = 0;
     int ec = 0;
 
-    std::stringstream ins;
-    ins << "INSERT INTO class VALUES (NULL,"
+    std::stringstream sql;
+    sql << "INSERT INTO class VALUES (NULL,"
         << m_id << ','
         << ns_id
         << ",'" << name.str() << "',"
@@ -323,7 +410,7 @@ pModel::oid pModel::defineClass(pModel::oid ns_id, pModel::oid m_id, pStringRef 
         << sl  << ',' << sc  << ',' << el  << ',' << ec
         << ",'',''" // extends, implements
         << ")";
-    return sql_insert(ins.str().c_str());
+    return sql_insert(sql.str().c_str());
 
 }
 
@@ -353,8 +440,8 @@ pModel::oid pModel::defineFunction(oid ns_id, oid m_id, oid c_id, pStringRef nam
                     int type, int flags, int vis, int minA, int maxA, int sl, int sc,
                     int el, int ec) {
 
-    std::stringstream ins;
-    ins << "INSERT INTO function VALUES (NULL,"
+    std::stringstream sql;
+    sql << "INSERT INTO function VALUES (NULL,"
         << m_id << ','
         << ns_id << ','
         << oidOrNull(c_id).str()
@@ -366,7 +453,7 @@ pModel::oid pModel::defineFunction(oid ns_id, oid m_id, oid c_id, pStringRef nam
         << maxA << ','
         << sl  << ',' << sc  << ',' << el  << ',' << ec
         << ")";
-    return sql_insert(ins.str().c_str());
+    return sql_insert(sql.str().c_str());
 
 }
 
@@ -375,9 +462,9 @@ void pModel::defineFunctionVar(oid f_id, pStringRef name,
                     pStringRef defaultVal,
                     int sl, int sc) {
 
-    std::stringstream ins;
+    std::stringstream sql;
 
-    ins << "INSERT INTO function_var VALUES (NULL,"
+    sql << "INSERT INTO function_var VALUES (NULL,"
         << f_id << ','
         << "'" << name.str() << "'" << ','
         << type << ','
@@ -387,7 +474,7 @@ void pModel::defineFunctionVar(oid f_id, pStringRef name,
         << strOrNull(defaultVal).str() << ","
         << sl  << ',' << sc
         << ")";
-    sql_insert(ins.str().c_str());
+    sql_insert(sql.str().c_str());
 
 }
 
