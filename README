@@ -34,16 +34,21 @@ quite functional. the analysis passes are, however, in the early stages.
 
 corvus can:
 
- * parse php < 5.3
+ * parse php <= 5.3
  * dump tokens
  * dump AST in XML format
+ * parse directories for source code by extension
+ * handle include directories
+ * build a model based on all source, cache it to a database
  * report diagnostics on:
 
  1. in a function signature, using a parameter without a default after a parameter with one e.g. foo($bar, $baz='foo', $bip)
+ 1. function calls with the wrong number of arguments
+ 1. calls to nonexistent functions
 
 planned:
 
- * 5.3 and 5.4 source compatibility
+ * 5.4 source compatibility
  * many more diagnostics, configurable
  * asynchronous parsing
  * project configuration file
