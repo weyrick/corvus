@@ -15,8 +15,7 @@ set(BOOST_MIN_VERSION      "103800")
 set(BOOST_MIN_VERSION_TEXT "1.38")
 
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/modules )
-set(COR_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
-set(COR_LIB_DIR ${PROJECT_SOURCE_DIR}/lib)
+set(COR_INCLUDE_DIR ${PROJECT_SOURCE_DIR})
 
 #set(CMAKE_CXX_FLAGS_DEBUG "-fexceptions -g -Wall -Winline -W -Wwrite-strings -Wno-unused")
 
@@ -45,6 +44,7 @@ link_directories(${Boost_LIBRARY_DIRS})
 
 set(TINYXML_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/3rdparty/tinyxml")
 set(MD5_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/3rdparty/md5")
+set(LEXERTL_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/3rdparty")
 
 IF( LLVM_VERSION LESS ${LLVM_MIN_VERSION} )
   MESSAGE(FATAL_ERROR "LLVM version ${LLVM_STRING_VERSION} is too old, please install ${LLVM_MIN_VERSION_TEXT} of greater!")
@@ -52,8 +52,8 @@ ENDIF( LLVM_VERSION LESS ${LLVM_MIN_VERSION} )
 add_definitions(-DLLVM_VERSION=${LLVM_VERSION})
 
 add_subdirectory(3rdparty)
-add_subdirectory(compiler)
-add_subdirectory(frontend/cli)
+add_subdirectory(corvus)
+add_subdirectory(frontend)
 
 #IF(CPPUNIT_FOUND)
 #  ENABLE_TESTING()
