@@ -95,11 +95,11 @@ set_source_files_properties( ${PARSER_SRC_FILES}
                              PROPERTIES COMPILE_FLAGS ${LLVM_COMPILE_FLAGS}
                             )
 
-add_library( libcorvus ${PARSER_SRC_FILES} )
-#set_target_properties(liborvus
-#                      PROPERTIES
-#                      OUTPUT_NAME corvus
-#                     )
+add_library( libcorvus SHARED ${PARSER_SRC_FILES} )
+set_target_properties(libcorvus
+                      PROPERTIES
+                      OUTPUT_NAME corvus
+                     )
 target_link_libraries ( libcorvus
                         tinyxml
                         corvus_md5
