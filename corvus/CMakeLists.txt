@@ -70,7 +70,6 @@ set(PARSER_SRC_FILES
   ${CMAKE_CURRENT_BINARY_DIR}/corvus_grammar.cpp
   pAST.cpp
   pBaseVisitor.cpp
-  #pBaseTransformer.cpp
   pParseContext.cpp
   pSourceFile.cpp
   pLexer.cpp
@@ -80,6 +79,7 @@ set(PARSER_SRC_FILES
   pPass.cpp
   pPassManager.cpp
   pModel.cpp
+  pConfig.cpp
   # passes
   passes/PrintAST.cpp
   passes/DumpStats.cpp

@@ -15,6 +15,7 @@
 #include <getopt.h>
 
 #include "corvus/pSourceManager.h"
+#include "corvus/pConfig.h"
 #include <llvm/Support/FileSystem.h>
 
 using namespace llvm;
@@ -125,6 +126,15 @@ int main( int argc, char* argv[] )
     if (inputFiles.empty()) {
         corvusVersion();
         exit(1);
+    }
+
+    // try to read home directory config file
+    char *home = getenv("HOME");
+    if (home) {
+        pConfig hc;
+        if (hc.read(pStringRef(home)+"/.corvus")) {
+            //std::cout << "read .corvus yay!!\n";
+        }
     }
 
     for (unsigned i = 0; i != inputFiles.size(); ++i) {
