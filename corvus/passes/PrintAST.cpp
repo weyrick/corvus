@@ -427,15 +427,6 @@ bool PrintAST::visit_children_formalParam(formalParam* n) {
     return true;
 }
 
-void PrintAST::visit_pre_label(label* n) {
-    currentElement_->SetAttribute("id", n->labelNo());
-}
-
-void PrintAST::visit_pre_branch(branch* n) {
-    currentElement_->SetAttribute("trueLabel", n->trueLabel());
-    currentElement_->SetAttribute("falseLabel", n->falseLabel());
-}
-
 void PrintAST::visit_pre_typeCast(typeCast* n) {
     switch(n->castKind()) {
 

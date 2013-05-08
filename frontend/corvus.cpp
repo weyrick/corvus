@@ -41,7 +41,7 @@ const char *VERSION = "1.0";
 void corvusVersion(void) {
     std::cout << "corvus PHP source analyzer " << VERSION << std::endl;
     std::cout << "author: Shannon Weyrick <weyrick@mozek.us>\n" << std::endl;
-    std::cout << "USAGE: corvus [options] <input files/dirs>\n" \
+    std::cout << "USAGE: corvus [options] [-c <config> | <input files/dirs>]\n" \
                  "OPTIONS:\n" \
                  " --debug-model            - Debug the model builder\n" \
                  " --debug-parse            - Debug output from parser\n" \

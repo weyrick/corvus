@@ -12,7 +12,6 @@
 #include "corvus/pSourceFile.h"
 
 #include "corvus/pBaseVisitor.h"
-//#include "corvus/pBaseTransformer.h"
 #include "corvus/pParser.h"
 
 namespace corvus {
@@ -54,10 +53,5 @@ void pSourceModule::applyVisitor(AST::pBaseVisitor* v) {
     assert(ast_);
     v->visit(ast_);
 }
-/*
-void pSourceModule::applyTransform(AST::pBaseTransformer* t) {
-    assert(ast_);
-    ast_ = cast<AST::block>(t->transform(ast_));
-}
-*/
+
 } // namespace

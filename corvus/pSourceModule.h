@@ -26,7 +26,6 @@ typedef boost::shared_ptr<pSourceModule> pSourceModulePtr;
 namespace AST {
     class stmt;
     class pBaseVisitor;
-    class pBaseTransformer;
 }
 
 class pSourceModule {
@@ -52,12 +51,11 @@ public:
 
     void dumpContextStats(void) { context_.allocator().PrintStats(); }
 
-    // AST TRAVERSAL AND TRANSFORM
+    // AST TRAVERSAL
     AST::block* getAST() { return ast_; }
     const AST::block* getAST() const { return ast_; }
     void setAST(const AST::statementList* list);
     void applyVisitor(AST::pBaseVisitor* v);
-    //void applyTransform(AST::pBaseTransformer* t);
 
 };
 

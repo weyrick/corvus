@@ -264,7 +264,7 @@ class expr: public stmt {
 
 public:
     // see astNodes.def
-    static const nodeKind firstExprKind = exprReduceKind;
+    static const nodeKind firstExprKind = assignmentKind;
     static const nodeKind lastExprKind = unaryOpKind;
 
     expr(nodeKind k): stmt(k) { }
@@ -2453,107 +2453,6 @@ public:
 };
 
 
-// This class is needed for some transforms. It represents a block of statements of which the last one needs to be an
-// expression. This class is used when lowering some expressions into some statements, which still have to evaluate to
-// _something_. This can even be used to evaluate to a variable (which is then the last instruction in the statementList).
-// !!!This class is not intended for use by the parser!!!
-class exprReduce: public expr {
-    
-    block* statements_;
-
-protected:
-    exprReduce(const exprReduce& other, pParseContext& C): expr(other), statements_(0)
-    {
-        statements_ = other.statements_->clone(C);
-    }
-    
-public:
-
-    exprReduce(pParseContext& C, statementList* ptStatements): expr(exprReduceKind), statements_(NULL)
-    {
-        assert(!ptStatements->empty());
-        assert(isa<expr>(ptStatements->back()) && "The last statement of a list of statements for an evalExpr needs to be an expression!");
-        statements_ = new (C) block(C, ptStatements);
-    }
-    exprReduce(pParseContext& C, const expressionList* ptExpressions): expr(exprReduceKind), statements_(NULL)
-    {
-        assert(!ptExpressions->empty());
-        statements_ = new (C) block(C, ptExpressions);
-    }
-    block* statements(void) const { return statements_; }
-
-    stmt::child_iterator child_begin() { return reinterpret_cast<stmt**>(&statements_); }
-    stmt::child_iterator child_end() { return reinterpret_cast<stmt**>(&statements_+1); }
-
-    IMPLEMENT_SUPPORT_MEMBERS(exprReduce);
-
-};
-
-// MIR nodes
-
-// A label is function-local, and a function-unique label id has to be obtained from the
-// functionDecl AST node.
-class label: public stmt {
-    
-    pInt labelNo_;
-    
-protected:
-    label(const label& other, pParseContext& C): stmt(other), labelNo_(other.labelNo_) {}
-    
-public:
-    label(pUInt labelNo): stmt(labelKind), labelNo_(labelNo) {}
-    pUInt labelNo() const { return labelNo_; }
-    void setLabelNo(pUInt n) { labelNo_ = n; }
-    
-    stmt::child_iterator child_begin() { return child_iterator(); }
-    stmt::child_iterator child_end() { return child_iterator(); }
-
-    IMPLEMENT_SUPPORT_MEMBERS(label);   
-};
-
-// A branch with no condition is an unconditional branch to trueLabel.
-// falseLabel is then -1
-class branch: public stmt {
-    
-    pInt trueLabel_;
-    pInt falseLabel_;
-    expr* condition_;
-    
-protected:
-    branch(const branch& other, pParseContext& C): stmt(other),
-            trueLabel_(other.trueLabel_), falseLabel_(other.falseLabel_), condition_(0)
-    {
-        if(other.condition_)
-            condition_ = other.condition_->clone(C);
-    }
-    
-public:
-    branch(expr* condition, pUInt trueLabel, pUInt falseLabel): stmt(branchKind),
-            trueLabel_(trueLabel), falseLabel_(falseLabel), condition_(condition) {}
-    branch(expr* condition, label* trueLabel, label* falseLabel): stmt(branchKind),
-                trueLabel_(trueLabel->labelNo()), falseLabel_(falseLabel->labelNo()),
-                condition_(condition) {}
-    branch(pUInt destinationLabel): stmt(branchKind),
-            trueLabel_(destinationLabel), falseLabel_(-1), condition_(0) {}
-    branch(label* destinationLabel): stmt(branchKind),
-            trueLabel_(destinationLabel->labelNo()), falseLabel_(-1), condition_(0) {}
-    pUInt trueLabel() const { return trueLabel_; }
-    void setTrueLabel(pUInt n) { trueLabel_ = n; }
-    void setTrueLabel(label* n) { trueLabel_ = n->labelNo(); }
-
-    pUInt falseLabel() const { return falseLabel_; }
-    void setFalseLabel(pUInt n) { falseLabel_ = n; }
-    void setFalseLabel(label* n) { falseLabel_ = n->labelNo(); }
-
-    expr* condition() const { return condition_; }
-    void setCondition(expr *n) {condition_ = n; }
-    
-    stmt::child_iterator child_begin() { return reinterpret_cast<stmt**>(&condition_); }
-    stmt::child_iterator child_end() { return reinterpret_cast<stmt**>(&condition_+1); }
-
-    IMPLEMENT_SUPPORT_MEMBERS(branch);
-};
-
 // This needs to be after the class label.
 // function declaration
 class functionDecl: public decl {
@@ -2589,8 +2488,6 @@ public:
     stmt::child_iterator child_begin() { return (stmt**)&children_[0]; }
     stmt::child_iterator child_end() { return (stmt**)&children_[0]+END_EXPR; }
     
-    label* getNewLabel(pParseContext& C) { return new (C) label(labelCount_++); }
-
     IMPLEMENT_SUPPORT_MEMBERS(functionDecl);
 
 };

@@ -44,15 +44,8 @@ STMT(propertyDecl,    decl)
 STMT(functionDecl,    decl)
 // LAST DECL
 
-//FIRST MIR NODE
-STMT(label,           stmt)
-STMT(branch,          stmt)
-//LAST MIR NODE
-
-
 // expr (see expr::first and last kind constants)
 // FIRST EXPR
-EXPR(exprReduce,     expr)
 EXPR(assignment,     expr)
 EXPR(builtin,        expr)
 EXPR(opAssignment,   expr)

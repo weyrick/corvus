@@ -27,8 +27,6 @@ class pParseContext {
 private:
     typedef boost::unordered_map<const pSourceRange*, pUInt> lineNumMapType;
 
-    /// This data is only valid during parse (creation of AST), not analysis or transforms
-    // line number information will be copied into AST
     pUInt currentLineNum_;
     pSourceCharIterator lastNewline_;
     const pSourceRange* lastToken_;
