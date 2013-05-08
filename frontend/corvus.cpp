@@ -64,9 +64,16 @@ int main( int argc, char* argv[] )
 
     std::string exts("php");
     std::vector<std::string> inputFiles;
-    std::vector<std::string> includePaths;
 
     pSourceManager sm;
+    pConfig config;
+
+    // try to read home directory config file
+    char *home = getenv("HOME");
+    if (home) {
+        // will ignore if not found
+        pConfigMgr::read(pStringRef(home)+"/.corvus", config);
+    }
 
     while ((opt = getopt_long(argc, argv, "tai:hve:d:", longopts,
                               &idx
@@ -93,7 +100,7 @@ int main( int argc, char* argv[] )
             printToks = true;
             break;
         case 'i':
-            includePaths.push_back(optarg);
+            config.includePaths.push_back(optarg);
             break;
         case 'e':
             exts = optarg;
@@ -112,9 +119,9 @@ int main( int argc, char* argv[] )
 
     sm.setDebug(verbosity, debugParse, debugModel);
 
-    if (!includePaths.empty()) {
-        for (unsigned i = 0; i != includePaths.size(); ++i) {
-            sm.addIncludeDir(includePaths[i], exts);
+    if (!config.includePaths.empty()) {
+        for (unsigned i = 0; i != config.includePaths.size(); ++i) {
+            sm.addIncludeDir(config.includePaths[i], exts);
         }
     }
 
@@ -126,15 +133,6 @@ int main( int argc, char* argv[] )
     if (inputFiles.empty()) {
         corvusVersion();
         exit(1);
-    }
-
-    // try to read home directory config file
-    char *home = getenv("HOME");
-    if (home) {
-        pConfig hc;
-        if (hc.read(pStringRef(home)+"/.corvus")) {
-            //std::cout << "read .corvus yay!!\n";
-        }
     }
 
     for (unsigned i = 0; i != inputFiles.size(); ++i) {

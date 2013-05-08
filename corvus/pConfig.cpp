@@ -21,7 +21,7 @@
 
 namespace corvus { 
 
-bool pConfig::read(const llvm::Twine &file) {
+bool pConfigMgr::read(const llvm::Twine &file, pConfig &c) {
 
     llvm::SmallString<128> path_storage;
     llvm::StringRef fName = file.toStringRef(path_storage);
@@ -34,14 +34,32 @@ bool pConfig::read(const llvm::Twine &file) {
     llvm::SourceMgr sm;
     llvm::StringRef input = contents->getBufferStart();
     llvm::yaml::Stream stream(input, sm);
+    llvm::SmallString<128> kstorage;
+    llvm::SmallString<128> vstorage;
 
     for (llvm::yaml::document_iterator di = stream.begin(), de = stream.end();
        di != de; ++di) {
-        llvm::yaml::Node *n = di->getRoot();
-        if (n) {
-        }
-        else {
-          break;
+        llvm::yaml::MappingNode *n = llvm::dyn_cast<llvm::yaml::MappingNode>(di->getRoot());
+        if (!n)
+            break;
+        for (llvm::yaml::MappingNode::iterator i = n->begin();
+             i != n->end();
+             ++i) {
+            llvm::yaml::ScalarNode *keyN = llvm::dyn_cast<llvm::yaml::ScalarNode>(i->getKey());
+            llvm::yaml::ScalarNode *valN = llvm::dyn_cast<llvm::yaml::ScalarNode>(i->getValue());
+            if (!keyN || !valN)
+                continue;
+            //std::cout << "key is " << key->getValue(storage).str() << ", val is " << val->getValue(storage).str() << std::endl;
+
+            pStringRef key = keyN->getValue(kstorage);
+            pStringRef val = valN->getValue(vstorage);
+            if (key == "include") {
+                c.includePaths.push_back(val.str());
+            }
+            else {
+                std::cerr << "unknown key in config file: " << val.str() << std::endl;
+            }
+
         }
     }
 

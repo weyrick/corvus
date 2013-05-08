@@ -14,14 +14,21 @@
 #include "pTypes.h"
 #include <string>
 #include <llvm/ADT/Twine.h>
+#include <vector>
+#include <string>
 
 namespace corvus {
 
-class pConfig {
+struct pConfig {
+    std::vector<std::string> includePaths;
+    std::string dbPath;
+};
+
+class pConfigMgr {
 
 public:
 
-    bool read(const llvm::Twine &file);
+    static bool read(const llvm::Twine &file, pConfig &c);
 
 };
 
