@@ -56,8 +56,17 @@ bool pConfigMgr::read(const llvm::Twine &file, pConfig &c) {
             if (key == "include") {
                 c.includePaths.push_back(val.str());
             }
+            else if (key == "directory" || key == "file") {
+                c.inputFiles.push_back(val.str());
+            }
+            else if (key == "db") {
+                c.dbName = val.str();
+            }
+            else if (key == "exts") {
+                c.exts = val.str();
+            }
             else {
-                std::cerr << "unknown key in config file: " << val.str() << std::endl;
+                std::cerr << "unknown key in config file: " << key.str() << std::endl;
             }
 
         }

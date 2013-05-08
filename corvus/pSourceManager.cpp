@@ -246,7 +246,7 @@ void pSourceManager::openModel() {
     assert(!db_);
 
     if (verbosity_ > 1) {
-        std::cerr << "opening model at: " << ((!dbName_.length()) ? "tmpdb" : dbName_) << std::endl;
+        std::cerr << "opening model at: " << ((dbName_.empty()) ? "tmpdb" : dbName_) << std::endl;
     }
 
     int rc = sqlite3_open(dbName_.c_str(), &db_);

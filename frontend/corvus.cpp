@@ -31,6 +31,7 @@ struct option longopts[] = {
     {"db", 1, 0, 'd'},
     {"help", 0, 0, 'h'},
     {"verbose", 0, 0, 'v'},
+    {"config", 1, 0, 'c'},
     {0, 0, 0, 0}
 };
 
@@ -44,7 +45,8 @@ void corvusVersion(void) {
                  "OPTIONS:\n" \
                  " --debug-model            - Debug the model builder\n" \
                  " --debug-parse            - Debug output from parser\n" \
-                 " -h,--help                - Display available options (-help-hidden for more)\n" \
+                 " -c,--config=<file>       - Load corvus config file\n" \
+                 " -h,--help                - Display available options\n" \
                  " -a,--print-ast           - Print AST in XML format\n" \
                  " -t,--print-toks          - Print tokens from lexer\n" \
                  " -e,--exts=<list>         - Source file extensions to parse when reading a directory (command separated, default: php)\n" \
@@ -62,11 +64,11 @@ int main( int argc, char* argv[] )
     bool debugParse(false), debugModel(false);
     bool printToks(false), printAST(false);
 
-    std::string exts("php");
     std::vector<std::string> inputFiles;
 
     pSourceManager sm;
     pConfig config;
+    config.exts = "php";
 
     // try to read home directory config file
     char *home = getenv("HOME");
@@ -75,7 +77,7 @@ int main( int argc, char* argv[] )
         pConfigMgr::read(pStringRef(home)+"/.corvus", config);
     }
 
-    while ((opt = getopt_long(argc, argv, "tai:hve:d:", longopts,
+    while ((opt = getopt_long(argc, argv, "tai:hve:d:c:", longopts,
                               &idx
                               )
             ) != -1
@@ -102,8 +104,13 @@ int main( int argc, char* argv[] )
         case 'i':
             config.includePaths.push_back(optarg);
             break;
+        case 'c':
+            if (!pConfigMgr::read(optarg, config)) {
+                std::cerr << "unable to load config file: " << optarg << std::endl;
+            }
+            break;
         case 'e':
-            exts = optarg;
+            config.exts = optarg;
             break;
         case 'h':
             corvusVersion();
@@ -119,9 +126,24 @@ int main( int argc, char* argv[] )
 
     sm.setDebug(verbosity, debugParse, debugModel);
 
+    // set values from config
+    if (!config.dbName.empty()) {
+        if (verbosity)
+            std::cout << "[config] setting db name: " << config.dbName << std::endl;
+        sm.setModelDBName(config.dbName);
+    }
     if (!config.includePaths.empty()) {
         for (unsigned i = 0; i != config.includePaths.size(); ++i) {
-            sm.addIncludeDir(config.includePaths[i], exts);
+            if (verbosity)
+                std::cout << "[config] adding include path: " << config.includePaths[i] << std::endl;
+            sm.addIncludeDir(config.includePaths[i], config.exts);
+        }
+    }
+    if (!config.inputFiles.empty()) {
+        for (unsigned i = 0; i != config.inputFiles.size(); ++i) {
+            if (verbosity)
+                std::cout << "[config] adding input file: " << config.inputFiles[i] << std::endl;
+            inputFiles.push_back(config.inputFiles[i]);
         }
     }
 
@@ -140,9 +162,11 @@ int main( int argc, char* argv[] )
         sys::fs::file_status stat;
         sys::fs::status(inputFiles[i], stat);
         if (sys::fs::is_directory(stat))
-            sm.addSourceDir(inputFiles[i], exts);
+            sm.addSourceDir(inputFiles[i], config.exts);
         else if (sys::fs::is_regular_file(stat))
             sm.addSourceFile(inputFiles[i]);
+        else
+            std::cerr << "skipping unknown path: " << inputFiles[i] << std::endl;
 
     }
 

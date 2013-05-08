@@ -21,7 +21,9 @@ namespace corvus {
 
 struct pConfig {
     std::vector<std::string> includePaths;
-    std::string dbPath;
+    std::vector<std::string> inputFiles;
+    std::string dbName;
+    std::string exts;
 };
 
 class pConfigMgr {
