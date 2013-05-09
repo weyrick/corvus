@@ -1,6 +1,6 @@
 = Corvus PHP Static Analyzer =
 
-This is a fast, lightweight PHP static analyzer with few dependencies.
+This is a fast (C++ based), lightweight PHP static analyzer with few dependencies.
 Its purpose is to catch programming errors by statically analyzing the
 source code, without running it.
 
@@ -44,8 +44,8 @@ corvus can:
  * report diagnostics on:
 
  1. in a function signature, using a parameter without a default after a parameter with one e.g. foo($bar, $baz='foo', $bip)
- 1. function calls with the wrong number of arguments
- 1. calls to nonexistent functions
+ 2. function calls with the wrong number of arguments
+ 3. calls to nonexistent functions
 
 planned:
 
