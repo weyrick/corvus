@@ -80,6 +80,7 @@ set(PARSER_SRC_FILES
   pPassManager.cpp
   pModel.cpp
   pConfig.cpp
+  pDiagnostic.cpp
   # passes
   passes/PrintAST.cpp
   passes/DumpStats.cpp

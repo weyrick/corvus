@@ -14,14 +14,14 @@
 #include "corvus/pAST.h"
 #include "corvus/pParseContext.h"
 
-#include <boost/shared_ptr.hpp>
+#include <vector>
 
 namespace corvus {
 
 class pSourceFile;
 class pSourceModule;
-
-typedef boost::shared_ptr<pSourceModule> pSourceModulePtr;
+class pDiagnostic;
+class pSourceManager;
 
 namespace AST {
     class stmt;
@@ -29,15 +29,19 @@ namespace AST {
 }
 
 class pSourceModule {
+public:
+    typedef std::vector<pDiagnostic *> DiagListType;
 
 private:
     const pSourceFile* source_;
     AST::block* ast_;
     AST::pParseContext context_;
     bool parsed_;
+    std::vector<pDiagnostic *> diagList_;
+    pSourceManager *sourceMgr_;
 
 public:
-    pSourceModule(pStringRef file);
+    pSourceModule(pSourceManager *mgr, pStringRef file);
     ~pSourceModule();
 
     void parse(bool debug);
@@ -56,6 +60,10 @@ public:
     const AST::block* getAST() const { return ast_; }
     void setAST(const AST::statementList* list);
     void applyVisitor(AST::pBaseVisitor* v);
+
+    // DIAGNOSTICS
+    void addDiagnostic(pDiagnostic* d);
+    DiagListType& getDiagnostics(void);
 
 };
 

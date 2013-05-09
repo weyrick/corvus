@@ -10,16 +10,21 @@
 
 #include "corvus/pSourceModule.h"
 #include "corvus/pSourceFile.h"
+#include "corvus/pSourceManager.h"
 
 #include "corvus/pBaseVisitor.h"
 #include "corvus/pParser.h"
+#include "corvus/pDiagnostic.h"
+
+#include <algorithm>
 
 namespace corvus {
 
-pSourceModule::pSourceModule(pStringRef file):
+pSourceModule::pSourceModule(pSourceManager *mgr, pStringRef file):
     source_(new pSourceFile(file)),
     ast_(NULL),
-    context_(this)
+    context_(this),
+    sourceMgr_(mgr)
 {
 
 
@@ -36,6 +41,11 @@ pSourceModule::~pSourceModule() {
     // cleanup AST
     if (ast_)
         ast_->destroy(context_);
+    // cleanup diagnostics
+    if (!diagList_.empty()) {
+        for (int i = 0; i < diagList_.size(); ++i)
+            delete diagList_[i];
+    }
     delete source_;
 }
 
@@ -53,5 +63,23 @@ void pSourceModule::applyVisitor(AST::pBaseVisitor* v) {
     assert(ast_);
     v->visit(ast_);
 }
+
+bool compareDiagLine(pDiagnostic* lhs, pDiagnostic* rhs) {
+    return (lhs->startLineNum() < rhs->startLineNum());
+}
+
+pSourceModule::DiagListType &pSourceModule::getDiagnostics(void) {
+    // sort
+    std::sort(diagList_.begin(), diagList_.end(), compareDiagLine);
+    // return
+    return diagList_;
+}
+
+void pSourceModule::addDiagnostic(pDiagnostic* d) {
+    // we take ownership here
+    diagList_.push_back(d);
+    sourceMgr_->trackDiagModule(this);
+}
+
 
 } // namespace

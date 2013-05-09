@@ -10,6 +10,7 @@
 
 #include "corvus/pSourceFile.h"
 #include "corvus/pPass.h"
+#include "corvus/pDiagnostic.h"
 
 namespace corvus { namespace AST {
 
@@ -20,27 +21,13 @@ const char* pPass::nodeDescTable_[] = {
 
 
 void pPass::addDiagnostic(AST::stmt* s, pStringRef msg) {
-    // XXX this is temporary
-    const pParseContext &C_ = module_->context();
-    std::cout << C_.getOwner()->fileName() << ":" << s->startLineNum() << ":" << s->startCol() << ": " << msg.data() << std::endl;
-    if (!s->startLineNum() || !s->startCol())
-        return;
-    // diag source line
-    pSourceCharIterator i = C_.getOwner()->source()->contents()->getBufferStart();
-    pSourceCharIterator end = C_.getOwner()->source()->contents()->getBufferEnd();
-    pUInt curLine(1), diagLine(s->startLineNum());
-    while (curLine != diagLine) {
-        if (*i == '\n')
-            curLine++;
-        i++;
-    }
-    pSourceCharIterator e = i;
-    while (*e != '\n' && e != end)
-        e++;
-    pStringRef line(i, e-i);
-    std::cout << line.str() << std::endl;
-    // arrow to problem column
-    std::cout << std::string(s->startCol()-1, ' ') << "^" << std::endl;
+    // the module takes ownership of this
+    pDiagnostic *d = new pDiagnostic(s->startLineNum(),
+                                     s->startCol(),
+                                     s->endLineNum(),
+                                     s->endCol(),
+                                     msg);
+    module_->addDiagnostic(d);
 }
 
 

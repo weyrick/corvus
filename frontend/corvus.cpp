@@ -16,6 +16,7 @@
 
 #include "corvus/pSourceManager.h"
 #include "corvus/pConfig.h"
+#include "corvus/pDiagnostic.h"
 #include <llvm/Support/FileSystem.h>
 
 using namespace llvm;
@@ -56,6 +57,31 @@ void corvusVersion(void) {
                  " --version                - Display the version of this program" << std::endl;
 }
 
+void renderDiagnostic(const pSourceModule *sm, const pDiagnostic *d) {
+    /*
+    const pParseContext &C_ = module_->context();
+    std::cout << C_.getOwner()->fileName() << ":" << s->startLineNum() << ":" << s->startCol() << ": " << msg.data() << std::endl;
+    if (!s->startLineNum() || !s->startCol())
+        return;
+    // diag source line
+    pSourceCharIterator i = C_.getOwner()->source()->contents()->getBufferStart();
+    pSourceCharIterator end = C_.getOwner()->source()->contents()->getBufferEnd();
+    pUInt curLine(1), diagLine(s->startLineNum());
+    while (curLine != diagLine) {
+        if (*i == '\n')
+            curLine++;
+        i++;
+    }
+    pSourceCharIterator e = i;
+    while (*e != '\n' && e != end)
+        e++;
+    pStringRef line(i, e-i);
+    std::cout << line.str() << std::endl;
+    // arrow to problem column
+    std::cout << std::string(s->startCol()-1, ' ') << "^" << std::endl;
+    */
+    std::cout << sm->fileName() << ":" << d->startLineNum() << ":" << d->startCol() << ": " << d->msg().str() << std::endl;
+}
 
 int main( int argc, char* argv[] )
 {
@@ -182,7 +208,14 @@ int main( int argc, char* argv[] )
     sm.refreshModel();
     sm.runDiagnostics();
 
-    // XXX code to render diagnostics
+    // render diagnostics
+    pSourceManager::DiagModuleListType mList = sm.getDiagModules();
+    for (int i = 0; i < mList.size(); ++i) {
+        pSourceModule::DiagListType dList = mList[i]->getDiagnostics();
+        for (int j = 0; j < dList.size(); ++j) {
+            renderDiagnostic(mList[i], dList[j]);
+        }
+    }
 
     if (verbosity)
         std::cerr << "analyzation complete" << std::endl;

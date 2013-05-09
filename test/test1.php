@@ -44,10 +44,6 @@ function foo($one, $two) {
     echo $hello;
 }
 
-// DIAG: $three needs default
-function bar($hey, $two=5, $three) {
-}
-
 function baz($foo1, $foo2=5, $foo3=10) {
   // futurediag: unused variables $foo1, $foo2, $foo3
 }
@@ -107,5 +103,9 @@ $foo5 = baz();
 
 // futurediag: unused variable $f
 $unused = 5;
+
+// DIAG: $three needs default
+function bar($hey, $two=5, $three) {
+}
 
 ?>

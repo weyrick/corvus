@@ -25,13 +25,20 @@ class pPassManager;
 class pModel;
 
 class pSourceManager {
+public:
+    typedef std::vector<pSourceModule*> DiagModuleListType;
 
 private:
+    typedef std::map<std::string, pSourceModule*> ModuleListType;
+    typedef std::map<pSourceModule*, bool> DiagTrackerType;
 
     bool debugParse_, debugModel_;
-    int verbosity_;
-    typedef std::map<std::string, pSourceModule*> ModuleListType;
+    int verbosity_;    
     ModuleListType moduleList_;
+
+    // the source modules from moduleList_ which have diagnostics waiting
+    // note that moduleList_ is the owner of these pointers, not diagModuleList_
+    DiagTrackerType diagModuleTracker_;
 
     sqlite3 *db_;
     pModel *model_;
@@ -66,6 +73,14 @@ public:
 
     void refreshModel();
     void runDiagnostics();
+
+    // caller will not own these and should not free them
+    void trackDiagModule(pSourceModule *m) {
+        diagModuleTracker_[m] = true;
+    }
+
+    DiagModuleListType getDiagModules();
+
 
 };
 

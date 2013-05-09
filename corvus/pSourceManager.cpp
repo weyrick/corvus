@@ -63,7 +63,7 @@ void pSourceManager::addSourceFile(pStringRef name) {
         std::cerr << "adding source file: " << name.str() << std::endl;
     }
 
-    pSourceModule* unit(new pSourceModule(rp));
+    pSourceModule* unit(new pSourceModule(this, rp));
     moduleList_[rp] = unit;
 
     free(rp);
@@ -186,7 +186,7 @@ void pSourceManager::addIncludeDir(pStringRef name, pStringRef exts) {
         }
 
         if (found)
-            includeList.push_back(new pSourceModule(dir->path()));
+            includeList.push_back(new pSourceModule(this, dir->path()));
     }
 
     pPassManager passManager(model_);
@@ -257,6 +257,18 @@ void pSourceManager::openModel() {
     }
 
     model_ = new pModel(db_, debugModel_);
+
+}
+
+pSourceManager::DiagModuleListType pSourceManager::getDiagModules() {
+
+    pSourceManager::DiagModuleListType result;
+    for (DiagTrackerType::iterator i = diagModuleTracker_.begin();
+         i != diagModuleTracker_.end();
+         ++i) {
+        result.push_back(i->first);
+    }
+    return result;
 
 }
 

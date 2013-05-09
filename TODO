@@ -7,11 +7,11 @@
    - rendering in: console, html, xml, json
    - each diagnostic configurable on/off
    - possibly whitespace, phpdoc checks, basic phpmd-like checks
-- yaml configuration file (llvm yaml)
 - remove boost lib depedency (osx)
-- add model passes, declare-use-chain, call graphs, cfg
+- possibly remove boost dependency, or include in 3rdparty
 - keep output generic for use from e.g. ide
 - investigate other uses of llvm support classes
-
+ - in particular, use similar data structures from llvm if it helps remove
+   the dependency on boost
 - diagnostic wish list
  - warn on new ternary operator with implicit true expression

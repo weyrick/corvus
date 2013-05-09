@@ -40,6 +40,7 @@ corvus can:
  * parse directories for source code by extension
  * handle include directories
  * build a model based on all source, cache it to a database
+ * read YAML based config files
  * report diagnostics on:
 
  1. in a function signature, using a parameter without a default after a parameter with one e.g. foo($bar, $baz='foo', $bip)
@@ -51,6 +52,5 @@ planned:
  * 5.4 source compatibility
  * many more diagnostics, configurable
  * asynchronous parsing
- * project configuration file
  * library support (callable from e.g. an IDE)
 
