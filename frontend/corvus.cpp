@@ -104,11 +104,6 @@ bool willRenderFor(pStringRef cwd, const pConfig &config, pStringRef fname) {
     if (config.diagFiles.empty())
         return true;
 
-    /*
-    std::cout << "searching for: " << lfile.str().str() << " in: \n";
-    for (int i = 0; i < config.diagFiles.size(); ++i)
-        std::cout << config.diagFiles[i] << "\n";
-    */
     pConfig::StringListType::const_iterator i = find(config.diagFiles.begin(),
                                                      config.diagFiles.end(),
                                                      fname.str());
