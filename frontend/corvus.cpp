@@ -131,7 +131,7 @@ bool willRenderFor(pStringRef cwd, const pConfig &config, pStringRef fname) {
 int main( int argc, char* argv[] )
 {
 
-    int opt, idx, verbosity;
+    int opt, idx, verbosity(0);
     bool debugParse(false), debugModel(false);
     bool printToks(false), printAST(false);
 
