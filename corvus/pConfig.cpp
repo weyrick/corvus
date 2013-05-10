@@ -56,8 +56,11 @@ bool pConfigMgr::read(const llvm::Twine &file, pConfig &c) {
             if (key == "include") {
                 c.includePaths.push_back(val.str());
             }
-            else if (key == "directory" || key == "file") {
+            else if (key == "source_directory" || key == "source_file") {
                 c.inputFiles.push_back(val.str());
+            }
+            else if (key == "diagnostic_file") {
+                c.diagFiles.push_back(val.str());
             }
             else if (key == "db") {
                 c.dbName = val.str();

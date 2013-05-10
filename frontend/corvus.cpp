@@ -13,6 +13,7 @@
 #include <iostream>
 #include <string>
 #include <getopt.h>
+#include <algorithm>
 
 #include "corvus/pSourceManager.h"
 #include "corvus/pConfig.h"
@@ -42,7 +43,14 @@ const char *VERSION = "1.0";
 void corvusVersion(void) {
     std::cout << "corvus PHP source analyzer " << VERSION << std::endl;
     std::cout << "author: Shannon Weyrick <weyrick@mozek.us>\n" << std::endl;
-    std::cout << "USAGE: corvus [options] [-c <config> | <input files/dirs>]\n" \
+    std::cout << "USAGE: \n" \
+                 "corvus [options] <source files/dirs>\n" \
+                 "corvus [options] -c <config> [diagnostic files]\n\n" \
+                 "in the first invocation format, specify a list of source files " \
+                 "or directories to both parse and produce diagnostics on.\n\n" \
+                 "in the second invocation format, specify a config file which includes " \
+                 "the source directories and files, then optionally list which of those source files\n" \
+                 "to produce diagnostics on.\n\n" \
                  "OPTIONS:\n" \
                  " --debug-model            - Debug the model builder\n" \
                  " --debug-parse            - Debug output from parser\n" \
@@ -54,10 +62,10 @@ void corvusVersion(void) {
                  " -i,--include=<directory> - Add a directory to build model from, but not generate diagnostics for\n" \
                  " -d,--db=<file>           - Name of model database. If not specified, no model data is stored.\n" \
                  " -v                       - Increase verbosity, may specify more than once\n" \
-                 " --version                - Display the version of this program" << std::endl;
+                 " --version                - Display the version of this program\n" << std::endl;
 }
 
-void renderDiagnostic(const pSourceModule *sm, const pDiagnostic *d) {
+void renderDiagnostic(pStringRef cwd, const pSourceModule *sm, const pDiagnostic *d) {
     /*
     const pParseContext &C_ = module_->context();
     std::cout << C_.getOwner()->fileName() << ":" << s->startLineNum() << ":" << s->startCol() << ": " << msg.data() << std::endl;
@@ -80,7 +88,44 @@ void renderDiagnostic(const pSourceModule *sm, const pDiagnostic *d) {
     // arrow to problem column
     std::cout << std::string(s->startCol()-1, ' ') << "^" << std::endl;
     */
-    std::cout << sm->fileName() << ":" << d->startLineNum() << ":" << d->startCol() << ": " << d->msg().str() << std::endl;
+    // strip leading cwd
+    pStringRef fname = sm->fileName();
+    if (fname.startswith(cwd)) {
+        std::cout << fname.substr(cwd.size()+1).str() << ":";
+    }
+    else {
+        std::cout << sm->fileName() << ":";
+    }
+    std::cout << d->startLineNum() << ":" << d->startCol() << ": " << d->msg().str() << std::endl;
+}
+
+bool willRenderFor(pStringRef cwd, const pConfig &config, pStringRef fname) {
+
+    if (config.diagFiles.empty())
+        return true;
+
+    /*
+    std::cout << "searching for: " << lfile.str().str() << " in: \n";
+    for (int i = 0; i < config.diagFiles.size(); ++i)
+        std::cout << config.diagFiles[i] << "\n";
+    */
+    pConfig::StringListType::const_iterator i = find(config.diagFiles.begin(),
+                                                     config.diagFiles.end(),
+                                                     fname.str());
+    if (i != config.diagFiles.end())
+        // found it, render
+        return true;
+
+    // otherwise, try stripping cwd from file and check again
+    // in this case, they specified a diagFile relative to cwd
+    if (!fname.startswith(cwd))
+        return false;
+
+    i = find(config.diagFiles.begin(),
+             config.diagFiles.end(),
+             fname.substr(cwd.size()+1).str());
+    return (i != config.diagFiles.end());
+
 }
 
 int main( int argc, char* argv[] )
@@ -165,7 +210,10 @@ int main( int argc, char* argv[] )
             sm.addIncludeDir(config.includePaths[i], config.exts);
         }
     }
+
+    bool haveSourceFromConfig = false;
     if (!config.inputFiles.empty()) {
+        haveSourceFromConfig = true;
         for (unsigned i = 0; i != config.inputFiles.size(); ++i) {
             if (verbosity)
                 std::cout << "[config] adding input file: " << config.inputFiles[i] << std::endl;
@@ -174,8 +222,18 @@ int main( int argc, char* argv[] )
     }
 
     if (optind < argc) {
-        while (optind < argc)
-          inputFiles.push_back(argv[optind++]);
+        // if we have files on the command line, but there were already files
+        // added via a config file, then instead of adding these files to
+        // the list we will instead limit diagnostic output to just these
+        // files
+        if (haveSourceFromConfig) {
+            while (optind < argc)
+                config.diagFiles.push_back(argv[optind++]);
+        }
+        else {
+            while (optind < argc)
+                inputFiles.push_back(argv[optind++]);
+        }
     }
 
     if (inputFiles.empty()) {
@@ -209,11 +267,16 @@ int main( int argc, char* argv[] )
     sm.runDiagnostics();
 
     // render diagnostics
+    llvm::SmallString<128> cwd;
+    llvm::sys::fs::current_path(cwd);
     pSourceManager::DiagModuleListType mList = sm.getDiagModules();
     for (int i = 0; i < mList.size(); ++i) {
+        // if we have diagfiles, only render for the ones in that list
+        if (!willRenderFor(cwd, config, mList[i]->fileName()))
+            continue;
         pSourceModule::DiagListType dList = mList[i]->getDiagnostics();
         for (int j = 0; j < dList.size(); ++j) {
-            renderDiagnostic(mList[i], dList[j]);
+            renderDiagnostic(cwd, mList[i], dList[j]);
         }
     }
 

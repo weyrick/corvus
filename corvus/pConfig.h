@@ -20,8 +20,10 @@
 namespace corvus {
 
 struct pConfig {
-    std::vector<std::string> includePaths;
-    std::vector<std::string> inputFiles;
+    typedef std::vector<std::string> StringListType;
+    StringListType includePaths;
+    StringListType inputFiles;
+    StringListType diagFiles;
     std::string dbName;
     std::string exts;
 };
