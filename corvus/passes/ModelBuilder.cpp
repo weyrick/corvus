@@ -38,6 +38,7 @@ void ModelBuilder::pre_run(void) {
     if (!model_->sourceModuleDirty(module_->fileName(), hash)) {
         // don't run the pass
         abortPass();
+        return;
     }
 
     m_id_ = model_->getSourceModuleOID(module_->fileName(),
