@@ -6,7 +6,7 @@ set(TINYXML_SRC_FILES
    tinyxmlparser.cpp
    )
 
-add_definitions("-DTIXML_USE_STL")
+add_definitions("-fPIC -DTIXML_USE_STL")
 
 # STATIC
 add_library( tinyxml ${TINYXML_SRC_FILES} ) 

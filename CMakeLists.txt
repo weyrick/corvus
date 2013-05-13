@@ -17,6 +17,7 @@ set(BOOST_MIN_VERSION_TEXT "1.38")
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/modules )
 set(COR_INCLUDE_DIR ${PROJECT_SOURCE_DIR})
 
+set(CMAKE_CXX_FLAGS "-fPIC")
 #set(CMAKE_CXX_FLAGS_DEBUG "-fexceptions -g -Wall -Winline -W -Wwrite-strings -Wno-unused")
 
 MESSAGE( STATUS "PROJECT_SOURCE_DIR: " ${PROJECT_SOURCE_DIR} )
@@ -38,9 +39,7 @@ Find_Package(CppUnit) # optional
 Find_Package(Doxygen) # optional
 
 include_directories(${COR_INCLUDE_DIR} ${Boost_INCLUDE_DIR} ${LLVM_INCLUDE_DIR})
-
-# XXX remove this dependency, no libs
-link_directories(${Boost_LIBRARY_DIRS})
+link_directories(${LLVM_LIB_DIR} ${Boost_LIBRARY_DIRS})
 
 set(TINYXML_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/3rdparty/tinyxml")
 set(MD5_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/3rdparty/md5")
