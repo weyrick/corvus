@@ -25,7 +25,7 @@ using namespace corvus;
 #define TOKEN_COL(T)       CTXT.getColPair(T)
 #define CURRENT_LINE       CTXT.currentLineNum()
 
-AST::literalExpr* extractLiteralString(pSourceRange* B, pSourceModule* pMod, bool isSimple) {
+AST::literalExpr* extractLiteralString(pSourceRef* B, pSourceModule* pMod, bool isSimple) {
   // substring out the quotes, special case for empty string
   AST::literalString* A;
   if ((*B).size() <= 2) {
@@ -41,8 +41,8 @@ AST::literalExpr* extractLiteralString(pSourceRange* B, pSourceModule* pMod, boo
 }  
 
 %name corvusParse
-%token_type {pSourceRange*}
-%default_type {pSourceRange*}
+%token_type {pSourceRef*}
+%default_type {pSourceRef*}
 %extra_argument {pSourceModule* pMod}
 
 

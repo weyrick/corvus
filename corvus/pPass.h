@@ -57,7 +57,7 @@ public:
     virtual void run(void) = 0;
     virtual void post_run(void)  { }
 
-    void addDiagnostic(AST::stmt*, pStringRef msg);
+    pDiagnostic *addDiagnostic(AST::stmt*, pStringRef msg);
 
 };
 

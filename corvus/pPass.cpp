@@ -11,6 +11,7 @@
 #include "corvus/pSourceFile.h"
 #include "corvus/pPass.h"
 #include "corvus/pDiagnostic.h"
+#include "corvus/pSourceLoc.h"
 
 namespace corvus { namespace AST {
 
@@ -20,14 +21,13 @@ const char* pPass::nodeDescTable_[] = {
 };
 
 
-void pPass::addDiagnostic(AST::stmt* s, pStringRef msg) {
+pDiagnostic *pPass::addDiagnostic(AST::stmt* s, pStringRef msg) {
     // the module takes ownership of this
-    pDiagnostic *d = new pDiagnostic(s->startLineNum(),
-                                     s->startCol(),
-                                     s->endLineNum(),
-                                     s->endCol(),
+    pSourceLoc loc(module_, s->range());
+    pDiagnostic *d = new pDiagnostic(loc,
                                      msg);
     module_->addDiagnostic(d);
+    return d;
 }
 
 

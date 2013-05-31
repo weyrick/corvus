@@ -11,7 +11,8 @@
 #ifndef COR_PDIAGNOSTIC_H_
 #define COR_PDIAGNOSTIC_H_
 
-#include "corvus/pTypes.h"
+#include "pTypes.h"
+#include "pSourceLoc.h"
 
 #include <string>
 
@@ -21,26 +22,16 @@ class pDiagnostic {
 
 private:
 
-    pUInt startLineNum_;
-    pUInt endLineNum_;
-    pUInt startCol_;
-    pUInt endCol_;
-
+    pSourceLoc loc_;
     std::string msg_;
 
 public:    
 
-    pDiagnostic(pUInt sl, pUInt sc, pUInt el, pUInt ec, pStringRef msg) :
-        startLineNum_(sl),
-        endLineNum_(el),
-        startCol_(sc),
-        endCol_(ec),
+    pDiagnostic(const pSourceLoc &loc, pStringRef msg) :
+        loc_(loc),
         msg_(msg.str()) { }
 
-    pUInt startLineNum(void) const { return startLineNum_; }
-    pUInt endLineNum(void) const { return endLineNum_; }
-    pUInt startCol(void) const { return startCol_; }
-    pUInt endCol(void) const { return endCol_; }
+    const pSourceLoc& location(void) const { return loc_; }
 
     pStringRef msg(void) const { return msg_; }
 

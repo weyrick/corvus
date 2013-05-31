@@ -25,11 +25,11 @@ class pSourceModule;
 namespace AST {
 class pParseContext {
 private:
-    typedef boost::unordered_map<const pSourceRange*, pUInt> lineNumMapType;
+    typedef boost::unordered_map<const pSourceRef*, pUInt> lineNumMapType;
 
     pUInt currentLineNum_;
     pSourceCharIterator lastNewline_;
-    const pSourceRange* lastToken_;
+    const pSourceRef* lastToken_;
     lineNumMapType tokenLineInfo_;
 
     /// Maintains memory of IR during entire analysis and code gen phases
@@ -70,19 +70,19 @@ public:
     void incLineNum(void) { ++currentLineNum_; }
     void incLineNum(pUInt i) { currentLineNum_ +=i; }
 
-    pColRange getColPair(pSourceRange* r);
+    pColRange getColPair(pSourceRef* r);
 
     void setLastNewline(pSourceCharIterator i) { lastNewline_ = i; }
     const pSourceCharIterator& lastNewline(void) const { return lastNewline_; }
 
-    void setLastToken(const pSourceRange* i) { lastToken_ = i; }
-    const pSourceRange* lastToken(void) const { return lastToken_; }
+    void setLastToken(const pSourceRef* i) { lastToken_ = i; }
+    const pSourceRef* lastToken(void) const { return lastToken_; }
 
-    void setTokenLine(const pSourceRange* t) {
+    void setTokenLine(const pSourceRef* t) {
         tokenLineInfo_[t] = currentLineNum_;
     }
 
-    pUInt getTokenLine(const pSourceRange* t) {
+    pUInt getTokenLine(const pSourceRef* t) {
         lineNumMapType::const_iterator i = tokenLineInfo_.find(t);
         if (i == tokenLineInfo_.end())
             return 0;
@@ -101,7 +101,7 @@ public:
     }
 
     // PARSE ERROR HANDLER
-    void parseError(pSourceRange* r);
+    void parseError(pSourceRef* r);
     void parseError(pStringRef msg);
 
 };

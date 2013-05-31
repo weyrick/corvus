@@ -39,9 +39,17 @@ typedef boost::uint_fast32_t pUInt;
 
 /// source files. note that these are not safe to store. they must be copied
 /// if they will live past the life of the buffer they came from (source file)
-typedef pStringRef pSourceRange;
+typedef pStringRef pSourceRef;
 typedef pStringRef::iterator pSourceCharIterator;
 typedef std::pair<pUInt,pUInt> pColRange;
+
+struct pSourceRange {
+    pSourceRange(void): startLine(0), endLine(0), startCol(0), endCol(0) { }
+    pUInt startLine;
+    pUInt endLine;
+    pUInt startCol;
+    pUInt endCol;
+};
 
 } /* namespace corvus */
 

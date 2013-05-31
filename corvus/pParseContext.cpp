@@ -21,7 +21,7 @@ namespace corvus {
 
 namespace AST {
 
-pColRange pParseContext::getColPair(pSourceRange* r) {
+pColRange pParseContext::getColPair(pSourceRef* r) {
     // find the closest newline to the left of r->begin, without underrunning
     // the buffer
     pSourceCharIterator bufBegin = owner_->source()->contents()->getBufferStart();
@@ -44,7 +44,7 @@ void pParseContext::parseError(pStringRef msg) {
     throw pParseError(errorMsg.str());
 }
 
-void pParseContext::parseError(pSourceRange* r) {
+void pParseContext::parseError(pSourceRef* r) {
 
     // show the line the error occured on
     // if it was a lex error, we show 1 character. if it was a parse error,

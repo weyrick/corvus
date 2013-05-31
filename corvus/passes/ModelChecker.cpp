@@ -10,7 +10,6 @@
 
 #include "corvus/passes/ModelChecker.h"
 #include <sstream>
-
 namespace corvus { namespace AST { namespace Pass {
 
 
@@ -67,10 +66,13 @@ void ModelChecker::visit_pre_functionInvoke(functionInvoke* n) {
     }
     // if there are multiple hits, diag it
     else if (list.size() > 1) {
-        diag << "function '" << n->literalName().str() << "' defined in multiple locations:";
+        diag << "function '" << n->literalName().str() << "' defined in " << list.size() << " locations";
         addDiagnostic(n, diag.str());
-        for (int i = 0; i < list.size(); i++) {
-            std::cout << "\t" << list[i].sourceModule << ":" << list[i].startLine << std::endl;
+        int max = list.size();
+        if (max > 3)
+            max = 3;
+        for (int i = 0; i < max; i++) {
+            diag << list[i].sourceModule << ":" << list[i].startLine << std::endl;
         }
         return;
     }

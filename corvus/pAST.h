@@ -49,7 +49,7 @@ const int COR_FORMAL_PARAM_VECTOR_SIZE = 5; // formal parameters in function/met
 
 // a list of symbols, used for extends, implements
 typedef llvm::SmallVector<std::string, COR_IDLIST_SIZE> idList;
-typedef std::vector<const pSourceRange*> sourceRangeList;
+typedef std::vector<const pSourceRef*> sourceRangeList;
 
 enum nodeKind {
 #define STMT(CLASS, PARENT) CLASS##Kind,
@@ -126,15 +126,8 @@ struct constStmtIterator : public stmtIteratorImpl<constStmtIterator,
 class stmt {
 
     nodeKind kind_;
-
     pUInt refCount_;
-
-    pUInt startLineNum_;
-    pUInt endLineNum_;
-
-    // startCol is col @ startLineNum, endCol is col @ endLineNum
-    pUInt startCol_;
-    pUInt endCol_;
+    pSourceRange range_;
 
 protected:
   void* operator new(size_t bytes) throw() {
@@ -158,9 +151,7 @@ protected:
 
   void destroyChildren(pParseContext& C);
   
-  stmt(const stmt& other): kind_(other.kind_), refCount_(1),
-          startLineNum_(other.startLineNum_), endLineNum_(other.endLineNum_),
-          startCol_(0), endCol_(0){}
+  stmt(const stmt& other): kind_(other.kind_), refCount_(1), range_(other.range_) { }
     
   // This method assists in deep-copys of stmt**'s which are present for example in block nodes.
   void deepCopyChildren(stmt**& newChildren, stmt** const& oldChildren, pUInt numChildren, pParseContext& C) {
@@ -175,8 +166,7 @@ protected:
       }
   }
 public:
-    stmt(nodeKind k): kind_(k), refCount_(1), startLineNum_(0), endLineNum_(0),
-        startCol_(0), endCol_(0) { }
+    stmt(nodeKind k): kind_(k), refCount_(1) { }
 
     void destroy(pParseContext& C) {
         assert(refCount_ >= 1);
@@ -231,23 +221,25 @@ public:
 
     nodeKind kind(void) const { return kind_; }
 
-    void setLine(pUInt start) { startLineNum_ = start; endLineNum_ = start; }
+    void setLine(pUInt start) { range_.startLine = start; range_.endLine = start; }
     // simple case where one token defines col range
-    void setCol(pColRange cols) { startCol_ = cols.first; endCol_ = cols.second; }
+    void setCol(pColRange cols) { range_.startCol = cols.first; range_.endCol = cols.second; }
     // start/end on multiple lines so cols come from different tokens
     // this presumes startCols was generated from the token on startLine and endCols
     // was generated from the token on endLine
     void setCol(pColRange startCols, pColRange endCols) {
-        startCol_ = startCols.first;
-        endCol_ = endCols.second;
+        range_.startCol = startCols.first;
+        range_.endCol = endCols.second;
     }
-    void setLine(pUInt start, pUInt end) { startLineNum_ = start; endLineNum_ = end; }
+    void setLine(pUInt start, pUInt end) { range_.startLine = start; range_.endLine = end; }
 
-    pUInt startLineNum(void) const { return startLineNum_; }
-    pUInt endLineNum(void) const { return endLineNum_; }
-    pUInt startCol(void) const { return startCol_; }
-    pUInt endCol(void) const { return endCol_; }
-    pColRange cols(void) const { return pColRange(startCol_, endCol_); }
+    pUInt startLineNum(void) const { return range_.startLine; }
+    pUInt endLineNum(void) const { return range_.endLine; }
+    pUInt startCol(void) const { return range_.startCol; }
+    pUInt endCol(void) const { return range_.endCol; }
+    pColRange cols(void) const { return pColRange(range_.startCol, range_.endCol); }
+
+    const pSourceRange& range() const { return range_; }
 
     // Polymorphic deep copying.
     virtual stmt* clone(pParseContext& C) const = 0;
@@ -548,7 +540,7 @@ public:
         nsname_ = ns->getFullName();
         alias_.clear();
     }
-    useIdent(const namespaceName* ns, const pSourceRange& alias, pParseContext& C):
+    useIdent(const namespaceName* ns, const pSourceRef& alias, pParseContext& C):
         decl(useIdentKind) {
         nsname_ = ns->getFullName();
         alias_ = alias;
@@ -585,7 +577,7 @@ class formalParam: public decl {
             default_ = other.default_->clone(C);
     }
 public:
-    formalParam(const pSourceRange& name, pParseContext& C, bool ref, expr* def=NULL):
+    formalParam(const pSourceRef& name, pParseContext& C, bool ref, expr* def=NULL):
         decl(formalParamKind),
         name_(name),
         hint_(),
@@ -653,7 +645,7 @@ protected:
     }
     
 public:
-    signature(const pSourceRange& name,
+    signature(const pSourceRef& name,
               pParseContext& C,
               const formalParamList* s,
               bool returnByRef=false):
@@ -792,7 +784,7 @@ protected:
     
 public:
     propertyDecl(pParseContext& C,
-                 const pSourceRange& name,
+                 const pSourceRef& name,
                  expr* def
                  ):
         decl(propertyDeclKind),
@@ -845,7 +837,7 @@ protected:
     
 public:
     classDecl(pParseContext& C,
-              const pSourceRange& name,
+              const pSourceRef& name,
               classTypes type,
               const namespaceList* extends, // may be null
               const namespaceList* implements, // may be null
@@ -1363,7 +1355,7 @@ protected:
 
 public:
     catchStmt(const namespaceName* className,
-              const pSourceRange& varName,
+              const pSourceRef& varName,
               pParseContext& C,
               block* body):
     stmt(catchStmtKind),
@@ -1509,7 +1501,7 @@ public:
     static const nodeKind lastLiteralKind = inlineHtmlKind;
 
     literalExpr(nodeKind k): expr(k), stringVal_() { }
-    literalExpr(nodeKind k, const pSourceRange& v): expr(k), stringVal_(v.begin(), v.end()-v.begin()) { }
+    literalExpr(nodeKind k, const pSourceRef& v): expr(k), stringVal_(v.begin(), v.end()-v.begin()) { }
 
     virtual const pStringRef getStringVal(void) const {
         return stringVal_;
@@ -1552,12 +1544,12 @@ public:
             isSimple_(true) { }
 
     // normal source string
-    literalString(const pSourceRange& v):
+    literalString(const pSourceRef& v):
             literalExpr(literalStringKind, v),
             isSimple_(true) { }
 
     // extending string (inline html)
-    literalString(const pSourceRange& v, nodeKind k):
+    literalString(const pSourceRef& v, nodeKind k):
             literalExpr(k, v),
             isSimple_(true) { }
 
@@ -1600,7 +1592,7 @@ protected:
     {}
     
 public:
-    literalInt(const pSourceRange& v): literalExpr(literalIntKind, v), negative_(false),
+    literalInt(const pSourceRef& v): literalExpr(literalIntKind, v), negative_(false),
             isParsed_(false), val_(0)
     {}
 
@@ -1623,7 +1615,7 @@ protected:
     literalFloat(const literalFloat& other, pParseContext& C): literalExpr(other) {}
     
 public:
-    literalFloat(const pSourceRange& v): literalExpr(literalFloatKind, v) { }
+    literalFloat(const pSourceRef& v): literalExpr(literalFloatKind, v) { }
 
     stmt::child_iterator child_begin() { return child_iterator(); }
     stmt::child_iterator child_end() { return child_iterator(); }
@@ -1716,7 +1708,7 @@ protected:
     inlineHtml(const inlineHtml& other, pParseContext& C): literalString(other) {}
     
 public:
-    inlineHtml(const pSourceRange& v): literalString(v, inlineHtmlKind) { }
+    inlineHtml(const pSourceRef& v): literalString(v, inlineHtmlKind) { }
 
     stmt::child_iterator child_begin() { return child_iterator(); }
     stmt::child_iterator child_end() { return child_iterator(); }
@@ -1752,7 +1744,7 @@ protected:
     literalID(const literalID& other, pParseContext& C): expr(other), name_(other.name_) {}
     
 public:
-    literalID(const pSourceRange& name, pParseContext& C):
+    literalID(const pSourceRef& name, pParseContext& C):
         expr(literalIDKind),
         name_(name)
     {
@@ -1795,7 +1787,7 @@ protected:
     }
     
 public:
-    literalConstant(const pSourceRange& name, pParseContext& C, expr* target = NULL):
+    literalConstant(const pSourceRef& name, pParseContext& C, expr* target = NULL):
         literalExpr(literalConstantKind),
         name_(name),
         target_(target)
@@ -1880,7 +1872,7 @@ public:
         children_[TARGET] = target;
     }
 
-    var(const pSourceRange& name, pParseContext& C, expr* target = NULL):
+    var(const pSourceRef& name, pParseContext& C, expr* target = NULL):
         expr(varKind),
         name_(name),
         indirectionCount_(0),
@@ -1892,7 +1884,7 @@ public:
         children_[TARGET] = target;
     }
 
-    var(const pSourceRange& name, pParseContext& C, expressionList* indices, expr* target = NULL):
+    var(const pSourceRef& name, pParseContext& C, expressionList* indices, expr* target = NULL):
         expr(varKind),
         name_(name),
         indirectionCount_(0),

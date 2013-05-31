@@ -65,7 +65,7 @@ void corvusVersion(void) {
                  " --version                - Display the version of this program\n" << std::endl;
 }
 
-void renderDiagnostic(pStringRef cwd, const pSourceModule *sm, const pDiagnostic *d) {
+void renderDiagnostic(pStringRef cwd, const pDiagnostic *d) {
     /*
     const pParseContext &C_ = module_->context();
     std::cout << C_.getOwner()->fileName() << ":" << s->startLineNum() << ":" << s->startCol() << ": " << msg.data() << std::endl;
@@ -89,14 +89,14 @@ void renderDiagnostic(pStringRef cwd, const pSourceModule *sm, const pDiagnostic
     std::cout << std::string(s->startCol()-1, ' ') << "^" << std::endl;
     */
     // strip leading cwd
-    pStringRef fname = sm->fileName();
+    pStringRef fname = d->location().path();
     if (fname.startswith(cwd)) {
         std::cout << fname.substr(cwd.size()+1).str() << ":";
     }
     else {
-        std::cout << sm->fileName() << ":";
+        std::cout << fname.str() << ":";
     }
-    std::cout << d->startLineNum() << ":" << d->startCol() << ": " << d->msg().str() << std::endl;
+    std::cout << d->location().range().startLine << ":" << d->location().range().startCol << ": " << d->msg().str() << std::endl;
 }
 
 bool willRenderFor(pStringRef cwd, const pConfig &config, pStringRef fname) {
@@ -271,7 +271,7 @@ int main( int argc, char* argv[] )
             continue;
         pSourceModule::DiagListType dList = mList[i]->getDiagnostics();
         for (int j = 0; j < dList.size(); ++j) {
-            renderDiagnostic(cwd, mList[i], dList[j]);
+            renderDiagnostic(cwd, dList[j]);
         }
     }
 

@@ -22,7 +22,7 @@
 
 /* generated corvus_grammar parser interface */
 void* corvusParseAlloc(void *(*)(size_t));
-void  corvusParse(void *, int, corvus::pSourceRange*, corvus::pSourceModule*);
+void  corvusParse(void *, int, corvus::pSourceRef*, corvus::pSourceModule*);
 void  corvusParseFree(void *, void (*)(void*));
 void  corvusParseTrace(FILE *, char *);
 
@@ -91,7 +91,7 @@ std::pair<pSourceCharIterator,pSourceCharIterator> find_heredoc_id(const std::st
 
 void parseSourceFile(pSourceModule* pMod, bool debug=false) {
 
-    boost::object_pool<pSourceRange> tokenPool;
+    boost::object_pool<pSourceRef> tokenPool;
     lexer::pLexer lexer(pMod->source());
 
     void* pParser = corvusParseAlloc(malloc);
@@ -105,10 +105,10 @@ void parseSourceFile(pSourceModule* pMod, bool debug=false) {
     // start at begining of source file
     AST::pParseContext& context = pMod->context();
     context.incLineNum(); // line 1
-    context.setLastToken(tokenPool.construct(pSourceRange(lexer.sourceBegin(), 0)));
+    context.setLastToken(tokenPool.construct(pSourceRef(lexer.sourceBegin(), 0)));
     context.setLastNewline(lexer.sourceBegin());
 
-    pSourceRange* curRange;
+    pSourceRef* curRange;
     pSourceCharIterator lastNL;
 
     bool inlineHtml = false;
@@ -126,7 +126,7 @@ void parseSourceFile(pSourceModule* pMod, bool debug=false) {
         // always make a range unless the scanner didn't match, in which case
         // we handle separately below
         if (match.id != match.npos()) {
-            curRange = tokenPool.construct(pSourceRange(match.start, match.end-match.start));
+            curRange = tokenPool.construct(pSourceRef(match.start, match.end-match.start));
             context.setTokenLine(curRange);
         }
 
@@ -162,7 +162,7 @@ void parseSourceFile(pSourceModule* pMod, bool debug=false) {
                         match.end++;
                     }
                     inlineHtml = true;
-                    curRange = tokenPool.construct(pSourceRange(match.start, match.end-match.start));
+                    curRange = tokenPool.construct(pSourceRef(match.start, match.end-match.start));
                     context.setTokenLine(curRange);
                     countNewlines(context, match, lastNL);
                 }
@@ -172,12 +172,12 @@ void parseSourceFile(pSourceModule* pMod, bool debug=false) {
                     assert(HEREDOC_ID.length() && "no heredoc id");
                     std::pair<pSourceCharIterator,pSourceCharIterator> idr = find_heredoc_id(HEREDOC_ID, lexer, match, pMod);
                     countNewlines(context, match, lastNL);
-                    curRange = tokenPool.construct(pSourceRange(match.start, match.end-match.start));
+                    curRange = tokenPool.construct(pSourceRef(match.start, match.end-match.start));
                     context.setTokenLine(curRange);
                     corvusParse(pParser, T_HEREDOC_STRING, curRange, pMod);
                     match.start = idr.first;
                     match.end = idr.second;
-                    curRange = tokenPool.construct(pSourceRange(match.start, match.end-match.start));
+                    curRange = tokenPool.construct(pSourceRef(match.start, match.end-match.start));
                     context.setTokenLine(curRange);
                     corvusParse(pParser, T_HEREDOC_END, curRange, pMod);
                     match.state = 1;
