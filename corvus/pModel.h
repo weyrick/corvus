@@ -22,16 +22,30 @@ namespace corvus {
 // these are for caching data retrieved from sqlite
 namespace model {
 
-struct function {
-    std::string name;
-    std::string sourceModule;
-    int ftype;
-    int flags;
-    int visibility;
-    int minArity;
-    int maxArity;
-    int startLine;
-    int startCol;
+// a simple wrapper for a row in the model db
+// which saves us from having to make structs for each row
+// here we can just access it by field name
+class dbRow {
+public:
+    typedef std::map<const std::string, std::string> StringMap;
+    typedef std::map<const std::string, long> IntMap;
+protected:
+    StringMap fields_;
+    mutable IntMap intFields_; // lazyily built cache
+public:
+    const std::string& get(pStringRef key) const {
+        assert(fields_.find(key) != fields_.end() && "key not found");
+        StringMap::const_iterator i = fields_.find(key);
+        return i->first;
+    }
+    int getAsInt(pStringRef key) const;
+    void set(pStringRef key, pStringRef val) {
+        fields_[key] = val;
+    }
+};
+
+class function: public dbRow {
+
 };
 
 } // end model namespace
@@ -92,6 +106,9 @@ private:
     pStringRef oidOrNull(oid val);
     pStringRef strOrNull(pStringRef val);
 
+    template <typename LTYPE>
+    void list_query(pStringRef query, LTYPE &result);
+
 public:
 
     pModel(sqlite3 *db, bool trace=false): db_(db), trace_(trace) {
@@ -106,8 +123,7 @@ public:
 
     oid defineClass(oid ns_id, oid m_id, pStringRef name);
     oid defineFunction(oid ns_id, oid m_id, oid c_id, pStringRef name,
-                        int type, int flags, int vis, int minA, int maxA, int sl, int sc,
-                        int el, int ec);
+                        int type, int flags, int vis, int minA, int maxA, pSourceRange range);
     void defineFunctionVar(oid f_id, pStringRef name,
                           int type, int flags, int datatype, pStringRef datatype_obj,
                           pStringRef defaultVal,

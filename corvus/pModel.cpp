@@ -12,8 +12,21 @@
 
 #include <iostream>
 #include <sstream>
+#include <stdlib.h>
 
 namespace corvus { 
+
+namespace model {
+int dbRow::getAsInt(pStringRef key) const {
+    if (intFields_.find(key) != intFields_.end())
+        return intFields_[key];
+    assert(fields_.find(key) != fields_.end() && "getAsInt key not found");
+    // convert, cache
+    StringMap::const_iterator v = fields_.find(key);
+    intFields_[key] = atol(v->second.c_str());
+    return intFields_[key];
+}
+}
 
 void pModel::sql_execute(pStringRef query) {
     char *errMsg;
@@ -437,8 +450,7 @@ pStringRef pModel::strOrNull(pStringRef val) {
 }
 
 pModel::oid pModel::defineFunction(oid ns_id, oid m_id, oid c_id, pStringRef name,
-                    int type, int flags, int vis, int minA, int maxA, int sl, int sc,
-                    int el, int ec) {
+                    int type, int flags, int vis, int minA, int maxA, pSourceRange range) {
 
     std::stringstream sql;
     sql << "INSERT INTO function VALUES (NULL,"
@@ -451,7 +463,7 @@ pModel::oid pModel::defineFunction(oid ns_id, oid m_id, oid c_id, pStringRef nam
         << vis << ','
         << minA << ','
         << maxA << ','
-        << sl  << ',' << sc  << ',' << el  << ',' << ec
+        << range.startLine  << ',' << range.startCol  << ',' << range.endLine  << ',' << range.endCol
         << ")";
     return sql_insert(sql.str().c_str());
 
@@ -478,6 +490,26 @@ void pModel::defineFunctionVar(oid f_id, pStringRef name,
 
 }
 
+template <typename LTYPE>
+void pModel::list_query(pStringRef query, LTYPE &result) {
+    sqlite3_stmt *stmt;
+    int rc = sqlite3_prepare_v2(db_, query.str().c_str(), -1, &stmt, NULL);
+    if (rc != SQLITE_OK) {
+        std::cerr << "sqlite error: " << query.str() << "\n";
+        exit(1);
+    }
+    while ((rc = sqlite3_step(stmt)) == SQLITE_ROW) {
+        typename LTYPE::value_type f;
+        for (int i = 0; i < sqlite3_column_count(stmt); i++) {
+            pStringRef key = sqlite3_column_name(stmt, i);
+            pStringRef val = (char*)sqlite3_column_text(stmt, i);
+            f.set(key, val);
+        }
+        result.push_back(f);
+    }
+    sqlite3_finalize(stmt);
+}
+
 pModel::FunctionList pModel::queryFunctions(oid ns_id, oid c_id, pStringRef name) {
 
     FunctionList result;
@@ -501,28 +533,7 @@ pModel::FunctionList pModel::queryFunctions(oid ns_id, oid c_id, pStringRef name
         std::cerr << "TRACE: " << query.str() << std::endl;
     }
 
-    sqlite3_stmt *stmt;
-    int rc = sqlite3_prepare_v2(db_, query.str().c_str(), -1, &stmt, NULL);
-    if (rc != SQLITE_OK) {
-        std::cerr << "sqlite error: " << query.str() << "\n";
-        exit(1);
-    }
-
-    while ((rc = sqlite3_step(stmt)) == SQLITE_ROW) {
-        model::function f;
-        f.name = (char*)sqlite3_column_text(stmt, 0);
-        f.ftype = sqlite3_column_int(stmt, 1);
-        f.flags = sqlite3_column_int(stmt, 2);
-        f.visibility = sqlite3_column_int(stmt, 3);
-        f.minArity = sqlite3_column_int(stmt, 4);
-        f.maxArity = sqlite3_column_int(stmt, 5);
-        f.startLine = sqlite3_column_int(stmt, 6);
-        f.startCol = sqlite3_column_int(stmt, 7);
-        f.sourceModule = (char*)sqlite3_column_text(stmt, 8);
-        result.push_back(f);
-    }
-
-    sqlite3_finalize(stmt);
+    list_query<FunctionList>(query.str(), result);
 
     return result;
 

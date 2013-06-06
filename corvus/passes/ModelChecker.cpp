@@ -72,22 +72,22 @@ void ModelChecker::visit_pre_functionInvoke(functionInvoke* n) {
         if (max > 3)
             max = 3;
         for (int i = 0; i < max; i++) {
-            diag << list[i].sourceModule << ":" << list[i].startLine << std::endl;
+            diag << list[i].get("sourceModule") << ":" << list[i].get("startLine") << std::endl;
         }
         return;
     }
 
     // one hit, check arity
     pUInt arity = n->numArgs();
-    if (arity < list[0].minArity || arity > list[0].maxArity) {
-        if (list[0].minArity == list[0].maxArity) {
+    if (arity < list[0].getAsInt("minArity") || arity > list[0].getAsInt("maxArity")) {
+        if (list[0].getAsInt("minArity") == list[0].getAsInt("maxArity")) {
             diag << "wrong number of arguments: function '" << n->literalName().str()
-                 << "' requires " << list[0].minArity << " arguments (" << arity << " specified)";
+                 << "' requires " << list[0].get("minArity") << " arguments (" << arity << " specified)";
         }
         else {
             diag << "wrong number of arguments: function '" << n->literalName().str()
-                 << "' takes between " << list[0].minArity << " and "
-                 << list[0].maxArity << " arguments (" << arity << " specified)";
+                 << "' takes between " << list[0].get("minArity") << " and "
+                 << list[0].get("maxArity") << " arguments (" << arity << " specified)";
         }
         addDiagnostic(n, diag.str());
     }

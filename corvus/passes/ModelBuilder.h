@@ -22,12 +22,8 @@ namespace corvus {
 namespace AST { namespace Pass {
 
 class ModelBuilder: public pBaseVisitor {
-public:
-//    enum SCOPES { MODULE, CLASS, FUNCTION, BLOCK };
 
 private:
-
-//    std::vector<SCOPES> scope_;
 
     pModel::oid m_id_;
     pModel::oid ns_id_;

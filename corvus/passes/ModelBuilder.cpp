@@ -93,10 +93,7 @@ void ModelBuilder::visit_pre_signature(signature* n) {
                           pModel::PUBLIC,
                           minArity,
                           n->numParams(),
-                          n->startLineNum(),
-                          n->startCol(),
-                          n->endLineNum(),
-                          n->endCol()
+                          n->range()
                           ));
 
     for (int i = 0; i < n->numParams(); i++) {
