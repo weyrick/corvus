@@ -29,7 +29,9 @@ public:
 
     pSourceFile(pStringRef file);
 
-    const std::string& fileName(void) const { return file_; }
+    const std::string& fileName(void) const {
+        return file_;
+    }
     const llvm::MemoryBuffer* contents(void) const { return contents_.get(); }
 
 };

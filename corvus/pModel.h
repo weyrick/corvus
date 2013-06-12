@@ -61,6 +61,10 @@ public:
     const static int NULLID   = 0;
     const static int NO_FLAGS = 0;
 
+    // constants
+    const static int CLASS_CONST = 0;
+    const static int DEFINE      = 1;
+
     // flags
     const static int STATIC   = 0x1;
     const static int ABSTRACT = 0x2;
@@ -128,6 +132,8 @@ public:
                           int type, int flags, int datatype, pStringRef datatype_obj,
                           pStringRef defaultVal,
                           int sl, int sc);
+
+    void defineConstant(oid m_id, int type, pStringRef name, pStringRef val, pSourceRange range);
 
     FunctionList queryFunctions(oid ns_id, oid c_id, pStringRef name);
 

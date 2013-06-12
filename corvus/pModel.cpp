@@ -101,10 +101,11 @@ void pModel::makeTables() {
     // type:
     //   0 - const (outside class)
     //   1 - define()
-    const char *SD = "CREATE TABLE IF NOT EXISTS static (" \
+    const char *SD = "CREATE TABLE IF NOT EXISTS constant (" \
                          "id INTEGER PRIMARY KEY,"
                          "sourceModule_id INTEGER NOT NULL," \
                          "type INTEGER NOT NULL," \
+                         "name TEXT NOT NULL," \
                          "value TEXT NOT NULL," \
                          "line INTEGER NOT NULL," \
                          "col INTEGER NOT NULL," \
@@ -112,12 +113,12 @@ void pModel::makeTables() {
                          ")";
     sql_execute(SD);
 
-    const char *SU = "CREATE TABLE IF NOT EXISTS static_use (" \
+    const char *SU = "CREATE TABLE IF NOT EXISTS constant_use (" \
                          "id INTEGER PRIMARY KEY,"
-                         "static_id INTEGER NOT NULL," \
+                         "constant_id INTEGER NOT NULL," \
                          "line INTEGER NOT NULL," \
                          "col INTEGER NOT NULL," \
-                             "FOREIGN KEY(static_id) REFERENCES static(id) ON DELETE CASCADE"
+                             "FOREIGN KEY(constant_id) REFERENCES constant(id) ON DELETE CASCADE"
                          ")";
     sql_execute(SU);
 
@@ -485,6 +486,21 @@ void pModel::defineFunctionVar(oid f_id, pStringRef name,
         << strOrNull(datatype_obj).str() << ","
         << strOrNull(defaultVal).str() << ","
         << sl  << ',' << sc
+        << ")";
+    sql_insert(sql.str().c_str());
+
+}
+
+void pModel::defineConstant(oid m_id, int type, pStringRef name, pStringRef val, pSourceRange range) {
+
+    std::stringstream sql;
+
+    sql << "INSERT INTO constant VALUES (NULL,"
+        << m_id << ','
+        << type << ','
+        << "'" << name.str() << "'" << ','
+        << "'" << val.str() << "'" << ','
+        << range.startLine  << ',' << range.startCol
         << ")";
     sql_insert(sql.str().c_str());
 

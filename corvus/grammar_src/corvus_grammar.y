@@ -2059,6 +2059,8 @@ arrayIndices(A) ::= arrayIndices(B) T_LEFTSQUARE T_RIGHTSQUARE.
 // foo() or $foo() or $foo[1]() ...
 functionInvoke(A) ::= maybeDynamicID(ID) T_LEFTPAREN argList(ARGS) T_RIGHTPAREN.
 {
+    // args come in backward, reverse them
+    std::reverse(ARGS->begin(), ARGS->end());
     A = new (CTXT) AST::functionInvoke(ID, // f name
                                        CTXT,
                                        ARGS  // expression list: arguments, copied
@@ -2070,6 +2072,8 @@ functionInvoke(A) ::= maybeDynamicID(ID) T_LEFTPAREN argList(ARGS) T_RIGHTPAREN.
 // foo::bar() (or self:: or parent::)
 functionInvoke(A) ::= namespaceName(TARGET) T_DBL_COLON T_IDENTIFIER(ID) T_LEFTPAREN argList(ARGS) T_RIGHTPAREN.
 {
+    // args come in backward, reverse them
+    std::reverse(ARGS->begin(), ARGS->end());
     A = new (CTXT) AST::functionInvoke(new (CTXT) AST::literalID(*ID, CTXT), // f name
                                        CTXT,
                                        ARGS,  // expression list: arguments, copied
@@ -2082,6 +2086,8 @@ functionInvoke(A) ::= namespaceName(TARGET) T_DBL_COLON T_IDENTIFIER(ID) T_LEFTP
 }
 functionInvoke(A) ::= namespaceName(TARGET) T_DBL_COLON varNoObjects(DNAME) T_LEFTPAREN argList(ARGS) T_RIGHTPAREN.
 {
+    // args come in backward, reverse them
+    std::reverse(ARGS->begin(), ARGS->end());
     A = new (CTXT) AST::functionInvoke(DNAME, // f name
                                        CTXT,
                                        ARGS,  // expression list: arguments, copied
@@ -2093,6 +2099,8 @@ functionInvoke(A) ::= namespaceName(TARGET) T_DBL_COLON varNoObjects(DNAME) T_LE
 }
 functionInvoke(A) ::= T_NS_SEPARATOR namespaceName(TARGET) T_DBL_COLON T_IDENTIFIER(ID) T_LEFTPAREN argList(ARGS) T_RIGHTPAREN.
 {
+    // args come in backward, reverse them
+    std::reverse(ARGS->begin(), ARGS->end());
     TARGET->setAbsolute();
     A = new (CTXT) AST::functionInvoke(new (CTXT) AST::literalID(*ID, CTXT), // f name
                                        CTXT,
@@ -2106,6 +2114,8 @@ functionInvoke(A) ::= T_NS_SEPARATOR namespaceName(TARGET) T_DBL_COLON T_IDENTIF
 }
 functionInvoke(A) ::= T_NS_SEPARATOR namespaceName(TARGET) T_DBL_COLON varNoObjects(DNAME) T_LEFTPAREN argList(ARGS) T_RIGHTPAREN.
 {
+    // args come in backward, reverse them
+    std::reverse(ARGS->begin(), ARGS->end());
     TARGET->setAbsolute();
     A = new (CTXT) AST::functionInvoke(DNAME, // f name
                                        CTXT,
@@ -2119,6 +2129,8 @@ functionInvoke(A) ::= T_NS_SEPARATOR namespaceName(TARGET) T_DBL_COLON varNoObje
 // $foo::bar()
 functionInvoke(A) ::= refVar(TARGET) T_DBL_COLON T_IDENTIFIER(ID) T_LEFTPAREN argList(ARGS) T_RIGHTPAREN.
 {
+    // args come in backward, reverse them
+    std::reverse(ARGS->begin(), ARGS->end());
     A = new (CTXT) AST::functionInvoke(new (CTXT) AST::literalID(*ID, CTXT), // f name
                                        CTXT,
                                        ARGS,  // expression list: arguments, copied
@@ -2131,6 +2143,8 @@ functionInvoke(A) ::= refVar(TARGET) T_DBL_COLON T_IDENTIFIER(ID) T_LEFTPAREN ar
 // $foo()
 functionInvoke(A) ::= varNoObjects(DNAME) T_LEFTPAREN argList(ARGS) T_RIGHTPAREN.
 {
+    // args come in backward, reverse them
+    std::reverse(ARGS->begin(), ARGS->end());
     A = new (CTXT) AST::functionInvoke(DNAME, // f name
                                        CTXT,
                                        ARGS  // expression list: arguments, copied
@@ -2144,6 +2158,8 @@ functionInvoke(A) ::= varNoObjects(DNAME) T_LEFTPAREN argList(ARGS) T_RIGHTPAREN
 %type constructorInvoke {AST::functionInvoke*}
 constructorInvoke(A) ::= T_NEW maybeDynamicID(ID) T_LEFTPAREN argList(C) T_RIGHTPAREN.
 {
+    // args come in backward, reverse them
+    std::reverse(C->begin(), C->end());
     A = new (CTXT) AST::functionInvoke(ID, // f name
                                        CTXT,
                                        C  // expression list: arguments, copied

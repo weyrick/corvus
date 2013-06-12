@@ -2166,6 +2166,11 @@ public:
         return static_cast<expr*>(children_[TARGET]);
     }
 
+    expr* arg(int i) {
+        assert(i < numChildren_-INDICES);
+        return static_cast<expr*>(children_[INDICES+i]);
+    }
+
     pUInt numArgs(void) const { return numChildren_-2; }
 
     stmt::child_iterator child_begin() { return &children_[0]; }

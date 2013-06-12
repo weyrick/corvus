@@ -134,5 +134,37 @@ void ModelBuilder::visit_pre_assignment(assignment* n) {
 
 }
 
+void ModelBuilder::visit_pre_functionInvoke(functionInvoke *n) {
+
+    // can't do anything with dynamics
+    if (!n->hasLiteralName())
+        return;
+
+    if (n->target()) {
+        // method invoke
+    }
+    else {
+        // function invoke
+
+        // if this is define(), we do a static
+        if (n->literalName().equals("define") && n->numArgs() == 2) {
+            // need to pull the name and value from param list
+            expr* name = n->arg(0);
+            expr* value = n->arg(1);
+            if (!llvm::isa<literalExpr>(name) || !llvm::isa<literalExpr>(value)) {
+                //addDiagnostic(n, "expected literal name and value for define()");
+                return;
+            }
+            model_->defineConstant(m_id_,
+                                   pModel::DEFINE,
+                                   llvm::dyn_cast<literalExpr>(name)->getStringVal(),
+                                   llvm::dyn_cast<literalExpr>(value)->getStringVal(),
+                                   n->range());
+            return;
+        }
+    }
+
+}
+
 } } } // namespace
 
