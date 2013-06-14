@@ -17,6 +17,8 @@
 #include <map>
 #include <vector>
 
+#include <iostream>
+
 namespace corvus {
 
 // these are for caching data retrieved from sqlite
@@ -34,6 +36,7 @@ protected:
     mutable IntMap intFields_; // lazyily built cache
 public:
     const std::string& get(pStringRef key) const {
+        //std::cout << "key: " << key.str() << std::endl;
         assert(fields_.find(key) != fields_.end() && "key not found");
         StringMap::const_iterator i = fields_.find(key);
         return i->first;

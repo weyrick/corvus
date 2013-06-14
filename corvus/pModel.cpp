@@ -13,6 +13,7 @@
 #include <iostream>
 #include <sstream>
 #include <stdlib.h>
+#include <algorithm>
 
 namespace corvus { 
 
@@ -479,11 +480,14 @@ void pModel::defineConstant(oid m_id, int type, pStringRef name, pStringRef val,
 
     std::stringstream sql;
 
+    std::string valEsc(val);
+    std::replace(valEsc.begin(), valEsc.end(), '\'', '"'); // XXX this isn't right, should escape not replace
+
     sql << "INSERT INTO constant VALUES (NULL,"
         << m_id << ','
         << type << ','
         << "'" << name.str() << "'" << ','
-        << "'" << val.str() << "'" << ','
+        << "'" << valEsc << "'" << ','
         << range.startLine  << ',' << range.startCol
         << ")";
     sql_insert(sql.str().c_str());
