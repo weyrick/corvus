@@ -45,7 +45,7 @@ void ModelBuilder::pre_run(void) {
                                        hash,
                                        true /* delete first */
                                        );
-    ns_id_ = model_->getNamespaceOID("\\");
+    ns_id_ = model_->getRootNamespaceOID();
 
 }
 
@@ -57,14 +57,14 @@ void ModelBuilder::post_run(void) {
 
 void ModelBuilder::visit_pre_namespaceDecl(namespaceDecl* n) {
 
-    ns_id_ = model_->getNamespaceOID(n->name());
+    ns_id_ = model_->getNamespaceOID(n->name(), true);
 
 }
 
 
 void ModelBuilder::visit_pre_classDecl(classDecl* n) {
 
-    c_id_ = model_->defineClass(ns_id_, m_id_, n->name());
+    c_id_ = model_->defineClass(ns_id_, m_id_, n->name(), n->range());
 
 }
 

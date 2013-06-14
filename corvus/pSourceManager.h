@@ -75,6 +75,8 @@ public:
     void refreshModel();
     void runDiagnostics();
 
+    const pModel* model() { return model_; }
+
     // caller will not own these and should not free them
     void trackDiagModule(pSourceModule *m) {
         diagModuleTracker_[m] = true;

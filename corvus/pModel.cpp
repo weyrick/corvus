@@ -28,7 +28,7 @@ int dbRow::getAsInt(pStringRef key) const {
 }
 }
 
-void pModel::sql_execute(pStringRef query) {
+void pModel::sql_execute(pStringRef query) const {
     char *errMsg;
     int rc = sqlite3_exec(db_, query.begin(), NULL, NULL, &errMsg);
     if (rc != SQLITE_OK) {
@@ -42,7 +42,7 @@ void pModel::sql_execute(pStringRef query) {
     }
 }
 
-pModel::oid pModel::sql_insert(pStringRef query) {
+pModel::oid pModel::sql_insert(pStringRef query) const {
     sql_execute(query);
     oid r = sqlite3_last_insert_rowid(db_);
     if (trace_) {
@@ -51,7 +51,7 @@ pModel::oid pModel::sql_insert(pStringRef query) {
     return r;
 }
 
-pModel::oid pModel::sql_select_single_id(pStringRef query) {
+pModel::oid pModel::sql_select_single_id(pStringRef query) const {
 
     sqlite3_stmt *stmt;
     pModel::oid result = pModel::NULLID;
@@ -365,7 +365,7 @@ pModel::oid pModel::getSourceModuleOID(pStringRef realPath, pStringRef hash, boo
 
 }
 
-pModel::oid pModel::getNamespaceOID(pStringRef ns) {
+pModel::oid pModel::getNamespaceOID(pStringRef ns, bool create) const {
 
     if (namespaces_.find(ns) != namespaces_.end()) {
         return namespaces_[ns];
@@ -381,6 +381,9 @@ pModel::oid pModel::getNamespaceOID(pStringRef ns) {
         return existing;
     }
 
+    if (!create)
+        return pModel::NULLID;
+
     sql.str("");
 
     sql << "INSERT INTO namespace VALUES (NULL, '" << ns.str() << "')";
@@ -390,29 +393,10 @@ pModel::oid pModel::getNamespaceOID(pStringRef ns) {
 
 }
 
-pModel::oid pModel::defineClass(pModel::oid ns_id, pModel::oid m_id, pStringRef name) {
-
-/*
-    "sourceModule_id INTEGER NOT NULL," \
-    "namespace_id INTEGER NULL," \
-    "name TEXT NOT NULL,"
-    "type INTEGER NOT NULL," \
-    "flags INTEGER NOT NULL," \
-    "start_line INTEGER NOT NULL," \
-    "start_col INTEGER NOT NULL," \
-    "end_line INTEGER NOT NULL," \
-    "end_col INTEGER NOT NULL," \
-    // text versions
-    "extends TEXT NULL," \
-    "implements TEXT NULL," \
-*/
+pModel::oid pModel::defineClass(pModel::oid ns_id, pModel::oid m_id, pStringRef name, pSourceRange range) {
 
     int type = pModel::CLASS;
     int flags = pModel::NO_FLAGS;
-    int sl = 0;
-    int sc = 0;
-    int el = 0;
-    int ec = 0;
 
     std::stringstream sql;
     sql << "INSERT INTO class VALUES (NULL,"
@@ -421,7 +405,7 @@ pModel::oid pModel::defineClass(pModel::oid ns_id, pModel::oid m_id, pStringRef 
         << ",'" << name.str() << "',"
         << type << ','
         << flags << ','
-        << sl  << ',' << sc  << ',' << el  << ',' << ec
+        << range.startLine  << ',' << range.startCol  << ',' << range.endLine  << ',' << range.endCol
         << ",'',''" // extends, implements
         << ")";
     return sql_insert(sql.str().c_str());
@@ -507,7 +491,7 @@ void pModel::defineConstant(oid m_id, int type, pStringRef name, pStringRef val,
 }
 
 template <typename LTYPE>
-void pModel::list_query(pStringRef query, LTYPE &result) {
+void pModel::list_query(pStringRef query, LTYPE &result) const {
     sqlite3_stmt *stmt;
     int rc = sqlite3_prepare_v2(db_, query.str().c_str(), -1, &stmt, NULL);
     if (rc != SQLITE_OK) {
@@ -526,16 +510,19 @@ void pModel::list_query(pStringRef query, LTYPE &result) {
     sqlite3_finalize(stmt);
 }
 
-pModel::FunctionList pModel::queryFunctions(oid ns_id, oid c_id, pStringRef name) {
+pModel::FunctionList pModel::queryFunctions(oid ns_id, oid c_id, pStringRef name) const {
 
     FunctionList result;
     std::stringstream query;
+
+    if (ns_id == pModel::NULLID)
+        ns_id = getRootNamespaceOID();
 
     query << "SELECT name, type, flags, visibility, minArity, maxArity, " \
              " start_line, start_col, sourceModule.realPath FROM " \
              " function, sourceModule WHERE sourceModule.id=sourceModule_id AND" \
              " " \
-             " (namespace_id=" << ns_id << " OR namespace_id=1) AND class_id ";
+             " (namespace_id=" << ns_id << " OR namespace_id=" << getRootNamespaceOID() << ") AND class_id ";
     if (c_id) {
         query << " = " << c_id;
     }
@@ -550,6 +537,29 @@ pModel::FunctionList pModel::queryFunctions(oid ns_id, oid c_id, pStringRef name
     }
 
     list_query<FunctionList>(query.str(), result);
+
+    return result;
+
+}
+
+pModel::ClassList pModel::queryClasses(oid ns_id, pStringRef name) const {
+
+    ClassList result;
+    std::stringstream query;
+
+    query << "SELECT name, type, flags, " \
+             " start_line, start_col, sourceModule.realPath FROM " \
+             " class, sourceModule WHERE sourceModule.id=sourceModule_id AND" \
+             " " \
+             " (namespace_id=" << ns_id << " OR namespace_id=1)";
+
+    query << " AND name='" << name.str() << "'";
+
+    if (trace_) {
+        std::cerr << "TRACE: " << query.str() << std::endl;
+    }
+
+    list_query<ClassList>(query.str(), result);
 
     return result;
 

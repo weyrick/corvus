@@ -15,11 +15,14 @@
 #include "corvus/pSourceManager.h"
 #include "corvus/pConfig.h"
 #include "corvus/pDiagnostic.h"
+#include "corvus/pModel.h"
 #include <llvm/Support/FileSystem.h>
 #include <sstream>
 
 using namespace llvm;
 using namespace corvus;
+
+#define ASSERT(A,B) cassert(A,B,__LINE__)
 
 void cassert(int a, int b, int line) {
     if (a != b) {
@@ -61,6 +64,7 @@ int main( int argc, char* argv[] )
     pConfig config;
     std::vector<std::string> inputFiles;
 
+    //sm.setDebug(0,false,true);
     config.exts = "php";
 
     // try to read home directory config file
@@ -103,6 +107,7 @@ int main( int argc, char* argv[] )
 
     pSourceManager::DiagModuleListType mList = sm.getDiagModules();
 
+    // 1 source module
     cassert(mList.size(), 1, __LINE__);
 
     pSourceModule::DiagListType dList = mList[0]->getDiagnostics();
@@ -110,25 +115,40 @@ int main( int argc, char* argv[] )
     // DIAG COUNT
     cassert(dList.size(), 5, __LINE__);
 
+    // DIAGS
+
     // 1
-    cassert(dList[0]->msg(), "function 'nonexist' not defined", __LINE__);
-    cassert(dList[0]->location().range(), pSourceRange(56,1,56,0), __LINE__); // XXX should be 56,1 or 56,1,56,1
+    ASSERT(dList[0]->msg(), "function 'nonexist' not defined");
+    ASSERT(dList[0]->location().range(), pSourceRange(56,1,56,0)); // XXX should be 56,1 or 56,1,56,1
 
     // 2
-    cassert(dList[1]->msg(), "wrong number of arguments: function 'bar' takes between minArity and maxArity arguments (0 specified)", __LINE__);
-    cassert(dList[1]->location().range(), pSourceRange(59,1,59,0), __LINE__); // XXX
+    ASSERT(dList[1]->msg(), "wrong number of arguments: function 'bar' takes between minArity and maxArity arguments (0 specified)");
+    ASSERT(dList[1]->location().range(), pSourceRange(59,1,59,0)); // XXX
 
     // 3
-    cassert(dList[2]->msg(), "wrong number of arguments: function 'bar' takes between minArity and maxArity arguments (4 specified)", __LINE__);
-    cassert(dList[2]->location().range(), pSourceRange(63,1,63,0), __LINE__); //
+    ASSERT(dList[2]->msg(), "wrong number of arguments: function 'bar' takes between minArity and maxArity arguments (4 specified)");
+    ASSERT(dList[2]->location().range(), pSourceRange(63,1,63,0));
 
     // 4
-    cassert(dList[3]->msg(), "parameter should have default because previous parameter does", __LINE__);
-    cassert(dList[3]->location().range(), pSourceRange(108,28,108,34), __LINE__); //
+    ASSERT(dList[3]->msg(), "parameter should have default because previous parameter does");
+    ASSERT(dList[3]->location().range(), pSourceRange(108,28,108,34));
 
     // 5 (second part of 4)
-    cassert(dList[4]->msg(), "first parameter with default defined here", __LINE__);
-    cassert(dList[4]->location().range(), pSourceRange(108,20,108,24), __LINE__); //
+    ASSERT(dList[4]->msg(), "first parameter with default defined here");
+    ASSERT(dList[4]->location().range(), pSourceRange(108,20,108,24));
+
+    // MODEL QUERIES
+    const pModel *m = sm.model();
+
+    // functions
+    pModel::FunctionList f;
+    f = m->queryFunctions(m->getNamespaceOID("\\myns"), pModel::NULLID, "foo");
+    ASSERT(f.size(), 1);
+
+    // classes
+    pModel::ClassList c;
+    c = m->queryClasses(m->getNamespaceOID("\\myns"), "myclass");
+    ASSERT(c.size(), 1);
 
     std::cout << "all tests passing" << std::endl;
     return 0;

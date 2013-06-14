@@ -44,7 +44,11 @@ public:
     }
 };
 
-class function: public dbRow {
+class mFunction: public dbRow {
+
+};
+
+class mClass: public dbRow {
 
 };
 
@@ -54,7 +58,8 @@ class pModel {
 public:
 
     typedef sqlite3_int64 oid;
-    typedef std::vector<model::function> FunctionList;
+    typedef std::vector<model::mFunction> FunctionList;
+    typedef std::vector<model::mClass> ClassList;
     typedef std::map<std::string, oid> IDMap;
 
     // general
@@ -97,11 +102,11 @@ private:
     bool trace_;
 
     IDMap modules_;
-    IDMap namespaces_;
+    mutable IDMap namespaces_;
 
-    void sql_execute(pStringRef query);
-    oid sql_insert(pStringRef query);
-    oid sql_select_single_id(pStringRef query);
+    void sql_execute(pStringRef query) const;
+    oid sql_insert(pStringRef query) const;
+    oid sql_select_single_id(pStringRef query) const;
     void sql_setup();
     void sql_done();
 
@@ -111,7 +116,7 @@ private:
     pStringRef strOrNull(pStringRef val);
 
     template <typename LTYPE>
-    void list_query(pStringRef query, LTYPE &result);
+    void list_query(pStringRef query, LTYPE &result) const;
 
 public:
 
@@ -123,9 +128,12 @@ public:
 
     bool sourceModuleDirty(pStringRef realPath, pStringRef hash);
     oid getSourceModuleOID(pStringRef realPath, pStringRef hash, bool deleteFirst);
-    oid getNamespaceOID(pStringRef ns);
+    oid getNamespaceOID(pStringRef ns, bool create=false) const;
+    oid getRootNamespaceOID() const {
+        return getNamespaceOID("\\", true);
+    }
 
-    oid defineClass(oid ns_id, oid m_id, pStringRef name);
+    oid defineClass(oid ns_id, oid m_id, pStringRef name, pSourceRange range);
     oid defineFunction(oid ns_id, oid m_id, oid c_id, pStringRef name,
                         int type, int flags, int vis, int minA, int maxA, pSourceRange range);
     void defineFunctionVar(oid f_id, pStringRef name,
@@ -135,7 +143,8 @@ public:
 
     void defineConstant(oid m_id, int type, pStringRef name, pStringRef val, pSourceRange range);
 
-    FunctionList queryFunctions(oid ns_id, oid c_id, pStringRef name);
+    ClassList queryClasses(oid ns_id, pStringRef name) const;
+    FunctionList queryFunctions(oid ns_id, oid c_id, pStringRef name) const;
 
 };
 
