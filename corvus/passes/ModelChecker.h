@@ -32,6 +32,7 @@ public:
 
     void visit_pre_namespaceDecl(namespaceDecl* n);
     void visit_pre_functionInvoke(functionInvoke* n);
+    void visit_pre_literalConstant(literalConstant* n);
 
 };
 

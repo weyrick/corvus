@@ -44,13 +44,11 @@ public:
     }
 };
 
-class mFunction: public dbRow {
+class mFunction: public dbRow { };
 
-};
+class mClass: public dbRow { };
 
-class mClass: public dbRow {
-
-};
+class mConstant: public dbRow { };
 
 } // end model namespace
 
@@ -60,6 +58,7 @@ public:
     typedef sqlite3_int64 oid;
     typedef std::vector<model::mFunction> FunctionList;
     typedef std::vector<model::mClass> ClassList;
+    typedef std::vector<model::mConstant> ConstantList;
     typedef std::map<std::string, oid> IDMap;
 
     // general
@@ -143,6 +142,7 @@ public:
 
     void defineConstant(oid m_id, int type, pStringRef name, pStringRef val, pSourceRange range);
 
+    ConstantList queryConstants(pStringRef name) const;
     ClassList queryClasses(oid ns_id, pStringRef name) const;
     FunctionList queryFunctions(oid ns_id, oid c_id, pStringRef name) const;
 

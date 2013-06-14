@@ -3,6 +3,7 @@
 namespace myns;
 
 //const MYSTATIC = 7;
+define("MYFIRST", true);
 define('MYSECOND', 6);
 // futurediag: redefined constant
 define('MYSECOND', 7);
@@ -86,7 +87,7 @@ $a3 = myclass::$svar3;
 
 // nodiag: define()'d constant
 $b1 = MYSECOND;
-// futurediag: undefine()'d constant
+// DIAG undefine()'d constant
 $b2 = MYTHIRD;
 
 // futurediag: myclass2 has constructor which requires args

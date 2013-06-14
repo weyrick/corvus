@@ -113,29 +113,39 @@ int main( int argc, char* argv[] )
     pSourceModule::DiagListType dList = mList[0]->getDiagnostics();
 
     // DIAG COUNT
-    cassert(dList.size(), 5, __LINE__);
+    cassert(dList.size(), 6, __LINE__);
 
     // DIAGS
 
     // 1
-    ASSERT(dList[0]->msg(), "function 'nonexist' not defined");
-    ASSERT(dList[0]->location().range(), pSourceRange(56,1,56,0)); // XXX should be 56,1 or 56,1,56,1
+    int i = 0;
+    ASSERT(dList[i]->msg(), "function 'nonexist' not defined");
+    ASSERT(dList[i]->location().range(), pSourceRange(57,1,57,0)); // XXX
 
     // 2
-    ASSERT(dList[1]->msg(), "wrong number of arguments: function 'bar' takes between minArity and maxArity arguments (0 specified)");
-    ASSERT(dList[1]->location().range(), pSourceRange(59,1,59,0)); // XXX
+    i++;
+    ASSERT(dList[i]->msg(), "wrong number of arguments: function 'bar' takes between minArity and maxArity arguments (0 specified)");
+    ASSERT(dList[i]->location().range(), pSourceRange(60,1,60,0)); // XXX
 
     // 3
-    ASSERT(dList[2]->msg(), "wrong number of arguments: function 'bar' takes between minArity and maxArity arguments (4 specified)");
-    ASSERT(dList[2]->location().range(), pSourceRange(63,1,63,0));
+    i++;
+    ASSERT(dList[i]->msg(), "wrong number of arguments: function 'bar' takes between minArity and maxArity arguments (4 specified)");
+    ASSERT(dList[i]->location().range(), pSourceRange(64,1,64,0)); // XXX
 
     // 4
-    ASSERT(dList[3]->msg(), "parameter should have default because previous parameter does");
-    ASSERT(dList[3]->location().range(), pSourceRange(108,28,108,34));
+    i++;
+    ASSERT(dList[i]->msg(), "undefined constant: MYTHIRD");
+    ASSERT(dList[i]->location().range(), pSourceRange(91,0,91,0)); // XXX
 
-    // 5 (second part of 4)
-    ASSERT(dList[4]->msg(), "first parameter with default defined here");
-    ASSERT(dList[4]->location().range(), pSourceRange(108,20,108,24));
+    // 5
+    i++;
+    ASSERT(dList[i]->msg(), "parameter should have default because previous parameter does");
+    ASSERT(dList[i]->location().range(), pSourceRange(109,28,109,34));
+
+    // 6 (second part of 4)
+    i++;
+    ASSERT(dList[i]->msg(), "first parameter with default defined here");
+    ASSERT(dList[i]->location().range(), pSourceRange(109,20,109,24));
 
     // MODEL QUERIES
     const pModel *m = sm.model();
@@ -149,6 +159,12 @@ int main( int argc, char* argv[] )
     pModel::ClassList c;
     c = m->queryClasses(m->getNamespaceOID("\\myns"), "myclass");
     ASSERT(c.size(), 1);
+
+    // constants
+    pModel::ConstantList cn;
+    cn = m->queryConstants("MYFIRST");
+    ASSERT(cn.size(), 1);
+
 
     std::cout << "all tests passing" << std::endl;
     return 0;

@@ -107,8 +107,8 @@ void pModel::makeTables() {
                          "type INTEGER NOT NULL," \
                          "name TEXT NOT NULL," \
                          "value TEXT NOT NULL," \
-                         "line INTEGER NOT NULL," \
-                         "col INTEGER NOT NULL," \
+                         "start_line INTEGER NOT NULL," \
+                         "start_col INTEGER NOT NULL," \
                          "FOREIGN KEY(sourceModule_id) REFERENCES sourceModule(id) ON DELETE CASCADE"
                          ")";
     sql_execute(SD);
@@ -116,8 +116,8 @@ void pModel::makeTables() {
     const char *SU = "CREATE TABLE IF NOT EXISTS constant_use (" \
                          "id INTEGER PRIMARY KEY,"
                          "constant_id INTEGER NOT NULL," \
-                         "line INTEGER NOT NULL," \
-                         "col INTEGER NOT NULL," \
+                         "start_line INTEGER NOT NULL," \
+                         "start_col INTEGER NOT NULL," \
                              "FOREIGN KEY(constant_id) REFERENCES constant(id) ON DELETE CASCADE"
                          ")";
     sql_execute(SU);
@@ -186,8 +186,8 @@ void pModel::makeTables() {
                          "flags INTEGER NOT NULL," \
                          "visibility INTEGER NOT NULL," \
                          "defaultVal TEXT NULL," \
-                         "line INTEGER NOT NULL," \
-                         "col INTEGER NOT NULL," \
+                         "start_line INTEGER NOT NULL," \
+                         "start_col INTEGER NOT NULL," \
                          "FOREIGN KEY(class_id) REFERENCES class(id) ON DELETE CASCADE"
                          ")";
     sql_execute(CD);
@@ -199,8 +199,8 @@ void pModel::makeTables() {
                          "class_decl_id INTEGER NULL," \
                          // if using an undeclared, this will contain the name
                          "name TEXT NULL," \
-                         "line INTEGER NOT NULL," \
-                         "col INTEGER NOT NULL," \
+                         "start_line INTEGER NOT NULL," \
+                         "start_col INTEGER NOT NULL," \
                          "FOREIGN KEY(class_id) REFERENCES class(id) ON DELETE CASCADE," \
                          "FOREIGN KEY(class_decl_id) REFERENCES class_decl(id) ON DELETE CASCADE"
                          ")";
@@ -260,8 +260,8 @@ void pModel::makeTables() {
                          "datatype INTEGER NOT NULL," \
                          "datatype_obj TEXT NULL," \
                          "defaultVal TEXT NULL," \
-                         "line INTEGER NOT NULL," \
-                         "col INTEGER NOT NULL," \
+                         "start_line INTEGER NOT NULL," \
+                         "start_col INTEGER NOT NULL," \
                          "FOREIGN KEY(function_id) REFERENCES function(id) ON DELETE CASCADE"
                          ")";
     sql_execute(FV);
@@ -274,8 +274,8 @@ void pModel::makeTables() {
                          "function_var_id INTEGER NULL," \
                          // if using an undeclared, this will contain the name
                          "name TEXT NULL," \
-                         "line INTEGER NOT NULL," \
-                         "col INTEGER NOT NULL," \
+                         "start_line INTEGER NOT NULL," \
+                         "start_col INTEGER NOT NULL," \
                          "FOREIGN KEY(function_id) REFERENCES function(id) ON DELETE CASCADE," \
                          "FOREIGN KEY(function_var_id) REFERENCES function_var(id) ON DELETE CASCADE"
                          ")";
@@ -288,8 +288,8 @@ void pModel::makeTables() {
                          "function_id INTEGER NULL," \
                          // if using an undeclared, this will contain the name
                          "name TEXT NULL," \
-                         "line INTEGER NOT NULL," \
-                         "col INTEGER NOT NULL," \
+                         "start_line INTEGER NOT NULL," \
+                         "start_col INTEGER NOT NULL," \
                          "FOREIGN KEY(function_id) REFERENCES function(id) ON DELETE CASCADE" \
                          ")";
     sql_execute(FU);
@@ -550,16 +550,34 @@ pModel::ClassList pModel::queryClasses(oid ns_id, pStringRef name) const {
     query << "SELECT name, type, flags, " \
              " start_line, start_col, sourceModule.realPath FROM " \
              " class, sourceModule WHERE sourceModule.id=sourceModule_id AND" \
-             " " \
-             " (namespace_id=" << ns_id << " OR namespace_id=1)";
-
-    query << " AND name='" << name.str() << "'";
+             " (namespace_id=" << ns_id << " OR namespace_id=1)" \
+             " AND name='" << name.str() << "'";
 
     if (trace_) {
         std::cerr << "TRACE: " << query.str() << std::endl;
     }
 
     list_query<ClassList>(query.str(), result);
+
+    return result;
+
+}
+
+pModel::ConstantList pModel::queryConstants(pStringRef name) const {
+
+    pModel::ConstantList result;
+    std::stringstream query;
+
+    query << "SELECT name, " \
+             " start_line, start_col, sourceModule.realPath FROM " \
+             " constant, sourceModule WHERE sourceModule.id=sourceModule_id AND" \
+             " type=" << pModel::DEFINE << " AND name='" << name.str() << "'";
+
+    if (trace_) {
+        std::cerr << "TRACE: " << query.str() << std::endl;
+    }
+
+    list_query<pModel::ConstantList>(query.str(), result);
 
     return result;
 

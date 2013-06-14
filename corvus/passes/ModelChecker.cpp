@@ -94,5 +94,22 @@ void ModelChecker::visit_pre_functionInvoke(functionInvoke* n) {
 
 }
 
+void ModelChecker::visit_pre_literalConstant(literalConstant* n) {
+
+    // make sure this was define()'d
+    if (!n->target()) {
+        pModel::ConstantList cn = model_->queryConstants(n->name());
+        if (cn.size() == 0) {
+            std::stringstream diag;
+            diag << "undefined constant: " << n->name().str();
+            addDiagnostic(n, diag.str());
+        }
+    }
+    else {
+        // XXX class constant
+    }
+
+}
+
 } } } // namespace
 
