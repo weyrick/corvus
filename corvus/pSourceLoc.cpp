@@ -10,6 +10,7 @@
 
 #include "pSourceLoc.h"
 #include "pSourceModule.h"
+#include <sstream>
 
 namespace corvus {
 
@@ -18,6 +19,15 @@ std::string pSourceLoc::path() const {
         return module_->fileName();
     else
         return path_;
+}
+
+std::string pSourceLoc::toString() const {
+
+    std::stringstream out;
+    out << path() << ":" << range_.startLine << ":" << range_.startCol <<
+                 range_.endLine << ":" << range_.endCol;
+    return out.str();
+
 }
 
 }

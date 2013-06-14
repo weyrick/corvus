@@ -1,7 +1,6 @@
 /* ***** BEGIN LICENSE BLOCK *****
 ;;
-;; Copyright (c) 2009-2010 Shannon Weyrick <weyrick@mozek.us>
-;; Copyright (c) 2010 Cornelius Riemenschneider <c.r1@gmx.de>
+;; Copyright (c) 2012-2013 Shannon Weyrick <weyrick@mozek.us>
 ;;
 ;; This Source Code Form is subject to the terms of the Mozilla Public
 ;; License, v. 2.0. If a copy of the MPL was not distributed with this

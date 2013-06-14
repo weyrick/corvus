@@ -44,11 +44,31 @@ typedef pStringRef::iterator pSourceCharIterator;
 typedef std::pair<pUInt,pUInt> pColRange;
 
 struct pSourceRange {
+
     pSourceRange(void): startLine(0), endLine(0), startCol(0), endCol(0) { }
+
+    pSourceRange(pUInt sl, pUInt sc): startLine(sl), endLine(0),
+        startCol(sc), endCol(0) { }
+
+    pSourceRange(pUInt sl, pUInt sc, pUInt el, pUInt ec): startLine(sl), endLine(el),
+        startCol(sc), endCol(ec) { }
+
     pUInt startLine;
     pUInt endLine;
     pUInt startCol;
     pUInt endCol;
+
+    bool operator==(const pSourceRange &other) const {
+        return (startLine == other.startLine &&
+                endLine == other.endLine &&
+                startCol == other.startCol &&
+                endCol == other.endCol
+                );
+    }
+
+    bool operator!=(const pSourceRange &other) const {
+        return !(*this == other);
+    }
 };
 
 } /* namespace corvus */

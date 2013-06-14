@@ -51,6 +51,7 @@ public:
 
     pSourceManager(): debugParse_(false),
         debugModel_(false),
+        verbosity_(0),
         db_(NULL),
         model_(NULL),
         dbName_() { }

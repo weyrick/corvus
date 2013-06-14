@@ -53,6 +53,7 @@ add_definitions(-DLLVM_VERSION=${LLVM_VERSION})
 add_subdirectory(3rdparty)
 add_subdirectory(corvus)
 add_subdirectory(frontend)
+add_subdirectory(test)
 
 #IF(CPPUNIT_FOUND)
 #  ENABLE_TESTING()
@@ -63,3 +64,6 @@ IF(DOXYGEN_FOUND)
   ADD_CUSTOM_TARGET(doc ${DOXYGEN_EXECUTABLE} ${DOXYFILE} WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 ENDIF(DOXYGEN_FOUND)
 
+add_custom_target(check ${CMAKE_CURRENT_SOURCE_DIR}/test/corvus-test
+                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test/
+                  )

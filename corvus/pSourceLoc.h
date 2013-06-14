@@ -50,6 +50,17 @@ public:
 
     std::string path() const;
 
+    std::string toString() const;
+
+    bool operator==(const pSourceLoc &other) const {
+        return (path() == other.path() &&
+                range_ == other.range_);
+    }
+
+    bool operator!=(const pSourceLoc &other) const {
+        return !(*this == other);
+    }
+
 };
 
 } /* namespace corvus */
