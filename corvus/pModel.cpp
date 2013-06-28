@@ -475,13 +475,13 @@ void pModel::defineFunctionVar(oid f_id, pStringRef name,
 
 }
 
-void pModel::defineConstant(oid m_id, int type, pStringRef name, pStringRef val, pSourceRange range) {
+void pModel::defineConstant(oid m_id, pStringRef name, pStringRef val, pSourceRange range) {
 
     std::stringstream sql;
 
     sql << "INSERT INTO constant VALUES (NULL,"
         << m_id << ','
-        << type << ','
+        << pModel::DEFINE << ','
         << "'" << name.str() << "'" << ','
         << "'" << val.str() << "'" << ','
         << range.startLine  << ',' << range.startCol

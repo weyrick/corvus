@@ -800,6 +800,8 @@ public:
         return name_;
     }
 
+    expr* defaultValue() { return default_; }
+
     stmt::child_iterator child_begin() { return (stmt**)&default_; }
     stmt::child_iterator child_end() { return (stmt**)&default_+1; }
 

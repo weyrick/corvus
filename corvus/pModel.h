@@ -140,7 +140,7 @@ public:
                           pStringRef defaultVal,
                           int sl, int sc);
 
-    void defineConstant(oid m_id, int type, pStringRef name, pStringRef val, pSourceRange range);
+    void defineConstant(oid m_id, pStringRef name, pStringRef val, pSourceRange range);
 
     ConstantList queryConstants(pStringRef name) const;
     ClassList queryClasses(oid ns_id, pStringRef name) const;

@@ -5,6 +5,8 @@ namespace myns;
 //const MYSTATIC = 7;
 define("MYFIRST", true);
 define('MYSECOND', 6);
+define('MYEXPR', 2+2); // define with exp in val
+
 // futurediag: redefined constant
 define('MYSECOND', 7);
 

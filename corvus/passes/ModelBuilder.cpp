@@ -68,6 +68,22 @@ void ModelBuilder::visit_pre_classDecl(classDecl* n) {
 
 }
 
+void ModelBuilder::visit_post_propertyDecl(propertyDecl *n) {
+
+    if (n->flags() & memberFlags::CONST) {
+        expr* value = n->defaultValue();
+        assert(llvm::isa<literalExpr>(value) || llvm::isa<unaryOp>(value));
+        /*
+        model_->defineClassDecl(m_id_,
+                               c_id_,
+                               n->name(),
+                               llvm::dyn_cast<literalExpr>(value)->getStringVal(),
+                               n->range());
+                               */
+    }
+
+}
+
 void ModelBuilder::visit_post_classDecl(classDecl* n) {
 
     c_id_ = pModel::NULLID;
@@ -151,14 +167,17 @@ void ModelBuilder::visit_pre_functionInvoke(functionInvoke *n) {
             // need to pull the name and value from param list
             expr* name = n->arg(0);
             expr* value = n->arg(1);
-            if (!llvm::isa<literalExpr>(name) || !llvm::isa<literalExpr>(value)) {
-                //addDiagnostic(n, "expected literal name and value for define()");
+            if (!llvm::isa<literalExpr>(name)) {
+                addDiagnostic(n, "expected literal name for define()");
                 return;
             }
+            std::string strval;
+            if (llvm::isa<literalExpr>(value)) {
+                strval = llvm::dyn_cast<literalExpr>(value)->getStringVal();
+            }
             model_->defineConstant(m_id_,
-                                   pModel::DEFINE,
                                    llvm::dyn_cast<literalExpr>(name)->getStringVal(),
-                                   llvm::dyn_cast<literalExpr>(value)->getStringVal(),
+                                   strval,
                                    n->range());
             return;
         }
