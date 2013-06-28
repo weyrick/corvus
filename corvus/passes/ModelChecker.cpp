@@ -72,7 +72,7 @@ void ModelChecker::visit_pre_functionInvoke(functionInvoke* n) {
         if (max > 3)
             max = 3;
         for (int i = 0; i < max; i++) {
-            diag << list[i].get("sourceModule") << ":" << list[i].get("startLine") << std::endl;
+            diag << list[i].get("realpath") << ":" << list[i].get("start_line") << std::endl;
         }
         return;
     }
