@@ -455,10 +455,27 @@ pModel::oid pModel::defineFunction(oid ns_id, oid m_id, oid c_id, pStringRef nam
 
 }
 
+void pModel::defineClassDecl(oid c_id, pStringRef name, int type, int flags, int vis, pStringRef defaultVal, pSourceRange range) {
+
+    std::stringstream sql;
+    sql << "INSERT INTO class_decl VALUES (NULL,"
+        << c_id << ','
+        << type
+        << ",'" << name.str() << "',"
+        << flags << ','
+        << vis << ','
+        << strOrNull(defaultVal).str() << ","
+        << range.startLine  << ',' << range.startCol
+        << ")";
+
+    sql_insert(sql.str().c_str());
+
+}
+
 void pModel::defineFunctionVar(oid f_id, pStringRef name,
                     int type, int flags, int datatype, pStringRef datatype_obj,
                     pStringRef defaultVal,
-                    int sl, int sc) {
+                    pSourceRange range) {
 
     std::stringstream sql;
 
@@ -470,13 +487,13 @@ void pModel::defineFunctionVar(oid f_id, pStringRef name,
         << datatype << ','
         << strOrNull(datatype_obj).str() << ","
         << strOrNull(defaultVal).str() << ","
-        << sl  << ',' << sc
+        << range.startLine  << ',' << range.startCol
         << ")";
     sql_insert(sql.str().c_str());
 
 }
 
-void pModel::defineConstant(oid m_id, pStringRef name, pStringRef val, pSourceRange range) {
+void pModel::defineConstant(oid m_id, pStringRef name, int type, pStringRef val, pSourceRange range) {
 
     std::stringstream sql;
 
@@ -485,7 +502,7 @@ void pModel::defineConstant(oid m_id, pStringRef name, pStringRef val, pSourceRa
 
     sql << "INSERT INTO constant VALUES (NULL,"
         << m_id << ','
-        << pModel::DEFINE << ','
+        << type << ','
         << "'" << name.str() << "'" << ','
         << "'" << valEsc << "'" << ','
         << range.startLine  << ',' << range.startCol

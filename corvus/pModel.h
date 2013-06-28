@@ -69,7 +69,7 @@ public:
     const static int NO_FLAGS = 0;
 
     // constants
-    const static int CLASS_CONST = 0;
+    const static int CONST       = 0;
     const static int DEFINE      = 1;
 
     // flags
@@ -97,6 +97,10 @@ public:
     // class types
     const static int CLASS   = 0;
     const static int IFACE   = 1;
+
+    // class decl types
+    // share CONST = 0 above
+    const static int PROPERTY = 2;
 
 private:
 
@@ -136,14 +140,15 @@ public:
     }
 
     oid defineClass(oid ns_id, oid m_id, pStringRef name, pSourceRange range);
+    void defineClassDecl(oid c_id, pStringRef name, int type, int flags, int vis, pStringRef defaultVal, pSourceRange range);
     oid defineFunction(oid ns_id, oid m_id, oid c_id, pStringRef name,
                         int type, int flags, int vis, int minA, int maxA, pSourceRange range);
     void defineFunctionVar(oid f_id, pStringRef name,
                           int type, int flags, int datatype, pStringRef datatype_obj,
                           pStringRef defaultVal,
-                          int sl, int sc);
+                          pSourceRange range);
 
-    void defineConstant(oid m_id, pStringRef name, pStringRef val, pSourceRange range);
+    void defineConstant(oid m_id, pStringRef name, int type, pStringRef val, pSourceRange range);
 
     ConstantList queryConstants(pStringRef name) const;
     ClassList queryClasses(oid ns_id, pStringRef name) const;

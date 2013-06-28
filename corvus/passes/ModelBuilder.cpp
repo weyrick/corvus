@@ -72,14 +72,31 @@ void ModelBuilder::visit_post_propertyDecl(propertyDecl *n) {
 
     if (n->flags() & memberFlags::CONST) {
         expr* value = n->defaultValue();
-        assert(llvm::isa<literalExpr>(value) || llvm::isa<unaryOp>(value));
-        /*
-        model_->defineClassDecl(m_id_,
-                               c_id_,
-                               n->name(),
-                               llvm::dyn_cast<literalExpr>(value)->getStringVal(),
-                               n->range());
-                               */
+        assert(llvm::isa<literalExpr>(value) || llvm::isa<unaryOp>(value));        
+        std::string def;
+        if (llvm::isa<unaryOp>(value)) {
+            switch (llvm::dyn_cast<unaryOp>(value)->opKind()) {
+                case unaryOp::NEGATIVE:
+                    def.push_back('-');
+                    break;
+                case unaryOp::BITWISENOT:
+                    def.push_back('~');
+                    break;
+            }
+            value = llvm::dyn_cast<unaryOp>(value)->rVal();
+            def.append(llvm::dyn_cast<literalExpr>(value)->getStringVal());
+        }
+        else {
+            def = llvm::dyn_cast<literalExpr>(value)->getStringVal();
+        }
+        // unary op must be have literal as a param
+        model_->defineClassDecl(c_id_,
+                                n->name(),
+                                pModel::CONST,
+                                pModel::NO_FLAGS,
+                                pModel::PUBLIC, // implicit
+                                def,
+                                n->range());
     }
 
 }
@@ -121,8 +138,7 @@ void ModelBuilder::visit_pre_signature(signature* n) {
                                  pModel::T_UNKNOWN,
                                  "", // XXX datatype obj
                                  "", // XXX default
-                                 p->startLineNum(),
-                                 p->endLineNum()
+                                 p->range()
                     );
     }
 
@@ -162,7 +178,7 @@ void ModelBuilder::visit_pre_functionInvoke(functionInvoke *n) {
     else {
         // function invoke
 
-        // if this is define(), we do a static
+        // if this is define(), we do a constant
         if (n->literalName().equals("define") && n->numArgs() == 2) {
             // need to pull the name and value from param list
             expr* name = n->arg(0);
@@ -177,6 +193,7 @@ void ModelBuilder::visit_pre_functionInvoke(functionInvoke *n) {
             }
             model_->defineConstant(m_id_,
                                    llvm::dyn_cast<literalExpr>(name)->getStringVal(),
+                                   pModel::DEFINE,
                                    strval,
                                    n->range());
             return;
