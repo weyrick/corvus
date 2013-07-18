@@ -23,6 +23,7 @@ using namespace corvus;
 #define CTXT               pMod->context()
 #define TOKEN_LINE(T)      CTXT.getTokenLine(T)
 #define TOKEN_COL(T)       CTXT.getColPair(T)
+#define TOKEN_RANGE(T)     pSourceRange(TOKEN_LINE(T), TOKEN_COL(T).first, TOKEN_LINE(T), TOKEN_COL(T).second)
 #define CURRENT_LINE       CTXT.currentLineNum()
 
 AST::literalExpr* extractLiteralString(pSourceRef* B, pSourceModule* pMod, bool isSimple) {
@@ -1317,15 +1318,17 @@ scalar(A) ::= T_IDENTIFIER(B).
 %type classConstant {AST::expr*}
 classConstant(A) ::= namespaceName(TARGET) T_DBL_COLON T_IDENTIFIER(ID).
 {
-    A = new (CTXT) AST::literalConstant(*ID, CTXT, new (CTXT) AST::literalID(TARGET, CTXT));
+    A = new (CTXT) AST::literalConstant(*ID, CTXT, new (CTXT) AST::literalID(TARGET, TOKEN_RANGE(ID), CTXT));
     A->setLine(CURRENT_LINE);
+    A->setCol(TARGET->cols());
     delete TARGET;
 }
 classConstant(A) ::= T_NS_SEPARATOR namespaceName(TARGET) T_DBL_COLON T_IDENTIFIER(ID).
 {
     TARGET->setAbsolute();
-    A = new (CTXT) AST::literalConstant(*ID, CTXT, new (CTXT) AST::literalID(TARGET, CTXT));
+    A = new (CTXT) AST::literalConstant(*ID, CTXT, new (CTXT) AST::literalID(TARGET, TOKEN_RANGE(ID), CTXT));
     A->setLine(CURRENT_LINE);
+    A->setCol(TARGET->cols());
     delete TARGET;
 }
 // variable class constant
@@ -1412,32 +1415,32 @@ literal(A) ::= T_NULL.
 %type literalMagic {AST::expr*}
 literalMagic(A) ::= T_MAGIC_FILE(ID).
 {
-    A = new (CTXT) AST::literalID(*ID, CTXT);
+    A = new (CTXT) AST::literalID(*ID, TOKEN_RANGE(ID), CTXT);
     A->setLine(CURRENT_LINE);
 }
 literalMagic(A) ::= T_MAGIC_LINE(ID).
 {
-    A = new (CTXT) AST::literalID(*ID, CTXT);
+    A = new (CTXT) AST::literalID(*ID, TOKEN_RANGE(ID), CTXT);
     A->setLine(CURRENT_LINE);
 }
 literalMagic(A) ::= T_MAGIC_CLASS(ID).
 {
-    A = new (CTXT) AST::literalID(*ID, CTXT);
+    A = new (CTXT) AST::literalID(*ID, TOKEN_RANGE(ID), CTXT);
     A->setLine(CURRENT_LINE);
 }
 literalMagic(A) ::= T_MAGIC_METHOD(ID).
 {
-    A = new (CTXT) AST::literalID(*ID, CTXT);
+    A = new (CTXT) AST::literalID(*ID, TOKEN_RANGE(ID), CTXT);
     A->setLine(CURRENT_LINE);
 }
 literalMagic(A) ::= T_MAGIC_FUNCTION(ID).
 {
-    A = new (CTXT) AST::literalID(*ID, CTXT);
+    A = new (CTXT) AST::literalID(*ID, TOKEN_RANGE(ID), CTXT);
     A->setLine(CURRENT_LINE);
 }
 literalMagic(A) ::= T_MAGIC_NS(ID).
 {
-    A = new (CTXT) AST::literalID(*ID, CTXT);
+    A = new (CTXT) AST::literalID(*ID, TOKEN_RANGE(ID), CTXT);
     A->setLine(CURRENT_LINE);
 }
 
@@ -1885,11 +1888,11 @@ varPropertyList(A) ::= varProperty(PROP).
  * this attribute, and generate the correct method invocation if set.
  */
 %type varProperty {AST::expr*}
-varProperty(A) ::= T_CLASSDEREF objProperty(PROP) maybeMethodInvoke(ARGS).
+varProperty(A) ::= T_CLASSDEREF(T) objProperty(PROP) maybeMethodInvoke(ARGS).
 {
     if (ARGS) {
         // XXX phc checks for array indices on PROP
-        AST::functionInvoke* f = new (CTXT) AST::functionInvoke(new (CTXT) AST::literalID(PROP->name(), CTXT), CTXT, ARGS);
+        AST::functionInvoke* f = new (CTXT) AST::functionInvoke(new (CTXT) AST::literalID(PROP->name(), TOKEN_RANGE(T), CTXT), CTXT, ARGS);
         A = f;
         // PROP is now orphaned
         PROP->destroy(CTXT);
@@ -1933,9 +1936,9 @@ staticMember(A) ::= T_NS_SEPARATOR namespaceName(TARGET) T_DBL_COLON varNoObject
     delete TARGET;
 }
 // static::$foo
-staticMember(A) ::= T_STATIC T_DBL_COLON varNoObjects(VAR).
+staticMember(A) ::= T_STATIC(T) T_DBL_COLON varNoObjects(VAR).
 {
-    VAR->setTarget(new (CTXT) AST::literalID("static", CTXT));
+    VAR->setTarget(new (CTXT) AST::literalID("static", TOKEN_RANGE(T), CTXT));
     A = VAR;
 }
 // $cname::$prop

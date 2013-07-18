@@ -103,10 +103,33 @@ void ModelChecker::visit_pre_literalConstant(literalConstant* n) {
             std::stringstream diag;
             diag << "undefined constant: " << n->name().str();
             addDiagnostic(n, diag.str());
+            return;
         }
     }
     else {
-        // XXX class constant
+        // class constant
+        expr* target = n->target();
+        if (!llvm::isa<literalID>(target))
+            // dynamic class name
+            return;
+        literalID* classID = llvm::dyn_cast<literalID>(target);
+        pModel::ClassList cl = model_->queryClasses(ns_id_, classID->name());
+        assert(cl.size() <= 1);
+        if (cl.size() == 0) {
+            std::stringstream diag;
+            // XXX FQN
+            diag << "undefined class: " << classID->name().str();
+            addDiagnostic(target, diag.str());
+            return;
+        }
+        pModel::ClassDeclList cdl = model_->queryClassDecls(cl[0].getID(), n->name());
+        if (cdl.size() == 0) {
+            std::stringstream diag;
+            // XXX FQN
+            diag << "undefined class constant: " << classID->name().str() << "::" << n->name().str();
+            addDiagnostic(target, diag.str());
+            return;
+        }
     }
 
 }

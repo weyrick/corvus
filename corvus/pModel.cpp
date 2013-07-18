@@ -27,6 +27,13 @@ int dbRow::getAsInt(pStringRef key) const {
     intFields_[key] = atol(v->second.c_str());
     return intFields_[key];
 }
+
+sqlite3_int64 dbRow::getAsOID(pStringRef key) const {
+    assert(fields_.find(key) != fields_.end() && "getAsInt key not found");
+    StringMap::const_iterator v = fields_.find(key);
+    return atoll(v->second.c_str());
+}
+
 }
 
 void pModel::sql_execute(pStringRef query) const {
@@ -60,6 +67,7 @@ pModel::oid pModel::sql_select_single_id(pStringRef query) const {
     int rc = sqlite3_prepare_v2(db_, query.str().c_str(), -1, &stmt, NULL);
     if (rc != SQLITE_OK) {
         std::cerr << "sqlite error: " << query.str() << "\n";
+        std::cerr << sqlite3_errmsg(db_) << "\n";
         exit(1);
     }
     else if (trace_) {
@@ -310,6 +318,7 @@ bool pModel::sourceModuleDirty(pStringRef realPath, pStringRef hash) {
     int rc = sqlite3_prepare_v2(db_, sql.str().c_str(), -1, &stmt, NULL);
     if (rc != SQLITE_OK) {
         std::cerr << "sqlite error: " << sql.str() << "\n";
+        std::cerr << sqlite3_errmsg(db_) << "\n";
         exit(1);
     }
     else if (trace_) {
@@ -459,9 +468,9 @@ void pModel::defineClassDecl(oid c_id, pStringRef name, int type, int flags, int
 
     std::stringstream sql;
     sql << "INSERT INTO class_decl VALUES (NULL,"
-        << c_id << ','
-        << type
+        << c_id
         << ",'" << name.str() << "',"
+        << type << ','
         << flags << ','
         << vis << ','
         << strOrNull(defaultVal).str() << ","
@@ -517,6 +526,7 @@ void pModel::list_query(pStringRef query, LTYPE &result) const {
     int rc = sqlite3_prepare_v2(db_, query.str().c_str(), -1, &stmt, NULL);
     if (rc != SQLITE_OK) {
         std::cerr << "sqlite error: " << query.str() << "\n";
+        std::cerr << sqlite3_errmsg(db_) << "\n";
         exit(1);
     }
     while ((rc = sqlite3_step(stmt)) == SQLITE_ROW) {
@@ -568,7 +578,7 @@ pModel::ClassList pModel::queryClasses(oid ns_id, pStringRef name) const {
     ClassList result;
     std::stringstream query;
 
-    query << "SELECT name, type, flags, " \
+    query << "SELECT class.id, name, type, flags, " \
              " start_line, start_col, sourceModule.realPath FROM " \
              " class, sourceModule WHERE sourceModule.id=sourceModule_id AND" \
              " (namespace_id=" << ns_id << " OR namespace_id=1)" \
@@ -579,6 +589,28 @@ pModel::ClassList pModel::queryClasses(oid ns_id, pStringRef name) const {
     }
 
     list_query<ClassList>(query.str(), result);
+
+    return result;
+
+}
+
+pModel::ClassDeclList pModel::queryClassDecls(oid c_id, pStringRef name) const {
+
+    ClassDeclList result;
+    std::stringstream query;
+
+    query << "SELECT class_decl.name, class.name AS className, class_decl.type, class_decl.flags, visibility, defaultVal, " \
+             " class_decl.start_line, class_decl.start_col, sourceModule.realPath FROM " \
+             " class_decl, class, sourceModule WHERE sourceModule.id=sourceModule_id AND" \
+             " class.id=class_decl.class_id AND" \
+             " class_decl.class_id=" << c_id <<
+             " AND class_decl.name='" << name.str() << "'";
+
+    if (trace_) {
+        std::cerr << "TRACE: " << query.str() << std::endl;
+    }
+
+    list_query<ClassDeclList>(query.str(), result);
 
     return result;
 

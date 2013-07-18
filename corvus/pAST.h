@@ -127,9 +127,10 @@ class stmt {
 
     nodeKind kind_;
     pUInt refCount_;
-    pSourceRange range_;
 
 protected:
+    pSourceRange range_;
+
   void* operator new(size_t bytes) throw() {
     assert(0 && "stmt cannot be allocated with regular 'new'.");
     return 0;
@@ -1746,6 +1747,13 @@ protected:
     literalID(const literalID& other, pParseContext& C): expr(other), name_(other.name_) {}
     
 public:
+    literalID(const pSourceRef& name, pSourceRange r, pParseContext& C):
+        expr(literalIDKind),
+        name_(name)
+    {
+        range_ = r;
+    }
+
     literalID(const pSourceRef& name, pParseContext& C):
         expr(literalIDKind),
         name_(name)
@@ -1756,15 +1764,22 @@ public:
         expr(literalIDKind),
         name_(name->getFullName())
     {
+
     }
 
+    literalID(const namespaceName* name, pSourceRange r, pParseContext& C):
+        expr(literalIDKind),
+        name_(name->getFullName())
+    {
+        range_ = r;
+    }
 
     pStringRef name(void) const {
         return name_;
     }
 
-    static literalID* create(pStringRef name, pParseContext& C) {
-        return new (C) literalID(name, C);
+    static literalID* create(pStringRef name, pSourceRange r, pParseContext& C) {
+        return new (C) literalID(name, r, C);
     }
 
     stmt::child_iterator child_begin() { return child_iterator(); }

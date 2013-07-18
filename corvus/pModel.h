@@ -42,6 +42,10 @@ public:
         return i->first;
     }
     int getAsInt(pStringRef key) const;
+    sqlite3_int64 getAsOID(pStringRef key) const;
+    sqlite3_int64 getID() const {
+        return getAsOID("id");
+    }
     void set(pStringRef key, pStringRef val) {
         fields_[key] = val;
     }
@@ -50,6 +54,8 @@ public:
 class mFunction: public dbRow { };
 
 class mClass: public dbRow { };
+
+class mClassDecl: public dbRow { };
 
 class mConstant: public dbRow { };
 
@@ -61,6 +67,7 @@ public:
     typedef sqlite3_int64 oid;
     typedef std::vector<model::mFunction> FunctionList;
     typedef std::vector<model::mClass> ClassList;
+    typedef std::vector<model::mClassDecl> ClassDeclList;
     typedef std::vector<model::mConstant> ConstantList;
     typedef std::map<std::string, oid> IDMap;
 
@@ -152,6 +159,7 @@ public:
 
     ConstantList queryConstants(pStringRef name) const;
     ClassList queryClasses(oid ns_id, pStringRef name) const;
+    ClassDeclList queryClassDecls(oid c_id, pStringRef name) const;
     FunctionList queryFunctions(oid ns_id, oid c_id, pStringRef name) const;
 
 };

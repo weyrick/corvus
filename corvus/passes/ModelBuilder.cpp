@@ -89,7 +89,6 @@ void ModelBuilder::visit_post_propertyDecl(propertyDecl *n) {
         else {
             def = llvm::dyn_cast<literalExpr>(value)->getStringVal();
         }
-        // unary op must be have literal as a param
         model_->defineClassDecl(c_id_,
                                 n->name(),
                                 pModel::CONST,

@@ -113,7 +113,7 @@ int main( int argc, char* argv[] )
     pSourceModule::DiagListType dList = mList[0]->getDiagnostics();
 
     // DIAG COUNT
-    cassert(dList.size(), 6, __LINE__);
+    cassert(dList.size(), 8, __LINE__);
 
     // DIAGS
 
@@ -139,10 +139,18 @@ int main( int argc, char* argv[] )
 
     // 5
     i++;
+    ASSERT(dList[i]->msg(), "undefined class: myclassne");
+
+    // 6
+    i++;
+    ASSERT(dList[i]->msg(), "undefined class constant: myclass::FOO2");
+
+    // 7
+    i++;
     ASSERT(dList[i]->msg(), "parameter should have default because previous parameter does");
     //ASSERT(dList[i]->location().range(), pSourceRange(109,28,109,34));
 
-    // 6 (second part of 4)
+    // 8
     i++;
     ASSERT(dList[i]->msg(), "first parameter with default defined here");
     //ASSERT(dList[i]->location().range(), pSourceRange(109,20,109,24));

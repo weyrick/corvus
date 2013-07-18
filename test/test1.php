@@ -98,8 +98,10 @@ $foo2 = new myclass2();
 // nodiag: class constant
 $foo3 = myclass::FOO;
 
-// futurediag: nonexistant class constant
-$foo4 = myclass::FOO2;
+// DIAG nonexistant class constant (class)
+$foo4 = myclassne::FOO;
+// DIAG nonexistant class constant (constant)
+$foo45 = myclass::FOO2;
 
 // futurediag: using return value from function not returning anything
 $foo5 = baz();
