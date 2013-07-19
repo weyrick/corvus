@@ -33,6 +33,8 @@ class myclass {
 
   public function bar($one) {
     $hey = 5;
+    // nodiag on self
+    $boo = self::FOO;
     echo $baz;
   }
 

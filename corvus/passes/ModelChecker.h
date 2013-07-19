@@ -18,7 +18,9 @@ namespace corvus { namespace AST { namespace Pass {
 
 class ModelChecker: public pBaseVisitor {
 
+    pModel::oid m_id_;
     pModel::oid ns_id_;
+    pModel::oid c_id_;
 
 public:
     ModelChecker():
@@ -30,7 +32,12 @@ public:
     void post_run(void);
     */
 
+    void visit_pre_classDecl(classDecl* n);
+    void visit_post_classDecl(classDecl* n);
+
     void visit_pre_namespaceDecl(namespaceDecl* n);
+    void visit_post_namespaceDecl(namespaceDecl* n);
+
     void visit_pre_functionInvoke(functionInvoke* n);
     void visit_pre_literalConstant(literalConstant* n);
 

@@ -592,7 +592,7 @@ pModel::FunctionList pModel::queryFunctions(oid ns_id, oid c_id, pStringRef name
 
 }
 
-pModel::ClassList pModel::queryClasses(oid ns_id, pStringRef name) const {
+pModel::ClassList pModel::queryClasses(oid ns_id, pStringRef name, pModel::oid m_id) const {
 
     ClassList result;
     std::stringstream query;
@@ -602,6 +602,10 @@ pModel::ClassList pModel::queryClasses(oid ns_id, pStringRef name) const {
              " class, sourceModule WHERE sourceModule.id=sourceModule_id AND" \
              " (namespace_id=" << ns_id << " OR namespace_id=1)" \
              " AND name='" << name.str() << "'";
+
+    if (m_id != pModel::NULLID) {
+        query << " AND class.sourceModule_id=" << m_id;
+    }
 
     if (trace_) {
         std::cerr << "TRACE: " << query.str() << std::endl;
@@ -652,6 +656,18 @@ pModel::ConstantList pModel::queryConstants(pStringRef name) const {
     list_query<pModel::ConstantList>(query.str(), result);
 
     return result;
+
+}
+
+pModel::oid pModel::lookupClass(oid ns_id, pStringRef name, pModel::oid m_id) const {
+
+    pModel::ClassList cl = queryClasses(ns_id, name, m_id);
+    if (cl.size() == 1) {
+        return cl[0].getID();
+    }
+    else {
+        return pModel::NULLID;
+    }
 
 }
 

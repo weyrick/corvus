@@ -140,7 +140,7 @@ public:
     void commit(bool begin=true);
 
     bool sourceModuleDirty(pStringRef realPath, pStringRef hash);
-    oid getSourceModuleOID(pStringRef realPath, pStringRef hash, bool deleteFirst);
+    oid getSourceModuleOID(pStringRef realPath, pStringRef hash="", bool deleteFirst=false);
     oid getNamespaceOID(pStringRef ns, bool create=false) const;
     oid getRootNamespaceOID() const {
         return getNamespaceOID("\\", true);
@@ -158,9 +158,11 @@ public:
     void defineConstant(oid m_id, pStringRef name, int type, pStringRef val, pSourceRange range);
 
     ConstantList queryConstants(pStringRef name) const;
-    ClassList queryClasses(oid ns_id, pStringRef name) const;
+    ClassList queryClasses(oid ns_id, pStringRef name, oid m_id = pModel::NULLID) const;
     ClassDeclList queryClassDecls(oid c_id, pStringRef name) const;
     FunctionList queryFunctions(oid ns_id, oid c_id, pStringRef name) const;
+
+    oid lookupClass(oid ns_id, pStringRef name, oid m_id = pModel::NULLID) const;
 
 };
 

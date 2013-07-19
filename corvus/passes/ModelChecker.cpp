@@ -14,7 +14,10 @@ namespace corvus { namespace AST { namespace Pass {
 
 
 void ModelChecker::pre_run(void) {
-    ns_id_ = model_->getNamespaceOID("\\");
+    m_id_ = model_->getSourceModuleOID(module_->fileName());
+    assert(m_id_ != pModel::NULLID && "module not found");
+    ns_id_ = model_->getRootNamespaceOID();
+    assert(ns_id_ != pModel::NULLID && "namespace not found");
 }
 
 /*
@@ -25,6 +28,29 @@ void ModelChecker::post_run(void) {
 void ModelChecker::visit_pre_namespaceDecl(namespaceDecl* n) {
 
     ns_id_ = model_->getNamespaceOID(n->name());
+
+}
+
+void ModelChecker::visit_post_namespaceDecl(namespaceDecl* n) {
+
+    // we only lose the namespace if this one had a body, i.e. block
+    if (n->body())
+        ns_id_ = model_->getRootNamespaceOID();
+
+}
+
+void ModelChecker::visit_pre_classDecl(classDecl* n) {
+
+    c_id_ = model_->lookupClass(ns_id_, n->name(), m_id_);
+    if (c_id_ == pModel::NULLID)
+        std::cout << "no class found: " << n->name().str() << " for line " << n->range().startLine << " in " << module_->fileName() << "\n";
+    assert(c_id_ != pModel::NULLID && "class wasn't in the model");
+
+}
+
+void ModelChecker::visit_post_classDecl(classDecl* n) {
+
+    c_id_ = pModel::NULLID;
 
 }
 
@@ -112,23 +138,34 @@ void ModelChecker::visit_pre_literalConstant(literalConstant* n) {
         if (!llvm::isa<literalID>(target))
             // dynamic class name
             return;
+
         literalID* classID = llvm::dyn_cast<literalID>(target);
-        pModel::ClassList cl = model_->queryClasses(ns_id_, classID->name());
-        if (cl.size() > 1) {
-            std::stringstream diag;
-            // XXX FQN
-            diag << "class redefined: " << classID->name().str();
-            addDiagnostic(target, diag.str());
-            return;
+
+        pModel::oid class_id;
+        if (classID->name() == "self") {
+            class_id = c_id_;
         }
-        else if (cl.size() == 0) {
-            std::stringstream diag;
-            // XXX FQN
-            diag << "undefined class: " << classID->name().str();
-            addDiagnostic(target, diag.str());
-            return;
+        else {
+            pModel::ClassList cl = model_->queryClasses(ns_id_, classID->name());
+            if (cl.size() > 1) {
+                std::stringstream diag;
+                // XXX FQN
+                diag << "class redefined: " << classID->name().str();
+                addDiagnostic(target, diag.str());
+                return;
+            }
+            else if (cl.size() == 0) {
+                std::stringstream diag;
+                // XXX FQN
+                diag << "undefined class: " << classID->name().str();
+                addDiagnostic(target, diag.str());
+                return;
+            }
+            // otherwise, found
+            class_id = cl[0].getID();
         }
-        pModel::ClassDeclList cdl = model_->queryClassDecls(cl[0].getID(), n->name());
+
+        pModel::ClassDeclList cdl = model_->queryClassDecls(class_id, n->name());
         if (cdl.size() == 0) {
             std::stringstream diag;
             // XXX FQN
