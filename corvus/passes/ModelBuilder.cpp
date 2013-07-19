@@ -63,7 +63,9 @@ void ModelBuilder::visit_pre_namespaceDecl(namespaceDecl* n) {
 
 void ModelBuilder::visit_post_namespaceDecl(namespaceDecl* n) {
 
-    ns_id_ = model_->getRootNamespaceOID();
+    // we only lose the namespace if this one had a body, i.e. block
+    if (n->body())
+        ns_id_ = model_->getRootNamespaceOID();
 
 }
 

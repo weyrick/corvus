@@ -114,8 +114,14 @@ void ModelChecker::visit_pre_literalConstant(literalConstant* n) {
             return;
         literalID* classID = llvm::dyn_cast<literalID>(target);
         pModel::ClassList cl = model_->queryClasses(ns_id_, classID->name());
-        assert(cl.size() <= 1);
-        if (cl.size() == 0) {
+        if (cl.size() > 1) {
+            std::stringstream diag;
+            // XXX FQN
+            diag << "class redefined: " << classID->name().str();
+            addDiagnostic(target, diag.str());
+            return;
+        }
+        else if (cl.size() == 0) {
             std::stringstream diag;
             // XXX FQN
             diag << "undefined class: " << classID->name().str();

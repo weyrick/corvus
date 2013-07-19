@@ -483,13 +483,13 @@ protected:
 
 public:
     namespaceDecl(const namespaceName* ns, pParseContext& C):
-        decl(namespaceDeclKind) {
+        decl(namespaceDeclKind), children_(0) {
         name_ = ns->getFullName();
         children_ = NULL;
     }
 
     namespaceDecl(const namespaceName* ns, stmt* body, pParseContext& C):
-        decl(namespaceDeclKind) {
+        decl(namespaceDeclKind), children_(0) {
         name_ = ns->getFullName();
         children_ = new (C) stmt*[1];
         children_[BODY] = body;
@@ -500,6 +500,8 @@ public:
     }
 
     block* body(void) {
+        if (!children_)
+            return NULL;
         return static_cast<block*>(children_[BODY]);
     }
 
