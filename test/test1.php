@@ -1,6 +1,17 @@
 <?php
 
-namespace myns;
+namespace test_other {
+
+class myclass {
+  const FOO = 2;
+}
+
+function foo($one, $two, $three) {
+}
+
+}
+
+namespace test_main {
 
 //const MYSTATIC = 7;
 define("MYFIRST", true);
@@ -112,5 +123,8 @@ $unused = 5;
 // DIAG: $three needs default
 function bar($hey, $two=5, $three) {
 }
+
+}
+
 
 ?>

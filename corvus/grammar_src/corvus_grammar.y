@@ -285,6 +285,14 @@ namespaceDecl(A) ::= T_NAMESPACE namespaceName(NSNAME) T_SEMI.
     A->setLine(CURRENT_LINE);
     delete NSNAME;
 }
+namespaceDecl(A) ::= T_NAMESPACE namespaceName(NSNAME) statementBlock(BODY).
+{
+    NSNAME->setAbsolute();
+    A = new (CTXT) AST::namespaceDecl(NSNAME, BODY, CTXT);
+    // namespace decls are always absolute?
+    A->setLine(CURRENT_LINE);
+    delete NSNAME;
+}
 
 %type useDecl{AST::useDecl*}
 useDecl(A) ::= T_USE useIdentList(L) T_SEMI.

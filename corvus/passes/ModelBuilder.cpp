@@ -61,6 +61,11 @@ void ModelBuilder::visit_pre_namespaceDecl(namespaceDecl* n) {
 
 }
 
+void ModelBuilder::visit_post_namespaceDecl(namespaceDecl* n) {
+
+    ns_id_ = model_->getRootNamespaceOID();
+
+}
 
 void ModelBuilder::visit_pre_classDecl(classDecl* n) {
 

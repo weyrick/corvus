@@ -469,24 +469,52 @@ typedef llvm::SmallVector<const namespaceName*, COR_IDLIST_SIZE> namespaceList;
 
 class namespaceDecl: public decl {
 
-    std::string name_;
+    enum { BODY=0 };
+
+    std::string name_;    
+    // children_[0] is always body (if it exists)
+    stmt** children_;
 
 protected:
     namespaceDecl(const namespaceDecl& other, pParseContext& C): decl(other),
-        name_(other.name_) { }
+        name_(other.name_) {
+        deepCopyChildren(children_, other.children_, 1, C);
+    }
 
 public:
     namespaceDecl(const namespaceName* ns, pParseContext& C):
         decl(namespaceDeclKind) {
         name_ = ns->getFullName();
+        children_ = NULL;
+    }
+
+    namespaceDecl(const namespaceName* ns, stmt* body, pParseContext& C):
+        decl(namespaceDeclKind) {
+        name_ = ns->getFullName();
+        children_ = new (C) stmt*[1];
+        children_[BODY] = body;
     }
 
     pStringRef name(void) const {
         return name_;
     }
 
-    stmt::child_iterator child_begin() { return child_iterator(); }
-    stmt::child_iterator child_end() { return child_iterator(); }
+    block* body(void) {
+        return static_cast<block*>(children_[BODY]);
+    }
+
+    stmt::child_iterator child_begin() {
+        if (children_)
+            return &children_[BODY];
+        else
+            return child_iterator();
+    }
+    stmt::child_iterator child_end() {
+        if (children_)
+            return &children_[BODY]+1;
+        else
+            return child_iterator();
+    }
 
     IMPLEMENT_SUPPORT_MEMBERS(namespaceDecl);
 

@@ -23,30 +23,35 @@ using namespace llvm;
 using namespace corvus;
 
 #define ASSERT(A,B) cassert(A,B,__LINE__)
+#define ASSERT_NOT(A,B) cassert(A,B,__LINE__,true)
 
-void cassert(int a, int b, int line) {
-    if (a != b) {
+void cassert(int a, int b, int line, bool negate=false) {
+    bool comp = (negate) ? (a == b) : (a != b);
+    if (comp) {
         std::cout << line << ": " << a << " != " << b << std::endl;
         exit(1);
     }
 }
 
-void cassert(pStringRef a, pStringRef b, int line) {
-    if (!a.equals(b)) {
+void cassert(pStringRef a, pStringRef b, int line, bool negate=false) {
+    bool comp = (negate) ? (a.equals(b)) : (!a.equals(b));
+    if (comp) {
         std::cout << line << ": "<< "[" << a.str() << "] != [" << b.str() << "]" << std::endl;
         exit(1);
     }
 }
 
-void cassert(pSourceLoc a, pSourceLoc b, int line) {
-    if (a != b) {
+void cassert(pSourceLoc a, pSourceLoc b, int line, bool negate=false) {
+    bool comp = (negate) ? (a == b) : (a != b);
+    if (comp) {
         std::cout << line << ": "<< "[" << a.toString() << "] != [" << b.toString() << "]" << std::endl;
         exit(1);
     }
 }
 
-void cassert(pSourceRange a, pSourceRange b, int line) {
-    if (a != b) {
+void cassert(pSourceRange a, pSourceRange b, int line, bool negate=false) {
+    bool comp = (negate) ? (a == b) : (a != b);
+    if (comp) {
         std::stringstream outa, outb;
         outa << a.startLine << ":" << a.startCol << ":" <<
                      a.endLine << ":" << a.endCol;
@@ -158,21 +163,36 @@ int main( int argc, char* argv[] )
     // MODEL QUERIES
     const pModel *m = sm.model();
 
+    // namespaces
+    pModel::oid main_ns = m->getNamespaceOID("\\test_main");
+    pModel::oid other_ns = m->getNamespaceOID("\\test_other");
+    ASSERT_NOT(main_ns, pModel::NULLID);
+    ASSERT_NOT(other_ns, pModel::NULLID);
+
     // functions
     pModel::FunctionList f;
-    f = m->queryFunctions(m->getNamespaceOID("\\myns"), pModel::NULLID, "foo");
+    f = m->queryFunctions(main_ns, pModel::NULLID, "foo");
+    ASSERT(f.size(), 1);
+    f = m->queryFunctions(other_ns, pModel::NULLID, "foo");
     ASSERT(f.size(), 1);
 
     // classes
     pModel::ClassList c;
-    c = m->queryClasses(m->getNamespaceOID("\\myns"), "myclass");
+    // \test_main\myclass
+    c = m->queryClasses(main_ns, "myclass");
     ASSERT(c.size(), 1);
 
     // constants
     pModel::ConstantList cn;
+    // define('MYFIRST' .. )
     cn = m->queryConstants("MYFIRST");
     ASSERT(cn.size(), 1);
 
+    // class constants
+    pModel::ClassDeclList cdl;
+    // \test_main\myclass::FOO
+    cdl = m->queryClassDecls(c[0].getID(), "FOO");
+    ASSERT(cdl.size(), 1);
 
     std::cout << "all tests passing" << std::endl;
     return 0;

@@ -40,6 +40,7 @@ public:
     void post_run(void);
 
     void visit_pre_namespaceDecl(namespaceDecl* n);
+    void visit_post_namespaceDecl(namespaceDecl* n);
 
     void visit_pre_classDecl(classDecl* n);
     void visit_post_classDecl(classDecl* n);
