@@ -125,8 +125,8 @@ private:
 
     void makeTables();
 
-    pStringRef oidOrNull(oid val);
-    pStringRef strOrNull(pStringRef val);
+    std::string oidOrNull(oid val);
+    std::string sql_string(pStringRef val, bool allowNull=true);
 
     template <typename LTYPE>
     void list_query(pStringRef query, LTYPE &result) const;

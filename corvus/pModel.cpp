@@ -422,7 +422,7 @@ pModel::oid pModel::defineClass(pModel::oid ns_id, pModel::oid m_id, pStringRef 
 
 }
 
-pStringRef pModel::oidOrNull(oid val) {
+std::string pModel::oidOrNull(oid val) {
     if (val) {
         std::stringstream conv;
         conv << val;
@@ -433,14 +433,33 @@ pStringRef pModel::oidOrNull(oid val) {
     }
 }
 
-pStringRef pModel::strOrNull(pStringRef val) {
+// handles escape quotes
+std::string pModel::sql_string(pStringRef val, bool allowNull) {
     if (!val.empty()) {
-        std::stringstream conv;
-        conv << '\'' << val.str() << '\'';
-        return conv.str();
+        std::string conv;
+        int quotes = val.count('\'');
+        // get room for doubling up the quotes
+        conv.reserve(val.size()+quotes+2); // +2 is outer quotes
+        conv.push_back('\'');
+        for (pStringRef::iterator i = val.begin();
+             i != val.end();
+             ++i) {
+            if (*i == '\'') {
+                conv.push_back('\'');
+                conv.push_back('\'');
+            }
+            else {
+                conv.push_back(*i);
+            }
+        }
+        conv.push_back('\'');
+        return conv;
     }
     else {
-        return "NULL";
+        if (allowNull)
+            return "NULL";
+        else
+            return "''";
     }
 }
 
@@ -451,7 +470,7 @@ pModel::oid pModel::defineFunction(oid ns_id, oid m_id, oid c_id, pStringRef nam
     sql << "INSERT INTO function VALUES (NULL,"
         << m_id << ','
         << ns_id << ','
-        << oidOrNull(c_id).str()
+        << oidOrNull(c_id)
         << ",'" << name.str() << "',"
         << type << ','
         << flags << ','
@@ -473,7 +492,7 @@ void pModel::defineClassDecl(oid c_id, pStringRef name, int type, int flags, int
         << type << ','
         << flags << ','
         << vis << ','
-        << strOrNull(defaultVal).str() << ","
+        << sql_string(defaultVal) << ","
         << range.startLine  << ',' << range.startCol
         << ")";
 
@@ -494,8 +513,8 @@ void pModel::defineFunctionVar(oid f_id, pStringRef name,
         << type << ','
         << flags << ','
         << datatype << ','
-        << strOrNull(datatype_obj).str() << ","
-        << strOrNull(defaultVal).str() << ","
+        << sql_string(datatype_obj) << ","
+        << sql_string(defaultVal) << ","
         << range.startLine  << ',' << range.startCol
         << ")";
     sql_insert(sql.str().c_str());
@@ -506,14 +525,11 @@ void pModel::defineConstant(oid m_id, pStringRef name, int type, pStringRef val,
 
     std::stringstream sql;
 
-    std::string valEsc(val);
-    std::replace(valEsc.begin(), valEsc.end(), '\'', '"'); // XXX this isn't right, should escape not replace
-
     sql << "INSERT INTO constant VALUES (NULL,"
         << m_id << ','
         << type << ','
         << "'" << name.str() << "'" << ','
-        << "'" << valEsc << "'" << ','
+        << sql_string(val,false) << ','
         << range.startLine  << ',' << range.startCol
         << ")";
     sql_insert(sql.str().c_str());
@@ -533,7 +549,10 @@ void pModel::list_query(pStringRef query, LTYPE &result) const {
         typename LTYPE::value_type f;
         for (int i = 0; i < sqlite3_column_count(stmt); i++) {
             pStringRef key = sqlite3_column_name(stmt, i);
-            pStringRef val = (char*)sqlite3_column_text(stmt, i);
+            pStringRef val;
+            char *cVal = (char*)sqlite3_column_text(stmt, i);
+            if (cVal)
+                val = cVal;
             f.set(key, val);
         }
         result.push_back(f);
