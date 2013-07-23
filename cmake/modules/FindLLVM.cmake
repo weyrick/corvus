@@ -18,22 +18,22 @@ if (LLVM_INCLUDE_DIR)
 else (LLVM_INCLUDE_DIR)
 
   find_program(LLVM_CONFIG_EXECUTABLE
-      NAMES llvm-config
+      NAMES llvm-config llvm-config-3.3
       PATHS
       /opt/local/bin
   )
   
-  find_program(LLVM_CLANGXX_EXECUTABLE
-      NAMES clang++
-      PATHS
-      /opt/local/bin
-  )
+#  find_program(LLVM_CLANGXX_EXECUTABLE
+#      NAMES clang++
+#      PATHS
+#      /opt/local/bin
+#  )
 
-  if (LLVM_CLANGXX_EXECUTABLE)
-      MESSAGE(STATUS "LLVM clang++ found at: ${LLVM_CLANGXX_EXECUTABLE}")
-  else(LLVM_CLANGXX_EXECUTABLE)
-      MESSAGE(FATAL_ERROR "LLVM clang++ is required, but not found!")
-  endif(LLVM_CLANGXX_EXECUTABLE)
+# if (LLVM_CLANGXX_EXECUTABLE)
+#      MESSAGE(STATUS "LLVM clang++ found at: ${LLVM_CLANGXX_EXECUTABLE}")
+#  else(LLVM_CLANGXX_EXECUTABLE)
+#      MESSAGE(FATAL_ERROR "LLVM clang++ is required, but not found!")
+#  endif(LLVM_CLANGXX_EXECUTABLE)
   
   MACRO(FIND_LLVM_LIBS LLVM_CONFIG_EXECUTABLE _libname_ LIB_VAR OBJECT_VAR)
     exec_program( ${LLVM_CONFIG_EXECUTABLE} ARGS --libs ${_libname_}  OUTPUT_VARIABLE ${LIB_VAR} )

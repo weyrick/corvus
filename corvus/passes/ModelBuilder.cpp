@@ -15,6 +15,7 @@
 #include "corvus/pSourceModule.h"
 #include "corvus/pSourceFile.h"
 #include <stdio.h>
+#include <sstream>
 
 namespace corvus { namespace AST { namespace Pass {
 

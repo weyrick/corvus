@@ -72,43 +72,45 @@ public:
     typedef std::map<std::string, oid> IDMap;
 
     // general
-    const static int NULLID   = 0;
-    const static int NO_FLAGS = 0;
+    enum {
+    NULLID   = 0,
+    NO_FLAGS = 0,
 
     // constants
-    const static int CONST       = 0;
-    const static int DEFINE      = 1;
+    CONST       = 0,
+    DEFINE      = 1,
 
     // flags
-    const static int STATIC   = 0x1;
-    const static int ABSTRACT = 0x2;
-    const static int FINAL    = 0x4;
+    STATIC   = 0x1,
+    ABSTRACT = 0x2,
+    FINAL    = 0x4,
 
     // function types
-    const static int TOP_LEVEL = 0;
-    const static int FUNCTION  = 1;
-    const static int METHOD    = 2;
+    TOP_LEVEL = 0,
+    FUNCTION  = 1,
+    METHOD    = 2,
 
     // function var types
-    const static int PARAM     = 0;
-    const static int FREE_VAR  = 1;
+    PARAM     = 0,
+    FREE_VAR  = 1,
 
     // visibility
-    const static int PUBLIC    = 0;
-    const static int PROTECTED = 1;
-    const static int PRIVATE   = 2;
+    PUBLIC    = 0,
+    PROTECTED = 1,
+    PRIVATE   = 2,
 
     // data types
-    const static int T_UNKNOWN = 0;
+    T_UNKNOWN = 0,
     // array, str, bool, etc
 
     // class types
-    const static int CLASS   = 0;
-    const static int IFACE   = 1;
+    CLASS   = 0,
+    IFACE   = 1,
 
     // class decl types
     // share CONST = 0 above
-    const static int PROPERTY = 2;
+    PROPERTY = 2
+    };
 
 private:
 
