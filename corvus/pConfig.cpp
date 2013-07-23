@@ -13,7 +13,7 @@
 #include <iostream>
 
 #include <llvm/ADT/OwningPtr.h>
-#include <llvm/Value.h> // isa
+#include <llvm/IR/Value.h> // isa
 #include <llvm/Support/SourceMgr.h>
 #include <llvm/Support/YAMLParser.h>
 #include <llvm/Support/MemoryBuffer.h>

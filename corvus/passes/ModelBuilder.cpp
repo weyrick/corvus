@@ -71,7 +71,31 @@ void ModelBuilder::visit_post_namespaceDecl(namespaceDecl* n) {
 
 void ModelBuilder::visit_pre_classDecl(classDecl* n) {
 
-    c_id_ = model_->defineClass(ns_id_, m_id_, n->name(), n->range());
+    std::stringstream extends, implements;
+    if (n->extendsCount()) {
+        for (idList::iterator i = n->extends_begin();
+             i != n->extends_end();
+             ++i) {
+            // php has no multiple inheritance, so we expect only 1
+            extends << *i << ",";
+        }
+    }
+    if (n->implementsCount()) {
+        for (idList::iterator i = n->implements_begin();
+             i != n->implements_end();
+             ++i) {
+            implements << *i << ",";
+        }
+    }
+
+    c_id_ = model_->defineClass(ns_id_,
+                                m_id_,
+                                n->name(),
+                                (n->classType() == classDecl::IFACE) ?
+                                    pModel::IFACE : pModel::CLASS,
+                                extends.str(),
+                                implements.str(),
+                                n->range());
 
 }
 

@@ -403,9 +403,8 @@ pModel::oid pModel::getNamespaceOID(pStringRef ns, bool create) const {
 
 }
 
-pModel::oid pModel::defineClass(pModel::oid ns_id, pModel::oid m_id, pStringRef name, pSourceRange range) {
+pModel::oid pModel::defineClass(pModel::oid ns_id, pModel::oid m_id, pStringRef name, int type, pStringRef extends, pStringRef implements, pSourceRange range) {
 
-    int type = pModel::CLASS;
     int flags = pModel::NO_FLAGS;
 
     std::stringstream sql;
@@ -415,8 +414,9 @@ pModel::oid pModel::defineClass(pModel::oid ns_id, pModel::oid m_id, pStringRef 
         << ",'" << name.str() << "',"
         << type << ','
         << flags << ','
-        << range.startLine  << ',' << range.startCol  << ',' << range.endLine  << ',' << range.endCol
-        << ",'',''" // extends, implements
+        << range.startLine  << ',' << range.startCol  << ',' << range.endLine  << ',' << range.endCol << ','
+        << sql_string(extends, true) << ','
+        << sql_string(implements, true)
         << ")";
     return sql_insert(sql.str().c_str());
 

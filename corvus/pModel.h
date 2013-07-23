@@ -82,6 +82,7 @@ public:
     // flags
     const static int STATIC   = 0x1;
     const static int ABSTRACT = 0x2;
+    const static int FINAL    = 0x4;
 
     // function types
     const static int TOP_LEVEL = 0;
@@ -146,7 +147,7 @@ public:
         return getNamespaceOID("\\", true);
     }
 
-    oid defineClass(oid ns_id, oid m_id, pStringRef name, pSourceRange range);
+    oid defineClass(oid ns_id, oid m_id, pStringRef name, int type, pStringRef extends, pStringRef implements, pSourceRange range);
     void defineClassDecl(oid c_id, pStringRef name, int type, int flags, int vis, pStringRef defaultVal, pSourceRange range);
     oid defineFunction(oid ns_id, oid m_id, oid c_id, pStringRef name,
                         int type, int flags, int vis, int minA, int maxA, pSourceRange range);

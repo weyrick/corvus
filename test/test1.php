@@ -49,9 +49,16 @@ class myclass {
 
 }
 
+interface realiface {
+    public function foo();
+    public function bar();
+}
+
 // futurediag: unknown class "noclass" and "noiface"
-class myclass2 extends noclass implements noiface {
+class myclass2 extends noclass implements noiface, realiface {
   public function myclass2($one) { }
+  public function foo();
+  // futurediag: unimplemented interface method bar()
 }
 
 function foo($one, $two) {
