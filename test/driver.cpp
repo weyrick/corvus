@@ -129,12 +129,12 @@ int main( int argc, char* argv[] )
 
     // 2
     i++;
-    ASSERT(dList[i]->msg(), "wrong number of arguments: function 'bar' takes between minArity and maxArity arguments (0 specified)");
+    ASSERT(dList[i]->msg(), "wrong number of arguments: function 'bar' takes between 1 and 3 arguments (0 specified)");
     //ASSERT(dList[i]->location().range(), pSourceRange(60,1,60,0)); // XXX
 
     // 3
     i++;
-    ASSERT(dList[i]->msg(), "wrong number of arguments: function 'bar' takes between minArity and maxArity arguments (4 specified)");
+    ASSERT(dList[i]->msg(), "wrong number of arguments: function 'bar' takes between 1 and 3 arguments (4 specified)");
     //ASSERT(dList[i]->location().range(), pSourceRange(64,1,64,0)); // XXX
 
     // 4

@@ -14,6 +14,7 @@
 #include <sstream>
 #include <stdlib.h>
 #include <algorithm>
+#include <llvm/ADT/SmallVector.h>
 
 namespace corvus { 
 
@@ -153,6 +154,8 @@ void pModel::makeTables() {
                          "start_col INTEGER NOT NULL," \
                          "end_line INTEGER NOT NULL," \
                          "end_col INTEGER NOT NULL," \
+                         "extends_count INTEGER NOT NULL," \
+                         "implements_count INTEGER NOT NULL," \
                          // text versions
                          "extends TEXT NULL," \
                          "implements TEXT NULL," \
@@ -403,7 +406,9 @@ pModel::oid pModel::getNamespaceOID(pStringRef ns, bool create) const {
 
 }
 
-pModel::oid pModel::defineClass(pModel::oid ns_id, pModel::oid m_id, pStringRef name, int type, pStringRef extends, pStringRef implements, pSourceRange range) {
+pModel::oid pModel::defineClass(pModel::oid ns_id, pModel::oid m_id, pStringRef name,
+                                int type, int extends_count, int implements_count, pStringRef extends,
+                                pStringRef implements, pSourceRange range) {
 
     int flags = pModel::NO_FLAGS;
 
@@ -415,6 +420,7 @@ pModel::oid pModel::defineClass(pModel::oid ns_id, pModel::oid m_id, pStringRef 
         << type << ','
         << flags << ','
         << range.startLine  << ',' << range.startCol  << ',' << range.endLine  << ',' << range.endCol << ','
+        << extends_count << ',' << implements_count << ','
         << sql_string(extends, true) << ','
         << sql_string(implements, true)
         << ")";
@@ -499,6 +505,20 @@ void pModel::defineClassDecl(oid c_id, pStringRef name, int type, int flags, int
     sql_insert(sql.str().c_str());
 
 }
+
+void pModel::defineClassRelation(oid lhs_c_id, int type, oid rhs_c_id) {
+
+    std::stringstream sql;
+    sql << "INSERT INTO class_relations VALUES (NULL,"
+        << lhs_c_id << ','
+        << type << ','
+        << rhs_c_id
+        << ")";
+
+    sql_insert(sql.str().c_str());
+
+}
+
 
 void pModel::defineFunctionVar(oid f_id, pStringRef name,
                     int type, int flags, int datatype, pStringRef datatype_obj,
@@ -668,6 +688,74 @@ pModel::oid pModel::lookupClass(oid ns_id, pStringRef name, pModel::oid m_id) co
     else {
         return pModel::NULLID;
     }
+
+}
+
+pModel::ClassList pModel::getUnresolvedClasses() const {
+
+    ClassList result;
+    std::stringstream query;
+
+    // the method to retrieve this right now is to compare the count of
+    // extends and implements as recorded by the class declaration against
+    // the count of relations we have in the relations table. if there are fewer
+    // in the relations table than in the class table, then we have unresolved
+    query << "SELECT class.id, namespace_id, name, type, flags, extends, implements, extends_count, implements_count, " \
+             " (select count(*) from class_relations where lhs_class_id=class.id and type=0) as resolved_extends_count, " \
+             " (select count(*) from class_relations where lhs_class_id=class.id and type=1) as resolved_implements_count, " \
+             " start_line, start_col, sourceModule.realPath FROM " \
+             " class, sourceModule WHERE sourceModule.id=sourceModule_id AND" \
+             " (extends_count > 0 or implements_count > 0) AND " \
+             " ((extends_count > resolved_extends_count) or (implements_count > resolved_implements_count))";
+
+    if (trace_) {
+        std::cerr << "TRACE: " << query.str() << std::endl;
+    }
+
+    list_query<ClassList>(query.str(), result);
+
+    return result;
+
+}
+
+void pModel::resolveClassRelations() {
+
+    ClassList unresolved = getUnresolvedClasses();
+
+    for (int i = 0; i < unresolved.size(); ++i) {
+
+        pModel::oid c_id = unresolved[i].getAsOID("id");
+
+        if (unresolved[i].getAsInt("extends_count") > unresolved[i].getAsInt("resolved_extends_count")) {
+            //std::cout << "resolving extends for class " << unresolved[i].get("name") << " which extends " << unresolved[i].get("extends") << " in namespace " << unresolved[i].getAsOID("namespace_id") << "\n";
+            llvm::SmallVector<pStringRef, 32> e_list;
+            pStringRef orig(unresolved[i].get("extends"));
+            orig.split(e_list, ",", 32);
+            for (int i = 0; i < e_list.size(); ++i) {
+                pModel::oid resolved_id = lookupClass(unresolved[i].getAsOID("namespace_id"), e_list[i]);
+                if (resolved_id != pModel::NULLID) {
+                    defineClassRelation(c_id, pModel::EXTENDS, resolved_id);
+                }
+            }
+        }
+
+        if (unresolved[i].getAsInt("implements_count") > unresolved[i].getAsInt("resolved_implements_count")) {
+            //std::cout << "resolving extends for class " << unresolved[i].get("name") << " which implements " << unresolved[i].get("implements") << "\n";
+            llvm::SmallVector<pStringRef, 32> i_list;
+            pStringRef orig(unresolved[i].get("implements"));
+            orig.split(i_list, ",", 32);
+            for (int i = 0; i < i_list.size(); ++i) {
+                //std::cout << i << ": " << i_list[i].str() << "\n";
+                pModel::oid resolved_id = lookupClass(unresolved[i].getAsOID("namespace_id"), i_list[i]);
+                if (resolved_id != pModel::NULLID) {
+                    defineClassRelation(c_id, pModel::IMPLEMENTS, resolved_id);
+                }
+            }
+        }
+
+    }
+
+    commit(false);
 
 }
 

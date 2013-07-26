@@ -37,9 +37,9 @@ protected:
 public:
     const std::string& get(pStringRef key) const {
         //std::cout << "key: " << key.str() << std::endl;
-        assert(fields_.find(key) != fields_.end() && "key not found");
         StringMap::const_iterator i = fields_.find(key);
-        return i->first;
+        assert(i != fields_.end() && "key not found");
+        return i->second;
     }
     int getAsInt(pStringRef key) const;
     sqlite3_int64 getAsOID(pStringRef key) const;
@@ -109,7 +109,12 @@ public:
 
     // class decl types
     // share CONST = 0 above
-    PROPERTY = 2
+    PROPERTY = 2,
+
+    // class relation types
+    EXTENDS = 0,
+    IMPLEMENTS = 1
+
     };
 
 private:
@@ -149,8 +154,10 @@ public:
         return getNamespaceOID("\\", true);
     }
 
-    oid defineClass(oid ns_id, oid m_id, pStringRef name, int type, pStringRef extends, pStringRef implements, pSourceRange range);
+    oid defineClass(oid ns_id, oid m_id, pStringRef name, int type, int extends_count, int implements_count,
+                    pStringRef extends, pStringRef implements, pSourceRange range);
     void defineClassDecl(oid c_id, pStringRef name, int type, int flags, int vis, pStringRef defaultVal, pSourceRange range);
+    void defineClassRelation(oid lhs_c_id, int type, oid rhs_c_id);
     oid defineFunction(oid ns_id, oid m_id, oid c_id, pStringRef name,
                         int type, int flags, int vis, int minA, int maxA, pSourceRange range);
     void defineFunctionVar(oid f_id, pStringRef name,
@@ -159,6 +166,9 @@ public:
                           pSourceRange range);
 
     void defineConstant(oid m_id, pStringRef name, int type, pStringRef val, pSourceRange range);
+
+    ClassList getUnresolvedClasses() const;
+    void resolveClassRelations();
 
     ConstantList queryConstants(pStringRef name) const;
     ClassList queryClasses(oid ns_id, pStringRef name, oid m_id = pModel::NULLID) const;

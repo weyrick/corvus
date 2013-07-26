@@ -6,6 +6,11 @@ class myclass {
   const FOO = 2;
 }
 
+interface iface {
+    public function foo();
+    public function bar();
+}
+
 function foo($one, $two, $three) {
 }
 
@@ -54,12 +59,15 @@ interface realiface {
     public function bar();
 }
 
-// futurediag: unknown class "noclass" and "noiface"
+// DIAG: unknown class "noclass" and "noiface"
 class myclass2 extends noclass implements noiface, realiface {
   public function myclass2($one) { }
-  public function foo();
+  public function foo() { }
   // futurediag: unimplemented interface method bar()
 }
+
+// nodiag: extends/implements existing class/interface in another namespace
+class myclass3 extends \test_other\myclass implements \test_other\iface { }
 
 function foo($one, $two) {
     if (1) return 5;

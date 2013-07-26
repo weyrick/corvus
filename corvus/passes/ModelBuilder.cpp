@@ -77,7 +77,7 @@ void ModelBuilder::visit_pre_classDecl(classDecl* n) {
         for (idList::iterator i = n->extends_begin();
              i != n->extends_end();
              ++i) {
-            // php has no multiple inheritance, so we expect only 1
+            // interfaces have multiple inheritance
             extends << *i << ",";
         }
     }
@@ -89,13 +89,18 @@ void ModelBuilder::visit_pre_classDecl(classDecl* n) {
         }
     }
 
+    std::string extendsS(extends.str());
+    std::string implementsS(implements.str());
+
     c_id_ = model_->defineClass(ns_id_,
                                 m_id_,
                                 n->name(),
                                 (n->classType() == classDecl::IFACE) ?
                                     pModel::IFACE : pModel::CLASS,
-                                extends.str(),
-                                implements.str(),
+                                n->extendsCount(),
+                                n->implementsCount(),
+                                extendsS.substr(0,extendsS.size()-1),
+                                implementsS.substr(0,implementsS.size()-1),
                                 n->range());
 
 }

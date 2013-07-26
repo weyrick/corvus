@@ -14,6 +14,7 @@
 #include "corvus/pSourceModule.h"
 #include "corvus/pPassManager.h"
 #include "corvus/pModel.h"
+#include "corvus/pFullModelChecker.h"
 
 #include "corvus/passes/PrintAST.h"
 #include "corvus/passes/DumpStats.h"
@@ -147,6 +148,16 @@ void pSourceManager::addSourceFile(pStringRef name) {
     free(rp);
 }
 
+pSourceModule* pSourceManager::getSourceModuleByRealpath(pStringRef name) {
+    pSourceManager::ModuleListType::iterator i = moduleList_.find(name);
+    if (i != moduleList_.end()) {
+        return i->second;
+    }
+    else {
+        return NULL;
+    }
+}
+
 void pSourceManager::addSourceDir(pStringRef name, pStringRef exts) {
 
     llvm::SmallVector<pStringRef, 8> extList;
@@ -234,9 +245,14 @@ void pSourceManager::runDiagnostics() {
 
     // standard diag passes
     passManager.addPass<AST::Pass::Trivial>();
+    // individual source module model checks
     passManager.addPass<AST::Pass::ModelChecker>();
 
     runPasses(&passManager);
+
+    // now run full model checks
+    pFullModelChecker fmc(this, model_);
+    fmc.run();
 
 }
 
@@ -248,7 +264,7 @@ void pSourceManager::addIncludeDir(pStringRef name, pStringRef exts) {
 
     std::vector<pSourceModule*> includeList;
     llvm::SmallVector<pStringRef, 8> extList;
-    exts.split(extList, ",");
+    exts.split(extList, ",", 8);
 
     llvm::error_code ec;
     for (llvm::sys::fs::recursive_directory_iterator dir(name, ec), dirEnd;
@@ -315,6 +331,7 @@ void pSourceManager::refreshModel() {
     passManager.addPass<AST::Pass::ModelBuilder>();
     runPasses(&passManager);
     model_->commit();
+    model_->resolveClassRelations();
 
 }
 
