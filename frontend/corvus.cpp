@@ -27,6 +27,7 @@ struct option longopts[] = {
     {"print-ast", 0, 0, 'a'},
     {"debug-parse", 0, 0, 0},
     {"debug-model", 0, 0, 0},
+    {"debug-diags", 0, 0, 0},
     {"stubs", 1, 0, 's'},
     {"exts", 1, 0, 'e'},
     {"db", 1, 0, 'd'},
@@ -52,6 +53,7 @@ void corvusVersion(void) {
                  "to produce diagnostics on.\n\n" \
                  "OPTIONS:\n" \
                  " --debug-model            - Debug the model builder\n" \
+                 " --debug-diags            - Debug the diagnostics\n" \
                  " --debug-parse            - Debug output from parser\n" \
                  " -c,--config=<file>       - Load corvus config file\n" \
                  " -h,--help                - Display available options\n" \
@@ -126,7 +128,7 @@ int main( int argc, char* argv[] )
 {
 
     int opt, idx, verbosity(0);
-    bool debugParse(false), debugModel(false);
+    bool debugParse(false), debugModel(false), debugDiags(false);
     bool printToks(false), printAST(false);
 
     std::vector<std::string> inputFiles;
@@ -156,6 +158,10 @@ int main( int argc, char* argv[] )
             }
             if (strcmp(longopts[idx].name,"debug-model") == 0) {
                 debugModel = true;
+                continue;
+            }
+            if (strcmp(longopts[idx].name,"debug-diags") == 0) {
+                debugDiags = true;
                 continue;
             }
             inputFiles.push_back(longopts[idx].name);
@@ -189,7 +195,7 @@ int main( int argc, char* argv[] )
         }
     }
 
-    sm.setDebug(verbosity, debugParse, debugModel);
+    sm.setDebug(verbosity, debugParse, debugModel, debugDiags);
 
     // set values from config
     if (!config.dbName.empty()) {

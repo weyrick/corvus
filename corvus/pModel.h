@@ -35,6 +35,13 @@ protected:
     StringMap fields_;
     mutable IntMap intFields_; // lazyily built cache
 public:
+    void dump() const {
+        for (StringMap::const_iterator i = fields_.begin();
+             i != fields_.end();
+             ++i) {
+            std::cerr << i->first << ": " << i->second << "\n";
+        }
+    }
     const std::string& get(pStringRef key) const {
         //std::cout << "key: " << key.str() << std::endl;
         StringMap::const_iterator i = fields_.find(key);
@@ -128,6 +135,7 @@ private:
     void sql_execute(pStringRef query) const;
     oid sql_insert(pStringRef query) const;
     oid sql_select_single_id(pStringRef query) const;
+    std::string sql_select_single_string(pStringRef query) const;
     void sql_setup();
     void sql_done();
 
@@ -145,11 +153,14 @@ public:
         sql_setup();
     }
 
+    void setTrace(bool trace) { trace_ = trace; }
+
     void commit(bool begin=true);
 
     bool sourceModuleDirty(pStringRef realPath, pStringRef hash);
     oid getSourceModuleOID(pStringRef realPath, pStringRef hash="", bool deleteFirst=false);
     oid getNamespaceOID(pStringRef ns, bool create=false) const;
+    std::string getNamespaceName(oid ns_id) const;
     oid getRootNamespaceOID() const {
         return getNamespaceOID("\\", true);
     }

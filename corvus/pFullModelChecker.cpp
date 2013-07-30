@@ -27,17 +27,29 @@ void pFullModelChecker::run() {
     // make sure all classes are resolved (extends and implements)
     pModel::ClassList unresolved = model_->getUnresolvedClasses();
     for (int i = 0; i < unresolved.size(); ++i) {
-        if (unresolved[i].getAsInt("extends_count") > unresolved[i].getAsInt("resolved_extends_count")) {
+        std::string unresolved_extends = unresolved[i].get("unresolved_extends");
+        std::string unresolved_implements = unresolved[i].get("unresolved_implements");
+        if (unresolved_extends.size()) {
             std::stringstream diag;
-            diag << "class " << unresolved[i].get("name") << " extends " << unresolved[i].get("extends") << " which is unresolved";
+            diag << "class " << unresolved[i].get("name") << " extends " << unresolved_extends << " which ";
+            if (unresolved_extends.find(',') != std::string::npos)
+                diag << "are ";
+            else
+                diag << "is ";
+            diag << "unresolved";
             addDiagnostic(unresolved[i].get("realpath"),
                           unresolved[i].getAsInt("start_line"),
                           unresolved[i].getAsInt("start_col"),
                           diag.str());
         }
-        if (unresolved[i].getAsInt("implements_count") > unresolved[i].getAsInt("resolved_implements_count")) {
+        if (unresolved_implements.size()) {
             std::stringstream diag;
-            diag << "class " << unresolved[i].get("name") << " implements " << unresolved[i].get("implements") << " which is unresolved";
+            diag << "class " << unresolved[i].get("name") << " implements " << unresolved_implements << " which ";
+            if (unresolved_implements.find(',') != std::string::npos)
+                diag << "are ";
+            else
+                diag << "is ";
+            diag << "unresolved";
             addDiagnostic(unresolved[i].get("realpath"),
                           unresolved[i].getAsInt("start_line"),
                           unresolved[i].getAsInt("start_col"),

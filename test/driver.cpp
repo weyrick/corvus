@@ -118,44 +118,44 @@ int main( int argc, char* argv[] )
     pSourceModule::DiagListType dList = mList[0]->getDiagnostics();
 
     // DIAG COUNT
-    cassert(dList.size(), 8, __LINE__);
+    cassert(dList.size(), 10, __LINE__);
 
     // DIAGS
 
-    // 1
     int i = 0;
+
+
+    ASSERT(dList[i]->msg(), "class myclass2 extends noclass which is unresolved");
+
+    i++;
+    ASSERT(dList[i]->msg(), "class myclass2 implements noiface which is unresolved");
+
+    i++;
     ASSERT(dList[i]->msg(), "function 'nonexist' not defined");
     //ASSERT(dList[i]->location().range(), pSourceRange(57,1,57,0)); // XXX
 
-    // 2
     i++;
     ASSERT(dList[i]->msg(), "wrong number of arguments: function 'bar' takes between 1 and 3 arguments (0 specified)");
     //ASSERT(dList[i]->location().range(), pSourceRange(60,1,60,0)); // XXX
 
-    // 3
     i++;
     ASSERT(dList[i]->msg(), "wrong number of arguments: function 'bar' takes between 1 and 3 arguments (4 specified)");
     //ASSERT(dList[i]->location().range(), pSourceRange(64,1,64,0)); // XXX
 
-    // 4
     i++;
     ASSERT(dList[i]->msg(), "undefined constant: MYTHIRD");
     //ASSERT(dList[i]->location().range(), pSourceRange(91,0,91,0)); // XXX
 
-    // 5
     i++;
     ASSERT(dList[i]->msg(), "undefined class: myclassne");
 
-    // 6
     i++;
     ASSERT(dList[i]->msg(), "undefined class constant: myclass::FOO2");
 
-    // 7
     i++;
     ASSERT(dList[i]->msg(), "parameter should have default because previous parameter does");
     //ASSERT(dList[i]->location().range(), pSourceRange(109,28,109,34));
 
-    // 8
     i++;
     ASSERT(dList[i]->msg(), "first parameter with default defined here");
     //ASSERT(dList[i]->location().range(), pSourceRange(109,20,109,24));

@@ -14,6 +14,7 @@
 #include <sstream>
 #include <stdlib.h>
 #include <algorithm>
+#include <iterator>
 #include <llvm/ADT/SmallVector.h>
 
 namespace corvus { 
@@ -78,6 +79,11 @@ pModel::oid pModel::sql_select_single_id(pStringRef query) const {
     rc = sqlite3_step(stmt);
     if (rc == SQLITE_ROW) {
         result = sqlite3_column_int(stmt, 0);
+        if (trace_)
+            std::cerr << "TRACE: found 1 row\n";
+    }
+    else if (trace_) {
+        std::cerr << "TRACE: no rows found\n";
     }
 
     sqlite3_finalize(stmt);
@@ -85,6 +91,39 @@ pModel::oid pModel::sql_select_single_id(pStringRef query) const {
     return result;
 
 }
+
+
+std::string pModel::sql_select_single_string(pStringRef query) const {
+
+    sqlite3_stmt *stmt;
+    std::string result;
+
+    int rc = sqlite3_prepare_v2(db_, query.str().c_str(), -1, &stmt, NULL);
+    if (rc != SQLITE_OK) {
+        std::cerr << "sqlite error: " << query.str() << "\n";
+        std::cerr << sqlite3_errmsg(db_) << "\n";
+        exit(1);
+    }
+    else if (trace_) {
+        std::cerr << "TRACE: " << query.str() << std::endl;
+    }
+
+    rc = sqlite3_step(stmt);
+    if (rc == SQLITE_ROW) {
+        result = (char*)sqlite3_column_text(stmt, 0);
+        if (trace_)
+            std::cerr << "TRACE: found 1 row\n";
+    }
+    else if (trace_) {
+        std::cerr << "TRACE: no rows found\n";
+    }
+
+    sqlite3_finalize(stmt);
+
+    return result;
+
+}
+
 
 void pModel::sql_setup() {
     sql_execute("PRAGMA foreign_keys = ON");
@@ -159,6 +198,8 @@ void pModel::makeTables() {
                          // text versions
                          "extends TEXT NULL," \
                          "implements TEXT NULL," \
+                         "unresolved_extends TEXT NULL," \
+                         "unresolved_implements TEXT NULL," \
                          //
                          "FOREIGN KEY(namespace_id) REFERENCES namespace(id) ON DELETE CASCADE," \
                          "FOREIGN KEY(sourceModule_id) REFERENCES sourceModule(id) ON DELETE CASCADE"
@@ -406,6 +447,32 @@ pModel::oid pModel::getNamespaceOID(pStringRef ns, bool create) const {
 
 }
 
+std::string pModel::getNamespaceName(pModel::oid ns_id) const {
+
+    // linear search the cache first
+    for (IDMap::const_iterator i = namespaces_.begin();
+         i != namespaces_.end();
+         ++i) {
+        if (i->second == ns_id)
+            return i->first;
+    }
+
+    // try sql if we haven't found it
+    std::stringstream sql;
+
+    sql << "SELECT namespace FROM namespace WHERE id=" << ns_id;
+    std::string result = sql_select_single_string(sql.str().c_str());
+
+    if (!result.empty()) {
+        // cache it while we here
+        namespaces_[result] = ns_id;
+    }
+
+    return result;
+
+}
+
+
 pModel::oid pModel::defineClass(pModel::oid ns_id, pModel::oid m_id, pStringRef name,
                                 int type, int extends_count, int implements_count, pStringRef extends,
                                 pStringRef implements, pSourceRange range) {
@@ -422,7 +489,9 @@ pModel::oid pModel::defineClass(pModel::oid ns_id, pModel::oid m_id, pStringRef 
         << range.startLine  << ',' << range.startCol  << ',' << range.endLine  << ',' << range.endCol << ','
         << extends_count << ',' << implements_count << ','
         << sql_string(extends, true) << ','
-        << sql_string(implements, true)
+        << sql_string(implements, true) << ','
+        << sql_string(extends, true) << ',' // unresolved until resolveClassRelations is called
+        << sql_string(implements, true)     // unresolved until resolveClassRelations is called
         << ")";
     return sql_insert(sql.str().c_str());
 
@@ -559,6 +628,9 @@ void pModel::defineConstant(oid m_id, pStringRef name, int type, pStringRef val,
 template <typename LTYPE>
 void pModel::list_query(pStringRef query, LTYPE &result) const {
     sqlite3_stmt *stmt;
+    if (trace_) {
+        std::cerr << "TRACE: " << query.str() << "\n";
+    }
     int rc = sqlite3_prepare_v2(db_, query.str().c_str(), -1, &stmt, NULL);
     if (rc != SQLITE_OK) {
         std::cerr << "sqlite error: " << query.str() << "\n";
@@ -576,6 +648,9 @@ void pModel::list_query(pStringRef query, LTYPE &result) const {
             f.set(key, val);
         }
         result.push_back(f);
+    }
+    if (trace_) {
+        std::cerr << "TRACE: " << result.size() << " rows returned\n";
     }
     sqlite3_finalize(stmt);
 }
@@ -602,10 +677,6 @@ pModel::FunctionList pModel::queryFunctions(oid ns_id, oid c_id, pStringRef name
 
     query << " AND name='" << name.str() << "'";
 
-    if (trace_) {
-        std::cerr << "TRACE: " << query.str() << std::endl;
-    }
-
     list_query<FunctionList>(query.str(), result);
 
     return result;
@@ -627,10 +698,6 @@ pModel::ClassList pModel::queryClasses(oid ns_id, pStringRef name, pModel::oid m
         query << " AND class.sourceModule_id=" << m_id;
     }
 
-    if (trace_) {
-        std::cerr << "TRACE: " << query.str() << std::endl;
-    }
-
     list_query<ClassList>(query.str(), result);
 
     return result;
@@ -649,10 +716,6 @@ pModel::ClassDeclList pModel::queryClassDecls(oid c_id, pStringRef name) const {
              " class_decl.class_id=" << c_id <<
              " AND class_decl.name='" << name.str() << "'";
 
-    if (trace_) {
-        std::cerr << "TRACE: " << query.str() << std::endl;
-    }
-
     list_query<ClassDeclList>(query.str(), result);
 
     return result;
@@ -669,10 +732,6 @@ pModel::ConstantList pModel::queryConstants(pStringRef name) const {
              " constant, sourceModule WHERE sourceModule.id=sourceModule_id AND" \
              " type=" << pModel::DEFINE << " AND name='" << name.str() << "'";
 
-    if (trace_) {
-        std::cerr << "TRACE: " << query.str() << std::endl;
-    }
-
     list_query<pModel::ConstantList>(query.str(), result);
 
     return result;
@@ -681,7 +740,55 @@ pModel::ConstantList pModel::queryConstants(pStringRef name) const {
 
 pModel::oid pModel::lookupClass(oid ns_id, pStringRef name, pModel::oid m_id) const {
 
-    pModel::ClassList cl = queryClasses(ns_id, name, m_id);
+    // the final resolved namespace to look in
+    oid res_ns_id = ns_id;
+    // the final resolved classname to look for in res_ns_id
+    pStringRef res_name = name;
+
+    // first we may need to resolve name into a namespace or list of namespaces
+    // to find the class in
+    size_t p = name.count('\\');
+    if (p) {
+        // in the case that there is only one and it's in the first position,
+        // this is the global namespace
+        if (p == 1) {
+            if (name.find_first_of('\\') == 0) {
+                res_ns_id = getRootNamespaceOID();
+            }
+        }
+        else {
+            // there are multiple namespace sep tokens
+            // the class name will be the text from the last one
+            res_name = name.substr(name.find_last_of('\\')+1);
+            // the namespace specify part
+            pStringRef ns_part = name.substr(0, name.find_last_of('\\'));
+            if (ns_part.front() == '\\') {
+                // if ns_part is absolute, we lookup that namespace
+                res_ns_id = getNamespaceOID(ns_part);
+                if (res_ns_id == pModel::NULLID) {
+                    // namespace not found
+                    return pModel::NULLID;
+                }
+            }
+            else {
+                // otherwise we append it to the current namespace and
+                // look that up
+                std::string lookup_ns("\\");
+                lookup_ns.append(getNamespaceName(ns_id));
+                assert(lookup_ns.size() != 1 && "unable to locate ns");
+                lookup_ns.push_back('\\');
+                lookup_ns.append(ns_part);
+                res_ns_id = getNamespaceOID(lookup_ns);
+                if (res_ns_id == pModel::NULLID) {
+                    // namespace not found
+                    return pModel::NULLID;
+                }
+            }
+        }
+
+    }
+
+    pModel::ClassList cl = queryClasses(res_ns_id, res_name, m_id);
     if (cl.size() == 1) {
         return cl[0].getID();
     }
@@ -701,6 +808,7 @@ pModel::ClassList pModel::getUnresolvedClasses() const {
     // the count of relations we have in the relations table. if there are fewer
     // in the relations table than in the class table, then we have unresolved
     query << "SELECT class.id, namespace_id, name, type, flags, extends, implements, extends_count, implements_count, " \
+             " unresolved_extends, unresolved_implements, " \
              " (select count(*) from class_relations where lhs_class_id=class.id and type=0) as resolved_extends_count, " \
              " (select count(*) from class_relations where lhs_class_id=class.id and type=1) as resolved_implements_count, " \
              " start_line, start_col, sourceModule.realPath FROM " \
@@ -708,50 +816,90 @@ pModel::ClassList pModel::getUnresolvedClasses() const {
              " (extends_count > 0 or implements_count > 0) AND " \
              " ((extends_count > resolved_extends_count) or (implements_count > resolved_implements_count))";
 
-    if (trace_) {
-        std::cerr << "TRACE: " << query.str() << std::endl;
-    }
-
     list_query<ClassList>(query.str(), result);
 
     return result;
 
 }
 
+namespace {
+std::string join(const std::vector<std::string> &list) {
+        std::stringstream joinbuf;
+        copy(list.begin(),list.end(), std::ostream_iterator<std::string>(joinbuf,","));
+        std::string result = joinbuf.str();
+        return result.substr(0,result.size()-2);
+    }
+}
+
 void pModel::resolveClassRelations() {
 
     ClassList unresolved = getUnresolvedClasses();
+
+    std::vector<std::string> unresolved_extends, unresolved_implements;
 
     for (int i = 0; i < unresolved.size(); ++i) {
 
         pModel::oid c_id = unresolved[i].getAsOID("id");
 
         if (unresolved[i].getAsInt("extends_count") > unresolved[i].getAsInt("resolved_extends_count")) {
-            //std::cout << "resolving extends for class " << unresolved[i].get("name") << " which extends " << unresolved[i].get("extends") << " in namespace " << unresolved[i].getAsOID("namespace_id") << "\n";
             llvm::SmallVector<pStringRef, 32> e_list;
             pStringRef orig(unresolved[i].get("extends"));
             orig.split(e_list, ",", 32);
-            for (int i = 0; i < e_list.size(); ++i) {
-                pModel::oid resolved_id = lookupClass(unresolved[i].getAsOID("namespace_id"), e_list[i]);
+            for (int j = 0; j < e_list.size(); ++j) {
+                pModel::oid resolved_id = lookupClass(unresolved[i].getAsOID("namespace_id"), e_list[j]);
                 if (resolved_id != pModel::NULLID) {
                     defineClassRelation(c_id, pModel::EXTENDS, resolved_id);
+                }
+                else {
+                    unresolved_extends.push_back(e_list[j]);
                 }
             }
         }
 
         if (unresolved[i].getAsInt("implements_count") > unresolved[i].getAsInt("resolved_implements_count")) {
-            //std::cout << "resolving extends for class " << unresolved[i].get("name") << " which implements " << unresolved[i].get("implements") << "\n";
             llvm::SmallVector<pStringRef, 32> i_list;
             pStringRef orig(unresolved[i].get("implements"));
             orig.split(i_list, ",", 32);
-            for (int i = 0; i < i_list.size(); ++i) {
-                //std::cout << i << ": " << i_list[i].str() << "\n";
-                pModel::oid resolved_id = lookupClass(unresolved[i].getAsOID("namespace_id"), i_list[i]);
+            for (int j = 0; j < i_list.size(); ++j) {
+                pModel::oid resolved_id = lookupClass(unresolved[i].getAsOID("namespace_id"), i_list[j]);
                 if (resolved_id != pModel::NULLID) {
                     defineClassRelation(c_id, pModel::IMPLEMENTS, resolved_id);
                 }
+                else {
+                    unresolved_implements.push_back(i_list[j]);
+                }
             }
         }
+
+        // we save the text version of unresolved classes for the benefit of
+        // diagnostics
+        if (unresolved_extends.size()) {
+            std::stringstream query;
+            query << "UPDATE class SET unresolved_extends='";
+            if (unresolved_extends.size() > 1) {
+                query << join(unresolved_extends);
+            }
+            else {
+                query << unresolved_extends[0];
+            }
+            query << "' WHERE id=" << c_id;
+            sql_execute(query.str());
+        }
+        if (unresolved_implements.size()) {
+            std::stringstream query;
+            query << "UPDATE class SET unresolved_implements='";
+            if (unresolved_implements.size() > 1) {
+                query << join(unresolved_implements);
+            }
+            else {
+                query << unresolved_implements[0];
+            }
+            query << "' WHERE id=" << c_id;
+            sql_execute(query.str());
+        }
+
+        unresolved_extends.clear();
+        unresolved_implements.clear();
 
     }
 

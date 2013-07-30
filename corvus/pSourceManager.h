@@ -32,7 +32,7 @@ private:
     typedef std::map<std::string, pSourceModule*> ModuleListType;
     typedef std::map<pSourceModule*, bool> DiagTrackerType;
 
-    bool debugParse_, debugModel_;
+    bool debugParse_, debugModel_, debugDiags_;
     int verbosity_;    
     ModuleListType moduleList_;
 
@@ -51,6 +51,7 @@ public:
 
     pSourceManager(): debugParse_(false),
         debugModel_(false),
+        debugDiags_(false),
         verbosity_(0),
         db_(NULL),
         model_(NULL),
@@ -59,10 +60,11 @@ public:
 
     void setModelDBName(pStringRef db)  { dbName_ = db; }
 
-    void setDebug(int verbosity, bool debugParse, bool debugModel) {
+    void setDebug(int verbosity, bool debugParse, bool debugModel, bool debugDiags) {
         verbosity_ = verbosity;
         debugParse_ = debugParse;
         debugModel_ = debugModel;
+        debugDiags_ = debugDiags;
     }
 
     void printAST();

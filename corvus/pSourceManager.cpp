@@ -326,11 +326,13 @@ void pSourceManager::refreshModel() {
 
     if (!model_) {
         openModel();
-    }    
+    }
+    model_->setTrace(debugModel_);
     pPassManager passManager(model_);
     passManager.addPass<AST::Pass::ModelBuilder>();
     runPasses(&passManager);
     model_->commit();
+    model_->setTrace(debugDiags_);
     model_->resolveClassRelations();
 
 }
