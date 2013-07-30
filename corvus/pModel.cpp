@@ -789,11 +789,14 @@ pModel::oid pModel::lookupClass(oid ns_id, pStringRef name, pModel::oid m_id) co
     }
 
     pModel::ClassList cl = queryClasses(res_ns_id, res_name, m_id);
-    if (cl.size() == 1) {
+    if (cl.size() == 0) {
+        return pModel::NULLID;
+    }
+    else if (cl.size() == 1) {
         return cl[0].getID();
     }
     else {
-        return pModel::NULLID;
+        return pModel::MULTIPLE_IDS;
     }
 
 }

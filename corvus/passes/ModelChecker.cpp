@@ -146,23 +146,19 @@ void ModelChecker::visit_pre_literalConstant(literalConstant* n) {
             class_id = c_id_;
         }
         else {
-            pModel::ClassList cl = model_->queryClasses(ns_id_, classID->name());
-            if (cl.size() > 1) {
+            class_id = model_->lookupClass(ns_id_, classID->name());
+            if (class_id == pModel::NULLID) {
                 std::stringstream diag;
-                // XXX FQN
-                diag << "class redefined: " << classID->name().str();
+                diag << "class constant from undefined class: " << classID->name().str();
                 addDiagnostic(target, diag.str());
                 return;
             }
-            else if (cl.size() == 0) {
+            else if (class_id == pModel::MULTIPLE_IDS) {
                 std::stringstream diag;
-                // XXX FQN
-                diag << "undefined class: " << classID->name().str();
+                diag << "class constant from class defined multiple times: " << classID->name().str();
                 addDiagnostic(target, diag.str());
                 return;
             }
-            // otherwise, found
-            class_id = cl[0].getID();
         }
 
         pModel::ClassDeclList cdl = model_->queryClassDecls(class_id, n->name());

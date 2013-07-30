@@ -80,6 +80,7 @@ public:
 
     // general
     enum {
+    MULTIPLE_IDS = -1,
     NULLID   = 0,
     NO_FLAGS = 0,
 
