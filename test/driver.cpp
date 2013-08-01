@@ -147,7 +147,7 @@ int main( int argc, char* argv[] )
     //ASSERT(dList[i]->location().range(), pSourceRange(91,0,91,0)); // XXX
 
     i++;
-    ASSERT(dList[i]->msg(), "undefined class: myclassne");
+    ASSERT(dList[i]->msg(), "class constant from undefined class: myclassne");
 
     i++;
     ASSERT(dList[i]->msg(), "undefined class constant: myclass::FOO2");
