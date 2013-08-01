@@ -713,7 +713,7 @@ public:
         }
         if (numUseParams_) {
             useParamList_ = new (C) stmt*[numUseParams_];
-            memcpy(useParamList_, &(s->front()), numUseParams_ * sizeof(*useParamList_));
+            memcpy(useParamList_, &(s2->front()), numUseParams_ * sizeof(*useParamList_));
         }
     }
 
