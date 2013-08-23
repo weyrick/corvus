@@ -22,6 +22,8 @@ private:
     // we do not own
     db::pDB* db_;
 
+    void build_graph();
+
 public:
     pClassModelBuilder(db::pDB* db): db_(db) { }
 
