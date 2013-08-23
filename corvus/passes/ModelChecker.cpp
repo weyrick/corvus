@@ -164,7 +164,6 @@ void ModelChecker::visit_pre_literalConstant(literalConstant* n) {
         pModel::ClassDeclList cdl = model_->queryClassDecls(class_id, n->name());
         if (cdl.size() == 0) {
             std::stringstream diag;
-            // XXX FQN
             diag << "undefined class constant: " << classID->name().str() << "::" << n->name().str();
             addDiagnostic(target, diag.str());
             return;

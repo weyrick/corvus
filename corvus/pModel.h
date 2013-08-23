@@ -12,70 +12,45 @@
 #define COR_PMODEL_H_
 
 #include "corvus/pTypes.h"
+#include "pDB.h"
 
-#include <sqlite3.h>
+//#include <sqlite3.h>
 #include <map>
 #include <vector>
 
 #include <iostream>
 
+struct sqlite3;
+
 namespace corvus {
 
-// these are for caching data retrieved from sqlite
 namespace model {
 
-// a simple wrapper for a row in the model db
-// which saves us from having to make structs for each row
-// here we can just access it by field name
-class dbRow {
-public:
-    typedef std::map<const std::string, std::string> StringMap;
-    typedef std::map<const std::string, long> IntMap;
-protected:
-    StringMap fields_;
-    mutable IntMap intFields_; // lazyily built cache
-public:
-    void dump() const {
-        for (StringMap::const_iterator i = fields_.begin();
-             i != fields_.end();
-             ++i) {
-            std::cerr << i->first << ": " << i->second << "\n";
-        }
-    }
-    const std::string& get(pStringRef key) const {
-        //std::cout << "key: " << key.str() << std::endl;
-        StringMap::const_iterator i = fields_.find(key);
-        assert(i != fields_.end() && "key not found");
-        return i->second;
-    }
-    int getAsInt(pStringRef key) const;
-    sqlite3_int64 getAsOID(pStringRef key) const;
-    sqlite3_int64 getID() const {
-        return getAsOID("id");
-    }
-    void set(pStringRef key, pStringRef val) {
-        fields_[key] = val;
-    }
-};
 
-class mFunction: public dbRow { };
+class mFunction: public db::dbRow { };
 
-class mClass: public dbRow { };
+class mClass: public db::dbRow { };
 
-class mClassDecl: public dbRow { };
+class mClassDecl: public db::dbRow { };
 
-class mConstant: public dbRow { };
+class mConstant: public db::dbRow { };
 
 } // end model namespace
 
 class pModel {
 public:
 
-    typedef sqlite3_int64 oid;
-    typedef std::vector<model::mFunction> FunctionList;
-    typedef std::vector<model::mClass> ClassList;
-    typedef std::vector<model::mClassDecl> ClassDeclList;
-    typedef std::vector<model::mConstant> ConstantList;
+    typedef db::pDB::oid oid;
+    typedef db::pDB::RowList RowList;
+    //typedef std::vector<model::mFunction> FunctionList;
+    //typedef std::vector<model::mClass> ClassList;
+    //typedef std::vector<model::mClassDecl> ClassDeclList;
+    //typedef std::vector<model::mConstant> ConstantList;
+    typedef db::pDB::RowList FunctionList;
+    typedef db::pDB::RowList ClassList;
+    typedef db::pDB::RowList ClassDeclList;
+    typedef db::pDB::RowList ConstantList;
+
     typedef std::map<std::string, oid> IDMap;
 
     // general
@@ -127,36 +102,29 @@ public:
 
 private:
 
-    sqlite3 *db_;
-    bool trace_;
+    db::pDB *db_;
 
     IDMap modules_;
     mutable IDMap namespaces_;
 
-    void sql_execute(pStringRef query) const;
-    oid sql_insert(pStringRef query) const;
-    oid sql_select_single_id(pStringRef query) const;
-    std::string sql_select_single_string(pStringRef query) const;
-    void sql_setup();
-    void sql_done();
-
     void makeTables();
-
-    std::string oidOrNull(oid val);
-    std::string sql_string(pStringRef val, bool allowNull=true);
-
-    template <typename LTYPE>
-    void list_query(pStringRef query, LTYPE &result) const;
 
 public:
 
-    pModel(sqlite3 *db, bool trace=false): db_(db), trace_(trace) {
-        sql_setup();
+    pModel(sqlite3 *db, bool trace=false): db_(0) {
+        db_ = new db::pDB(db, trace);
+        makeTables();
     }
 
-    void setTrace(bool trace) { trace_ = trace; }
+    ~pModel() {
+        delete db_;
+    }
 
-    void commit(bool begin=true);
+    void setTrace(bool trace) { if (db_) db_->setTrace(trace); }
+
+    void commit(bool begin=true) {
+        if (db_) db_->commit(begin);
+    }
 
     bool sourceModuleDirty(pStringRef realPath, pStringRef hash);
     oid getSourceModuleOID(pStringRef realPath, pStringRef hash="", bool deleteFirst=false);
@@ -181,10 +149,12 @@ public:
 
     ClassList getUnresolvedClasses() const;
     void resolveClassRelations();
+    void refreshClassModel();
 
     ConstantList queryConstants(pStringRef name) const;
     ClassList queryClasses(oid ns_id, pStringRef name, oid m_id = pModel::NULLID) const;
     ClassDeclList queryClassDecls(oid c_id, pStringRef name) const;
+    ClassDeclList queryClassDecls(std::vector<oid> c_id_list, pStringRef name) const;
     FunctionList queryFunctions(oid ns_id, oid c_id, pStringRef name) const;
 
     oid lookupClass(oid ns_id, pStringRef name, oid m_id = pModel::NULLID) const;
@@ -193,4 +163,4 @@ public:
 
 } // namespace
 
-#endif /* COR_PSOURCEFILE_H_ */
+#endif

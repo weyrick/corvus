@@ -42,6 +42,23 @@ void ModelBuilder::pre_run(void) {
         return;
     }
 
+    // XXX if we get here, we may be deleting a source module if it exists.
+    // if that source module defined classes, they will be cascade deleted
+    // throughout the existing model db (including all properties, relations,
+    // etc). HOWEVER, if the module had defined a class which it
+    // now now longer defines (or has added/removed properties or fields),
+    // and a different class from another module had
+    // depended on it and resolved it previously (into its own "extends" field in the class
+    // table), that data is now stale.
+    // so essentially we need a to scan the "extends" and "implements" fields in model db
+    // in the class table here for any classes that were defined in this module we
+    // are about to delete, and reset that dependant class row to "unresolved"
+    // (by setting unresolved_extends = extends and unresolved_implementes = implements)
+    // so that the class model will rebuild based on the new data we're about to make
+    // XXX the way to remove this requirement is to move "unresolved_extends/implements" into
+    //     its own normalized table with cascade delete
+    // XXX
+
     m_id_ = model_->getSourceModuleOID(module_->fileName(),
                                        hash,
                                        true /* delete first */

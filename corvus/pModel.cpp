@@ -8,7 +8,8 @@
    ***** END LICENSE BLOCK *****
 */
 
-#include "corvus/pModel.h"
+#include "pModel.h"
+#include "pClassModelBuilder.h"
 
 #include <iostream>
 #include <sstream>
@@ -17,135 +18,38 @@
 #include <iterator>
 #include <llvm/ADT/SmallVector.h>
 
+
+namespace {
+    // a generic joiner which takes a std::vector of anything that can be spit
+    // out to a stringstream (mostly int, string) and joins them into a comma
+    // delimited string
+    template <typename ITEMTYPE>
+    std::string join(const std::vector< ITEMTYPE > &list) {
+            std::stringstream joinbuf;
+            copy(list.begin(),list.end(), std::ostream_iterator< ITEMTYPE >(joinbuf,","));
+            std::string result = joinbuf.str();
+            return result.substr(0,result.size()-2);
+    }
+}
+
 namespace corvus { 
 
-namespace model {
-int dbRow::getAsInt(pStringRef key) const {
-    if (intFields_.find(key) != intFields_.end())
-        return intFields_[key];
-    assert(fields_.find(key) != fields_.end() && "getAsInt key not found");
-    // convert, cache
-    StringMap::const_iterator v = fields_.find(key);
-    intFields_[key] = atol(v->second.c_str());
-    return intFields_[key];
-}
-
-sqlite3_int64 dbRow::getAsOID(pStringRef key) const {
-    assert(fields_.find(key) != fields_.end() && "getAsInt key not found");
-    StringMap::const_iterator v = fields_.find(key);
-    return atoll(v->second.c_str());
-}
-
-}
-
-void pModel::sql_execute(pStringRef query) const {
-    char *errMsg;
-    int rc = sqlite3_exec(db_, query.begin(), NULL, NULL, &errMsg);
-    if (rc != SQLITE_OK) {
-        std::cerr << "sqlite error: " << query.str()
-                  << "\n" << errMsg << "\n";
-        sqlite3_free(errMsg);
-        exit(1);
-    }
-    else if (trace_) {
-        std::cerr << "TRACE: " << query.str() << std::endl;
-    }
-}
-
-pModel::oid pModel::sql_insert(pStringRef query) const {
-    sql_execute(query);
-    oid r = sqlite3_last_insert_rowid(db_);
-    if (trace_) {
-        std::cerr << "TRACE: insert id #" << r << std::endl;
-    }
-    return r;
-}
-
-pModel::oid pModel::sql_select_single_id(pStringRef query) const {
-
-    sqlite3_stmt *stmt;
-    pModel::oid result = pModel::NULLID;
-
-    int rc = sqlite3_prepare_v2(db_, query.str().c_str(), -1, &stmt, NULL);
-    if (rc != SQLITE_OK) {
-        std::cerr << "sqlite error: " << query.str() << "\n";
-        std::cerr << sqlite3_errmsg(db_) << "\n";
-        exit(1);
-    }
-    else if (trace_) {
-        std::cerr << "TRACE: " << query.str() << std::endl;
-    }
-
-    rc = sqlite3_step(stmt);
-    if (rc == SQLITE_ROW) {
-        result = sqlite3_column_int(stmt, 0);
-        if (trace_)
-            std::cerr << "TRACE: found 1 row\n";
-    }
-    else if (trace_) {
-        std::cerr << "TRACE: no rows found\n";
-    }
-
-    sqlite3_finalize(stmt);
-
-    return result;
-
-}
-
-
-std::string pModel::sql_select_single_string(pStringRef query) const {
-
-    sqlite3_stmt *stmt;
-    std::string result;
-
-    int rc = sqlite3_prepare_v2(db_, query.str().c_str(), -1, &stmt, NULL);
-    if (rc != SQLITE_OK) {
-        std::cerr << "sqlite error: " << query.str() << "\n";
-        std::cerr << sqlite3_errmsg(db_) << "\n";
-        exit(1);
-    }
-    else if (trace_) {
-        std::cerr << "TRACE: " << query.str() << std::endl;
-    }
-
-    rc = sqlite3_step(stmt);
-    if (rc == SQLITE_ROW) {
-        result = (char*)sqlite3_column_text(stmt, 0);
-        if (trace_)
-            std::cerr << "TRACE: found 1 row\n";
-    }
-    else if (trace_) {
-        std::cerr << "TRACE: no rows found\n";
-    }
-
-    sqlite3_finalize(stmt);
-
-    return result;
-
-}
-
-
-void pModel::sql_setup() {
-    sql_execute("PRAGMA foreign_keys = ON");
-    sql_execute("BEGIN");
-    makeTables();
-    commit();
-}
-
-void pModel::commit(bool begin) {
-    sql_execute("COMMIT");
-    if (begin)
-        sql_execute("BEGIN");
-}
-
 void pModel::makeTables() {
+
+    #define CORVUS_DBMODEL_VERSION "1.0"
+
+    const char *META = "CREATE TABLE IF NOT EXISTS corvus (" \
+            "key TEXT UNIQUE NOT NULL," \
+            "val TEXT" \
+            ")";
+    db_->sql_execute(META);
 
     const char *SM = "CREATE TABLE IF NOT EXISTS sourceModule (" \
                          "id INTEGER PRIMARY KEY,"
                          "realpath TEXT UNIQUE NOT NULL," \
                          "hash TEXT" \
-                         ")";
-    sql_execute(SM);
+                         ");";
+    db_->sql_execute(SM);
 
     // type:
     //   0 - const (outside class)
@@ -160,7 +64,7 @@ void pModel::makeTables() {
                          "start_col INTEGER NOT NULL," \
                          "FOREIGN KEY(sourceModule_id) REFERENCES sourceModule(id) ON DELETE CASCADE"
                          ")";
-    sql_execute(SD);
+    db_->sql_execute(SD);
 
     const char *SU = "CREATE TABLE IF NOT EXISTS constant_use (" \
                          "id INTEGER PRIMARY KEY,"
@@ -169,13 +73,13 @@ void pModel::makeTables() {
                          "start_col INTEGER NOT NULL," \
                              "FOREIGN KEY(constant_id) REFERENCES constant(id) ON DELETE CASCADE"
                          ")";
-    sql_execute(SU);
+    db_->sql_execute(SU);
 
     const char *NS = "CREATE TABLE IF NOT EXISTS namespace (" \
                          "id INTEGER PRIMARY KEY,"
                          "namespace TEXT UNIQUE NOT NULL" \
                          ")";
-    sql_execute(NS);
+    db_->sql_execute(NS);
 
     // type:
     //   0 - class
@@ -204,7 +108,7 @@ void pModel::makeTables() {
                          "FOREIGN KEY(namespace_id) REFERENCES namespace(id) ON DELETE CASCADE," \
                          "FOREIGN KEY(sourceModule_id) REFERENCES sourceModule(id) ON DELETE CASCADE"
                          ")";
-    sql_execute(CL);
+    db_->sql_execute(CL);
 
     // the relations go "lhs TYPE rhs"
     // type:
@@ -218,7 +122,7 @@ void pModel::makeTables() {
             "FOREIGN KEY(lhs_class_id) REFERENCES class(id) ON DELETE CASCADE," \
             "FOREIGN KEY(rhs_class_id) REFERENCES class(id) ON DELETE CASCADE" \
                          ")";
-    sql_execute(CR);
+    db_->sql_execute(CR);
 
 
     // type:
@@ -243,7 +147,7 @@ void pModel::makeTables() {
                          "start_col INTEGER NOT NULL," \
                          "FOREIGN KEY(class_id) REFERENCES class(id) ON DELETE CASCADE"
                          ")";
-    sql_execute(CD);
+    db_->sql_execute(CD);
 
     const char *CU = "CREATE TABLE IF NOT EXISTS class_decl_use (" \
                          "id INTEGER PRIMARY KEY,"
@@ -257,7 +161,20 @@ void pModel::makeTables() {
                          "FOREIGN KEY(class_id) REFERENCES class(id) ON DELETE CASCADE," \
                          "FOREIGN KEY(class_decl_id) REFERENCES class_decl(id) ON DELETE CASCADE"
                          ")";
-    sql_execute(CU);
+    db_->sql_execute(CU);
+
+
+    // class model version: considering the class heirarchy
+    const char *CMD = "CREATE TABLE IF NOT EXISTS class_model_decl (" \
+                         "id INTEGER PRIMARY KEY," \
+                         // the origin class
+                         "class_id INTEGER NOT NULL," \
+                         // may be a decl from itself or any parent in the hierarchy
+                         "class_decl_id INTEGER NOT NULL," \
+                         // we only foreign cascade on class id, not decl, since it should suffice
+                         "FOREIGN KEY(class_id) REFERENCES class(id) ON DELETE CASCADE"
+                         ")";
+    db_->sql_execute(CMD);
 
     // type:
     //   0 - top level main
@@ -289,7 +206,19 @@ void pModel::makeTables() {
                          "FOREIGN KEY(class_id) REFERENCES class(id) ON DELETE CASCADE," \
                          "FOREIGN KEY(sourceModule_id) REFERENCES sourceModule(id) ON DELETE CASCADE"
                          ")";
-    sql_execute(FN);
+    db_->sql_execute(FN);
+
+    // class model version: considering the class heirarchy
+    const char *CMF = "CREATE TABLE IF NOT EXISTS class_model_function (" \
+                         "id INTEGER PRIMARY KEY," \
+                         // the origin class
+                         "class_id INTEGER NOT NULL," \
+                         // may be a function from itself or any parent in the hierarchy
+                         "class_function_id INTEGER NOT NULL," \
+                         // we only foreign cascade on class id, not decl, since it should suffice
+                         "FOREIGN KEY(class_id) REFERENCES class(id) ON DELETE CASCADE"
+                         ")";
+    db_->sql_execute(CMF);
 
     // type:
     //   0 - parameter
@@ -317,7 +246,7 @@ void pModel::makeTables() {
                          "start_col INTEGER NOT NULL," \
                          "FOREIGN KEY(function_id) REFERENCES function(id) ON DELETE CASCADE"
                          ")";
-    sql_execute(FV);
+    db_->sql_execute(FV);
 
 
     const char *FVU = "CREATE TABLE IF NOT EXISTS function_var_use (" \
@@ -332,7 +261,7 @@ void pModel::makeTables() {
                          "FOREIGN KEY(function_id) REFERENCES function(id) ON DELETE CASCADE," \
                          "FOREIGN KEY(function_var_id) REFERENCES function_var(id) ON DELETE CASCADE"
                          ")";
-    sql_execute(FVU);
+    db_->sql_execute(FVU);
 
 
     const char *FU = "CREATE TABLE IF NOT EXISTS function_use (" \
@@ -345,7 +274,9 @@ void pModel::makeTables() {
                          "start_col INTEGER NOT NULL," \
                          "FOREIGN KEY(function_id) REFERENCES function(id) ON DELETE CASCADE" \
                          ")";
-    sql_execute(FU);
+    db_->sql_execute(FU);
+
+    db_->commit();
 
 }
 
@@ -353,34 +284,14 @@ bool pModel::sourceModuleDirty(pStringRef realPath, pStringRef hash) {
 
     std::stringstream sql;
 
-    sql << "SELECT oid, hash FROM sourceModule WHERE realPath='" << realPath.str() << "'";
+    sql << "SELECT hash FROM sourceModule WHERE realPath='" << realPath.str() << "'";
 
-    sqlite3_stmt *stmt;
-    pModel::oid existing = pModel::NULLID;
-    std::string existing_hash;
+    std::string existing_hash = db_->sql_select_single_string(sql.str());
 
-    int rc = sqlite3_prepare_v2(db_, sql.str().c_str(), -1, &stmt, NULL);
-    if (rc != SQLITE_OK) {
-        std::cerr << "sqlite error: " << sql.str() << "\n";
-        std::cerr << sqlite3_errmsg(db_) << "\n";
-        exit(1);
-    }
-    else if (trace_) {
-        std::cerr << "TRACE: " << sql.str() << std::endl;
-    }
-
-    rc = sqlite3_step(stmt);
-    if (rc == SQLITE_ROW) {
-        existing = sqlite3_column_int(stmt, 0);
-        existing_hash = (char*)sqlite3_column_text(stmt, 1);
-    }
-
-    sqlite3_finalize(stmt);
-
-    if (existing != pModel::NULLID) {
+    if (existing_hash.size()) {
         // not in our local cache but it's in the db model
         // we have it in the db. check hash to see if we should remodel it
-        return (pStringRef(hash) != existing_hash);
+        return (hash != existing_hash);
     }
     else {
         // not in model, it's dirty
@@ -400,7 +311,7 @@ pModel::oid pModel::getSourceModuleOID(pStringRef realPath, pStringRef hash, boo
     if (!deleteFirst) {
         sql << "SELECT oid FROM sourceModule WHERE realPath='" << realPath.str() << "'";
 
-        pModel::oid existing = sql_select_single_id(sql.str());
+        pModel::oid existing = db_->sql_select_single_id(sql.str());
         if (existing != pModel::NULLID) {
             modules_[realPath] = existing;
             return existing;
@@ -408,12 +319,12 @@ pModel::oid pModel::getSourceModuleOID(pStringRef realPath, pStringRef hash, boo
     }
     else {
         sql << "DELETE FROM sourceModule WHERE realPath='" << realPath.str() << "'";
-        sql_execute(sql.str());
+        db_->sql_execute(sql.str());
     }
     sql.str("");
 
     sql << "INSERT INTO sourceModule VALUES (NULL, '" << realPath.str() << "', '" << hash.str() << "')";
-    oid result = sql_insert(sql.str().c_str());
+    oid result = db_->sql_insert(sql.str().c_str());
     modules_[realPath] = result;
     return result;
 
@@ -429,7 +340,7 @@ pModel::oid pModel::getNamespaceOID(pStringRef ns, bool create) const {
 
     sql << "SELECT oid FROM namespace WHERE namespace='" << ns.str() << "'";
 
-    pModel::oid existing = sql_select_single_id(sql.str());
+    pModel::oid existing = db_->sql_select_single_id(sql.str());
     if (existing != pModel::NULLID) {
         namespaces_[ns] = existing;
         return existing;
@@ -441,7 +352,7 @@ pModel::oid pModel::getNamespaceOID(pStringRef ns, bool create) const {
     sql.str("");
 
     sql << "INSERT INTO namespace VALUES (NULL, '" << ns.str() << "')";
-    oid result = sql_insert(sql.str().c_str());
+    oid result = db_->sql_insert(sql.str().c_str());
     namespaces_[ns] = result;
     return result;
 
@@ -461,7 +372,7 @@ std::string pModel::getNamespaceName(pModel::oid ns_id) const {
     std::stringstream sql;
 
     sql << "SELECT namespace FROM namespace WHERE id=" << ns_id;
-    std::string result = sql_select_single_string(sql.str().c_str());
+    std::string result = db_->sql_select_single_string(sql.str().c_str());
 
     if (!result.empty()) {
         // cache it while we here
@@ -488,55 +399,15 @@ pModel::oid pModel::defineClass(pModel::oid ns_id, pModel::oid m_id, pStringRef 
         << flags << ','
         << range.startLine  << ',' << range.startCol  << ',' << range.endLine  << ',' << range.endCol << ','
         << extends_count << ',' << implements_count << ','
-        << sql_string(extends, true) << ','
-        << sql_string(implements, true) << ','
-        << sql_string(extends, true) << ',' // unresolved until resolveClassRelations is called
-        << sql_string(implements, true)     // unresolved until resolveClassRelations is called
+        << db_->sql_string(extends, true) << ','
+        << db_->sql_string(implements, true) << ','
+        << db_->sql_string(extends, true) << ',' // unresolved until resolveClassRelations is called
+        << db_->sql_string(implements, true)     // unresolved until resolveClassRelations is called
         << ")";
-    return sql_insert(sql.str().c_str());
+    return db_->sql_insert(sql.str().c_str());
 
 }
 
-std::string pModel::oidOrNull(oid val) {
-    if (val) {
-        std::stringstream conv;
-        conv << val;
-        return conv.str();
-    }
-    else {
-        return "NULL";
-    }
-}
-
-// handles escape quotes
-std::string pModel::sql_string(pStringRef val, bool allowNull) {
-    if (!val.empty()) {
-        std::string conv;
-        int quotes = val.count('\'');
-        // get room for doubling up the quotes
-        conv.reserve(val.size()+quotes+2); // +2 is outer quotes
-        conv.push_back('\'');
-        for (pStringRef::iterator i = val.begin();
-             i != val.end();
-             ++i) {
-            if (*i == '\'') {
-                conv.push_back('\'');
-                conv.push_back('\'');
-            }
-            else {
-                conv.push_back(*i);
-            }
-        }
-        conv.push_back('\'');
-        return conv;
-    }
-    else {
-        if (allowNull)
-            return "NULL";
-        else
-            return "''";
-    }
-}
 
 pModel::oid pModel::defineFunction(oid ns_id, oid m_id, oid c_id, pStringRef name,
                     int type, int flags, int vis, int minA, int maxA, pSourceRange range) {
@@ -545,7 +416,7 @@ pModel::oid pModel::defineFunction(oid ns_id, oid m_id, oid c_id, pStringRef nam
     sql << "INSERT INTO function VALUES (NULL,"
         << m_id << ','
         << ns_id << ','
-        << oidOrNull(c_id)
+        << db_->oidOrNull(c_id)
         << ",'" << name.str() << "',"
         << type << ','
         << flags << ','
@@ -554,7 +425,7 @@ pModel::oid pModel::defineFunction(oid ns_id, oid m_id, oid c_id, pStringRef nam
         << maxA << ','
         << range.startLine  << ',' << range.startCol  << ',' << range.endLine  << ',' << range.endCol
         << ")";
-    return sql_insert(sql.str().c_str());
+    return db_->sql_insert(sql.str().c_str());
 
 }
 
@@ -567,11 +438,11 @@ void pModel::defineClassDecl(oid c_id, pStringRef name, int type, int flags, int
         << type << ','
         << flags << ','
         << vis << ','
-        << sql_string(defaultVal) << ","
+        << db_->sql_string(defaultVal) << ","
         << range.startLine  << ',' << range.startCol
         << ")";
 
-    sql_insert(sql.str().c_str());
+    db_->sql_insert(sql.str().c_str());
 
 }
 
@@ -584,7 +455,7 @@ void pModel::defineClassRelation(oid lhs_c_id, int type, oid rhs_c_id) {
         << rhs_c_id
         << ")";
 
-    sql_insert(sql.str().c_str());
+    db_->sql_insert(sql.str().c_str());
 
 }
 
@@ -602,11 +473,11 @@ void pModel::defineFunctionVar(oid f_id, pStringRef name,
         << type << ','
         << flags << ','
         << datatype << ','
-        << sql_string(datatype_obj) << ","
-        << sql_string(defaultVal) << ","
+        << db_->sql_string(datatype_obj) << ","
+        << db_->sql_string(defaultVal) << ","
         << range.startLine  << ',' << range.startCol
         << ")";
-    sql_insert(sql.str().c_str());
+    db_->sql_insert(sql.str().c_str());
 
 }
 
@@ -618,41 +489,11 @@ void pModel::defineConstant(oid m_id, pStringRef name, int type, pStringRef val,
         << m_id << ','
         << type << ','
         << "'" << name.str() << "'" << ','
-        << sql_string(val,false) << ','
+        << db_->sql_string(val,false) << ','
         << range.startLine  << ',' << range.startCol
         << ")";
-    sql_insert(sql.str().c_str());
+    db_->sql_insert(sql.str().c_str());
 
-}
-
-template <typename LTYPE>
-void pModel::list_query(pStringRef query, LTYPE &result) const {
-    sqlite3_stmt *stmt;
-    if (trace_) {
-        std::cerr << "TRACE: " << query.str() << "\n";
-    }
-    int rc = sqlite3_prepare_v2(db_, query.str().c_str(), -1, &stmt, NULL);
-    if (rc != SQLITE_OK) {
-        std::cerr << "sqlite error: " << query.str() << "\n";
-        std::cerr << sqlite3_errmsg(db_) << "\n";
-        exit(1);
-    }
-    while ((rc = sqlite3_step(stmt)) == SQLITE_ROW) {
-        typename LTYPE::value_type f;
-        for (int i = 0; i < sqlite3_column_count(stmt); i++) {
-            pStringRef key = sqlite3_column_name(stmt, i);
-            pStringRef val;
-            char *cVal = (char*)sqlite3_column_text(stmt, i);
-            if (cVal)
-                val = cVal;
-            f.set(key, val);
-        }
-        result.push_back(f);
-    }
-    if (trace_) {
-        std::cerr << "TRACE: " << result.size() << " rows returned\n";
-    }
-    sqlite3_finalize(stmt);
 }
 
 pModel::FunctionList pModel::queryFunctions(oid ns_id, oid c_id, pStringRef name) const {
@@ -677,7 +518,8 @@ pModel::FunctionList pModel::queryFunctions(oid ns_id, oid c_id, pStringRef name
 
     query << " AND name='" << name.str() << "'";
 
-    list_query<FunctionList>(query.str(), result);
+    //db_->list_query<FunctionList>(query.str(), result);
+    db_->list_query(query.str(), result);
 
     return result;
 
@@ -698,7 +540,28 @@ pModel::ClassList pModel::queryClasses(oid ns_id, pStringRef name, pModel::oid m
         query << " AND class.sourceModule_id=" << m_id;
     }
 
-    list_query<ClassList>(query.str(), result);
+    //db_->list_query<ClassList>(query.str(), result);
+    db_->list_query(query.str(), result);
+
+    return result;
+
+}
+
+pModel::ClassDeclList pModel::queryClassDecls(std::vector<oid> c_id_list, pStringRef name) const {
+
+    ClassDeclList result;
+    std::stringstream query;
+
+    std::string c_id_list_str = join(c_id_list);
+    query << "SELECT class.id, class_decl.name, class.name AS className, class_decl.type, class_decl.flags, visibility, defaultVal, " \
+             " class_decl.start_line, class_decl.start_col, sourceModule.realPath FROM " \
+             " class_decl, class, sourceModule WHERE sourceModule.id=sourceModule_id AND" \
+             " class.id=class_decl.class_id AND" \
+             " class_decl.class_id IN (" << c_id_list_str << ")" \
+             " AND class_decl.name='" << name.str() << "'";
+
+    //db_->list_query<ClassDeclList>(query.str(), result);
+    db_->list_query(query.str(), result);
 
     return result;
 
@@ -709,18 +572,20 @@ pModel::ClassDeclList pModel::queryClassDecls(oid c_id, pStringRef name) const {
     ClassDeclList result;
     std::stringstream query;
 
-    query << "SELECT class_decl.name, class.name AS className, class_decl.type, class_decl.flags, visibility, defaultVal, " \
+    query << "SELECT class.id, class_decl.name, class.name AS className, class_decl.type, class_decl.flags, visibility, defaultVal, " \
              " class_decl.start_line, class_decl.start_col, sourceModule.realPath FROM " \
              " class_decl, class, sourceModule WHERE sourceModule.id=sourceModule_id AND" \
              " class.id=class_decl.class_id AND" \
              " class_decl.class_id=" << c_id <<
              " AND class_decl.name='" << name.str() << "'";
 
-    list_query<ClassDeclList>(query.str(), result);
+    //db_->list_query<ClassDeclList>(query.str(), result);
+    db_->list_query(query.str(), result);
 
     return result;
 
 }
+
 
 pModel::ConstantList pModel::queryConstants(pStringRef name) const {
 
@@ -732,7 +597,8 @@ pModel::ConstantList pModel::queryConstants(pStringRef name) const {
              " constant, sourceModule WHERE sourceModule.id=sourceModule_id AND" \
              " type=" << pModel::DEFINE << " AND name='" << name.str() << "'";
 
-    list_query<pModel::ConstantList>(query.str(), result);
+    //db_->list_query<pModel::ConstantList>(query.str(), result);
+    db_->list_query(query.str(), result);
 
     return result;
 
@@ -819,19 +685,11 @@ pModel::ClassList pModel::getUnresolvedClasses() const {
              " (extends_count > 0 or implements_count > 0) AND " \
              " ((extends_count > resolved_extends_count) or (implements_count > resolved_implements_count))";
 
-    list_query<ClassList>(query.str(), result);
+    //db_->list_query<ClassList>(query.str(), result);
+    db_->list_query(query.str(), result);
 
     return result;
 
-}
-
-namespace {
-std::string join(const std::vector<std::string> &list) {
-        std::stringstream joinbuf;
-        copy(list.begin(),list.end(), std::ostream_iterator<std::string>(joinbuf,","));
-        std::string result = joinbuf.str();
-        return result.substr(0,result.size()-2);
-    }
 }
 
 void pModel::resolveClassRelations() {
@@ -886,7 +744,7 @@ void pModel::resolveClassRelations() {
                 query << unresolved_extends[0];
             }
             query << "' WHERE id=" << c_id;
-            sql_execute(query.str());
+            db_->sql_execute(query.str());
         }
         if (unresolved_implements.size()) {
             std::stringstream query;
@@ -898,7 +756,7 @@ void pModel::resolveClassRelations() {
                 query << unresolved_implements[0];
             }
             query << "' WHERE id=" << c_id;
-            sql_execute(query.str());
+            db_->sql_execute(query.str());
         }
 
         unresolved_extends.clear();
@@ -907,6 +765,13 @@ void pModel::resolveClassRelations() {
     }
 
     commit(false);
+
+}
+
+void pModel::refreshClassModel() {
+
+    pClassModelBuilder cmb(db_);
+    cmb.refresh();
 
 }
 

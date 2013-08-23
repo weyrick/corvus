@@ -54,6 +54,15 @@ class myclass {
 
 }
 
+class myextendedclass extends myclass {
+
+  public function yip() {
+    // nodiag: from base class
+    return self::FOO;
+  }
+
+}
+
 interface realiface {
     public function foo();
     public function bar();

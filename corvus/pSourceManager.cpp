@@ -332,8 +332,9 @@ void pSourceManager::refreshModel() {
     passManager.addPass<AST::Pass::ModelBuilder>();
     runPasses(&passManager);
     model_->commit();
-    model_->setTrace(debugDiags_);
     model_->resolveClassRelations();
+    model_->refreshClassModel();
+    model_->setTrace(debugDiags_);
 
 }
 

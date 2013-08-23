@@ -83,6 +83,8 @@ set(PARSER_SRC_FILES
   pConfig.cpp
   pDiagnostic.cpp
   pFullModelChecker.cpp
+  pDB.cpp
+  pClassModelBuilder.cpp
   # passes
   passes/PrintAST.cpp
   passes/DumpStats.cpp
