@@ -9,7 +9,7 @@
 */
 
 #include "pModel.h"
-#include "pClassModelBuilder.h"
+#include "pClassGraph.h"
 
 #include <iostream>
 #include <sstream>
@@ -770,8 +770,11 @@ void pModel::resolveClassRelations() {
 
 void pModel::refreshClassModel() {
 
-    pClassModelBuilder cmb(db_);
-    cmb.refresh();
+    pClassGraph cmb(db_);
+    cmb.build();
+
+    // XXX
+    cmb.writeDot("corvus-class-hierarchy.dot");
 
 }
 
