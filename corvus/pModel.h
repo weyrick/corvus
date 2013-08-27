@@ -122,8 +122,12 @@ public:
 
     void setTrace(bool trace) { if (db_) db_->setTrace(trace); }
 
-    void commit(bool begin=true) {
-        if (db_) db_->commit(begin);
+    void commit() {
+        if (db_) db_->commit();
+    }
+
+    void begin() {
+        if (db_) db_->begin();
     }
 
     bool sourceModuleDirty(pStringRef realPath, pStringRef hash);

@@ -122,13 +122,14 @@ std::string pDB::sql_select_single_string(pStringRef query) const {
 
 void pDB::sql_setup() {
     sql_execute("PRAGMA foreign_keys = ON");
+}
+
+void pDB::begin() {
     sql_execute("BEGIN");
 }
 
-void pDB::commit(bool begin) {
+void pDB::commit() {
     sql_execute("COMMIT");
-    if (begin)
-        sql_execute("BEGIN");
 }
 
 

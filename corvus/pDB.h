@@ -93,8 +93,10 @@ public:
     void list_query(pStringRef query, RowList &result) const;
 
     void setTrace(bool trace) { trace_ = trace; }
+    bool trace(void) const { return trace_; }
 
-    void commit(bool begin=true);
+    void begin();
+    void commit();
 
 };
 

@@ -38,6 +38,8 @@ void pModel::makeTables() {
 
     #define CORVUS_DBMODEL_VERSION "1.0"
 
+    db_->begin();
+
     const char *META = "CREATE TABLE IF NOT EXISTS corvus (" \
             "key TEXT UNIQUE NOT NULL," \
             "val TEXT" \
@@ -698,6 +700,8 @@ void pModel::resolveClassRelations() {
 
     std::vector<std::string> unresolved_extends, unresolved_implements;
 
+    begin();
+
     for (int i = 0; i < unresolved.size(); ++i) {
 
         pModel::oid c_id = unresolved[i].getAsOID("id");
@@ -710,6 +714,8 @@ void pModel::resolveClassRelations() {
                 pModel::oid resolved_id = lookupClass(unresolved[i].getAsOID("namespace_id"), e_list[j]);
                 if (resolved_id != pModel::NULLID) {
                     defineClassRelation(c_id, pModel::EXTENDS, resolved_id);
+                    // XXX i think we want to clear the class_model_decl and class_model_function here
+                    //     for this class to be sure it's rebuilt properly
                 }
                 else {
                     unresolved_extends.push_back(e_list[j]);
@@ -724,6 +730,8 @@ void pModel::resolveClassRelations() {
             for (int j = 0; j < i_list.size(); ++j) {
                 pModel::oid resolved_id = lookupClass(unresolved[i].getAsOID("namespace_id"), i_list[j]);
                 if (resolved_id != pModel::NULLID) {
+                    // XXX i think we want to clear the class_model_decl and class_model_function here
+                    //     for this class to be sure it's rebuilt properly
                     defineClassRelation(c_id, pModel::IMPLEMENTS, resolved_id);
                 }
                 else {
@@ -764,7 +772,7 @@ void pModel::resolveClassRelations() {
 
     }
 
-    commit(false);
+    commit();
 
 }
 

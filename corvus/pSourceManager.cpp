@@ -318,8 +318,6 @@ void pSourceManager::addIncludeDir(pStringRef name, pStringRef exts) {
         delete (*i);
     }
 
-    model_->commit();
-
 }
 
 void pSourceManager::refreshModel() {
@@ -328,6 +326,7 @@ void pSourceManager::refreshModel() {
         openModel();
     }
     model_->setTrace(debugModel_);
+    model_->begin();
     pPassManager passManager(model_);
     passManager.addPass<AST::Pass::ModelBuilder>();
     runPasses(&passManager);

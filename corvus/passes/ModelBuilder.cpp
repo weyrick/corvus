@@ -69,7 +69,6 @@ void ModelBuilder::pre_run(void) {
 
 void ModelBuilder::post_run(void) {
 
-    model_->commit();
 
 }
 
