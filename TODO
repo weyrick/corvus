@@ -15,3 +15,6 @@
    the dependency on boost
 - diagnostic wish list
  - warn on new ternary operator with implicit true expression
+- commandline option for full class graph output, with labels
+- sqlite indexes on tables
+- db versioning support
