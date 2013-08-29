@@ -27,6 +27,7 @@
 #include <vector>
 #include <iterator>
 #include <boost/range/iterator_range.hpp>
+#include <boost/foreach.hpp>
 
 #include <llvm/Support/Casting.h>
 #include <llvm/ADT/SmallVector.h>
@@ -1703,7 +1704,7 @@ protected:
     {
         // We have copied all array items by value, now we have to deep-copy the
         // expressions in the array items.
-        foreach(arrayItem& item, itemList_) {
+        BOOST_FOREACH(arrayItem& item, itemList_) {
             if(item.key)
                 item.key = item.key->clone(C);
             if(item.val)
