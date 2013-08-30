@@ -12,27 +12,29 @@
 #define COR_PASS_MODEL_BUILDER_H_
 
 #include "corvus/pAST.h"
-#include "corvus/pBaseVisitor.h"
+#include "corvus/pNSVisitor.h"
 #include "corvus/pModel.h"
 
 #include <vector>
+
+#define RESOLVE_FQN(sym) \
+    ( (ns_use_list_.find(sym) != ns_use_list_.end()) ? ns_use_list_[sym] : sym)
 
 namespace corvus {
 
 namespace AST { namespace Pass {
 
-class ModelBuilder: public pBaseVisitor {
+class ModelBuilder: public pNSVisitor {
 
 private:
 
-    pModel::oid m_id_;
-    pModel::oid ns_id_;
     pModel::oid c_id_;
-    std::vector<pModel::oid> f_id_list;
+    pModel::oid m_id_;
+    std::vector<pModel::oid> f_id_list_;
 
 public:
     ModelBuilder():
-            pBaseVisitor("ModelBuilder","Build the code model"),
+            pNSVisitor("ModelBuilder","Build the code model"),
             c_id_(pModel::NULLID)
             { }
 
@@ -41,6 +43,8 @@ public:
 
     void visit_pre_namespaceDecl(namespaceDecl* n);
     void visit_post_namespaceDecl(namespaceDecl* n);
+
+    void visit_post_useIdent(useIdent* n);
 
     void visit_pre_classDecl(classDecl* n);
     void visit_post_classDecl(classDecl* n);

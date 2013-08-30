@@ -14,30 +14,15 @@ namespace corvus { namespace AST { namespace Pass {
 
 
 void ModelChecker::pre_run(void) {
+    pNSVisitor::pre_run();
     m_id_ = model_->getSourceModuleOID(module_->fileName());
     assert(m_id_ != pModel::NULLID && "module not found");
-    ns_id_ = model_->getRootNamespaceOID();
-    assert(ns_id_ != pModel::NULLID && "namespace not found");
 }
 
 /*
 void ModelChecker::post_run(void) {
 }
 */
-
-void ModelChecker::visit_pre_namespaceDecl(namespaceDecl* n) {
-
-    ns_id_ = model_->getNamespaceOID(n->name());
-
-}
-
-void ModelChecker::visit_post_namespaceDecl(namespaceDecl* n) {
-
-    // we only lose the namespace if this one had a body, i.e. block
-    if (n->body())
-        ns_id_ = model_->getRootNamespaceOID();
-
-}
 
 void ModelChecker::visit_pre_classDecl(classDecl* n) {
 
@@ -146,7 +131,7 @@ void ModelChecker::visit_pre_literalConstant(literalConstant* n) {
             class_id = c_id_;
         }
         else {
-            class_id = model_->lookupClass(ns_id_, classID->name());
+            class_id = model_->lookupClass(ns_id_, RESOLVE_FQN(classID->name().str()));
             if (class_id == pModel::NULLID) {
                 std::stringstream diag;
                 diag << "class constant from undefined class: " << classID->name().str();

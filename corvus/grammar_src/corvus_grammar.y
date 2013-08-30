@@ -186,6 +186,7 @@ AST::literalExpr* extractLiteralString(pSourceRef* B, pSourceModule* pMod, bool 
 %syntax_error {  
   CTXT.parseError(TOKEN);
 }   
+%stack_size 500
 %stack_overflow {  
   std::cerr << "Parser stack overflow" << std::endl;
 }   

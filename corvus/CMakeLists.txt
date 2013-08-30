@@ -85,6 +85,7 @@ set(PARSER_SRC_FILES
   pFullModelChecker.cpp
   pDB.cpp
   pClassGraph.cpp
+  pNSVisitor.cpp
   # passes
   passes/PrintAST.cpp
   passes/DumpStats.cpp

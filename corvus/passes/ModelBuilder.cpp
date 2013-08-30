@@ -22,6 +22,8 @@ namespace corvus { namespace AST { namespace Pass {
 
 void ModelBuilder::pre_run(void) {
 
+    pNSVisitor::pre_run();
+
     // generate the source hash
     md5_byte_t digest[16];
     md5_state_t state;
@@ -63,7 +65,6 @@ void ModelBuilder::pre_run(void) {
                                        hash,
                                        true /* delete first */
                                        );
-    ns_id_ = model_->getRootNamespaceOID();
 
 }
 
@@ -81,8 +82,38 @@ void ModelBuilder::visit_pre_namespaceDecl(namespaceDecl* n) {
 void ModelBuilder::visit_post_namespaceDecl(namespaceDecl* n) {
 
     // we only lose the namespace if this one had a body, i.e. block
-    if (n->body())
+    if (n->body()) {
         ns_id_ = model_->getRootNamespaceOID();
+        ns_use_list_.clear();
+    }
+
+}
+
+void ModelBuilder::visit_post_useIdent(useIdent* n) {
+
+    std::string alias;
+
+    // use \foo\myclass
+    //     ~~~~~~~~~~~~ = nsname, blank alias
+
+    // if we don't have an alias, we want to extract the symbolname
+    // which is myclass in this case
+
+    // use \foo\myclass as bar
+    //     ~~~~~~~~~~~~    ~~~ = alias
+
+    // then anytime we see symbol 'alias', we instead use 'nsname'
+
+    alias = n->alias();
+    if (alias.empty()) {
+        alias = n->nsname();
+        if (alias.find('\\') != std::string::npos) {
+            alias = alias.substr(alias.find_last_of('\\')+1);
+        }
+    }
+
+    //std::cout << "use: " << alias << " => " << n->nsname().str() << "\n";
+    ns_use_list_[alias] = n->nsname();
 
 }
 
@@ -94,14 +125,14 @@ void ModelBuilder::visit_pre_classDecl(classDecl* n) {
              i != n->extends_end();
              ++i) {
             // interfaces have multiple inheritance
-            extends << *i << ",";
+            extends << RESOLVE_FQN(*i) << ",";
         }
     }
     if (n->implementsCount()) {
         for (idList::iterator i = n->implements_begin();
              i != n->implements_end();
              ++i) {
-            implements << *i << ",";
+            implements << RESOLVE_FQN(*i) << ",";
         }
     }
 
@@ -169,7 +200,7 @@ void ModelBuilder::visit_pre_signature(signature* n) {
             break;
         minArity++;
     }
-    f_id_list.push_back(model_->defineFunction(ns_id_,
+    f_id_list_.push_back(model_->defineFunction(ns_id_,
                           m_id_,
                           c_id_,
                           n->name(),
@@ -183,7 +214,7 @@ void ModelBuilder::visit_pre_signature(signature* n) {
 
     for (int i = 0; i < n->numParams(); i++) {
         formalParam *p = n->getParam(i);
-        model_->defineFunctionVar(f_id_list.back(),
+        model_->defineFunctionVar(f_id_list_.back(),
                                  p->name(),
                                  pModel::PARAM,
                                  pModel::NO_FLAGS,
@@ -199,7 +230,7 @@ void ModelBuilder::visit_pre_signature(signature* n) {
 void ModelBuilder::visit_post_functionDecl(functionDecl *n) {
 
 
-    f_id_list.pop_back();
+    f_id_list_.pop_back();
 
 }
 

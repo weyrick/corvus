@@ -12,19 +12,18 @@
 #define COR_PASS_MODELCHECKER_H_
 
 #include "corvus/pAST.h"
-#include "corvus/pBaseVisitor.h"
+#include "corvus/pNSVisitor.h"
 
 namespace corvus { namespace AST { namespace Pass {
 
-class ModelChecker: public pBaseVisitor {
+class ModelChecker: public pNSVisitor {
 
     pModel::oid m_id_;
-    pModel::oid ns_id_;
     pModel::oid c_id_;
 
 public:
     ModelChecker():
-            pBaseVisitor("ModelChecker","Make checks against the complete model")
+            pNSVisitor("ModelChecker","Make checks against the complete model")
             { }
 
     void pre_run(void);
@@ -34,9 +33,6 @@ public:
 
     void visit_pre_classDecl(classDecl* n);
     void visit_post_classDecl(classDecl* n);
-
-    void visit_pre_namespaceDecl(namespaceDecl* n);
-    void visit_post_namespaceDecl(namespaceDecl* n);
 
     void visit_pre_functionInvoke(functionInvoke* n);
     void visit_pre_literalConstant(literalConstant* n);
