@@ -28,7 +28,7 @@ void ModelChecker::visit_pre_classDecl(classDecl* n) {
 
     c_id_ = model_->lookupClass(ns_id_, n->name(), m_id_);
     if (c_id_ == pModel::NULLID)
-        std::cout << "no class found: " << n->name().str() << " for line " << n->range().startLine << " in " << module_->fileName() << "\n";
+        std::cout << "no class found: " << n->name().str() << " ns_id: " << ns_id_ << " for line " << n->range().startLine << " in " << module_->fileName() << "\n";
     assert(c_id_ != pModel::NULLID && "class wasn't in the model");
 
 }
@@ -65,7 +65,8 @@ void ModelChecker::visit_pre_functionInvoke(functionInvoke* n) {
     }
 
     // find the function in the model
-    pModel::FunctionList list = model_->queryFunctions(ns_id_, c_id, n->literalName());
+    std::pair<pModel::oid, std::string> resolved = model_->resolveFQN(ns_id_, RESOLVE_FQN(n->literalName().str()));
+    pModel::FunctionList list = model_->queryFunctions(resolved.first, c_id, resolved.second);
 
     // if it doesn't exist, diag it
     std::stringstream diag;
@@ -109,7 +110,7 @@ void ModelChecker::visit_pre_literalConstant(literalConstant* n) {
 
     // make sure this was define()'d
     if (!n->target()) {
-        pModel::ConstantList cn = model_->queryConstants(n->name());
+        pModel::ConstantList cn = model_->queryConstants(RESOLVE_FQN(n->name().str()));
         if (cn.size() == 0) {
             std::stringstream diag;
             diag << "undefined constant: " << n->name().str();

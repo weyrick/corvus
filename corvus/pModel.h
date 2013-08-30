@@ -161,7 +161,10 @@ public:
     ClassDeclList queryClassDecls(std::vector<oid> c_id_list, pStringRef name) const;
     FunctionList queryFunctions(oid ns_id, oid c_id, pStringRef name) const;
 
+    std::pair<oid, std::string> resolveFQN(oid ns_id, pStringRef name) const;
+
     oid lookupClass(oid ns_id, pStringRef name, oid m_id = pModel::NULLID) const;
+    oid lookupFunction(oid ns_id, oid c_id, pStringRef name) const;
 
 };
 

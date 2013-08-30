@@ -606,15 +606,15 @@ pModel::ConstantList pModel::queryConstants(pStringRef name) const {
 
 }
 
-pModel::oid pModel::lookupClass(oid ns_id, pStringRef name, pModel::oid m_id) const {
+std::pair<pModel::oid, std::string> pModel::resolveFQN(oid ns_id, pStringRef name) const {
 
     // the final resolved namespace to look in
     oid res_ns_id = ns_id;
-    // the final resolved classname to look for in res_ns_id
+    // the final resolved sym to look for in res_ns_id
     pStringRef res_name = name;
 
     // first we may need to resolve name into a namespace or list of namespaces
-    // to find the class in
+    // to find the sym in
     size_t p = name.count('\\');
     if (p) {
         // in the case that there is only one and it's in the first position,
@@ -626,7 +626,7 @@ pModel::oid pModel::lookupClass(oid ns_id, pStringRef name, pModel::oid m_id) co
         }
         else {
             // there are multiple namespace sep tokens
-            // the class name will be the text from the last one
+            // the sym will be the text from the last one
             res_name = name.substr(name.find_last_of('\\')+1);
             // the namespace specify part
             pStringRef ns_part = name.substr(0, name.find_last_of('\\'));
@@ -635,7 +635,7 @@ pModel::oid pModel::lookupClass(oid ns_id, pStringRef name, pModel::oid m_id) co
                 res_ns_id = getNamespaceOID(ns_part);
                 if (res_ns_id == pModel::NULLID) {
                     // namespace not found
-                    return pModel::NULLID;
+                    return std::pair<pModel::oid, std::string>(pModel::NULLID, res_name.str());
                 }
             }
             else {
@@ -649,14 +649,39 @@ pModel::oid pModel::lookupClass(oid ns_id, pStringRef name, pModel::oid m_id) co
                 res_ns_id = getNamespaceOID(lookup_ns);
                 if (res_ns_id == pModel::NULLID) {
                     // namespace not found
-                    return pModel::NULLID;
+                    return std::pair<pModel::oid, std::string>(pModel::NULLID, res_name.str());
                 }
             }
         }
 
     }
 
-    pModel::ClassList cl = queryClasses(res_ns_id, res_name, m_id);
+    return std::pair<pModel::oid, std::string>(res_ns_id, res_name.str());
+
+}
+
+pModel::oid pModel::lookupClass(oid ns_id, pStringRef name, pModel::oid m_id) const {
+
+    std::pair<oid, std::string> resolved = resolveFQN(ns_id, name);
+
+    pModel::ClassList cl = queryClasses(resolved.first, resolved.second, m_id);
+    if (cl.size() == 0) {
+        return pModel::NULLID;
+    }
+    else if (cl.size() == 1) {
+        return cl[0].getID();
+    }
+    else {
+        return pModel::MULTIPLE_IDS;
+    }
+
+}
+
+pModel::oid pModel::lookupFunction(oid ns_id, oid c_id, pStringRef name) const {
+
+    std::pair<oid, std::string> resolved = resolveFQN(ns_id, name);
+
+    pModel::FunctionList cl = queryFunctions(resolved.first, c_id, resolved.second);
     if (cl.size() == 0) {
         return pModel::NULLID;
     }
