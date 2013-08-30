@@ -557,9 +557,9 @@ pModel::ClassDeclList pModel::queryClassDecls(std::vector<oid> c_id_list, pStrin
     std::string c_id_list_str = join(c_id_list);
     query << "SELECT class.id, class_decl.name, class.name AS className, class_decl.type, class_decl.flags, visibility, defaultVal, " \
              " class_decl.start_line, class_decl.start_col, sourceModule.realPath FROM " \
-             " class_decl, class, sourceModule WHERE sourceModule.id=sourceModule_id AND" \
-             " class.id=class_decl.class_id AND" \
-             " class_decl.class_id IN (" << c_id_list_str << ")" \
+             " class_model_decl, class_decl, class, sourceModule WHERE sourceModule.id=sourceModule_id AND" \
+             " class.id=class_decl.class_id AND class_decl.id=class_model_decl.class_decl_id AND" \
+             " class_model_decl.class_id IN (" << c_id_list_str << ")" \
              " AND class_decl.name='" << name.str() << "'";
 
     //db_->list_query<ClassDeclList>(query.str(), result);
@@ -576,9 +576,9 @@ pModel::ClassDeclList pModel::queryClassDecls(oid c_id, pStringRef name) const {
 
     query << "SELECT class.id, class_decl.name, class.name AS className, class_decl.type, class_decl.flags, visibility, defaultVal, " \
              " class_decl.start_line, class_decl.start_col, sourceModule.realPath FROM " \
-             " class_decl, class, sourceModule WHERE sourceModule.id=sourceModule_id AND" \
-             " class.id=class_decl.class_id AND" \
-             " class_decl.class_id=" << c_id <<
+             " class_model_decl, class_decl, class, sourceModule WHERE sourceModule.id=sourceModule_id AND" \
+             " class.id=class_decl.class_id AND class_decl.id=class_model_decl.class_decl_id AND" \
+             " class_model_decl.class_id=" << c_id <<
              " AND class_decl.name='" << name.str() << "'";
 
     //db_->list_query<ClassDeclList>(query.str(), result);

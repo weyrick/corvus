@@ -114,7 +114,6 @@ void pClassGraph::cache_class_decls(db::pDB::oid in_class_id, db::pDB::oid paren
     for (boost::tie(iter,end) = boost::in_edges(source, *graph_);
          iter != end;
          ++iter) {
-        std::cout << "parent: " << boost::source(*iter, *graph_) << std::endl;
         cache_class_decls(in_class_id, boost::source(*iter, *graph_));
     }
 
