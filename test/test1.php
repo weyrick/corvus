@@ -2,6 +2,8 @@
 
 namespace test_other {
 
+class myexception extends \Exception { }
+
 class myclass {
   const FOO = 2;
 }

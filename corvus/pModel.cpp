@@ -622,6 +622,7 @@ std::pair<pModel::oid, std::string> pModel::resolveFQN(oid ns_id, pStringRef nam
         if (p == 1) {
             if (name.find_first_of('\\') == 0) {
                 res_ns_id = getRootNamespaceOID();
+                res_name = name.substr(1);
             }
         }
         else {
