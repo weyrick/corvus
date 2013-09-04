@@ -25,29 +25,39 @@ namespace corvus {
 
 void pClassGraph::build_graph() {
 
+    // NOTE: this graph only consistes of classes with relationships -
+    // that is, any class with no parent and no children will NOT appear
+    // in this graph
+
     assert(graph_ == 0 && "already built graph");
 
     int num_vertices = (int)db_->sql_select_single_id("SELECT COUNT(DISTINCT lhs_class_id) FROM class_relations");
 
-     graph_ = new GraphType(num_vertices);
+    if (db_->trace())
+        std::cout << "class graph has " << num_vertices << " vertices\n";
 
-     db::pDB::RowList result;
-     const char *query = "SELECT lhs_class_id, rhs_class_id FROM class_relations";
-     db_->list_query(query, result);
-     std::pair<GraphType::edge_descriptor, bool> er;
-     for (int i = 0; i < result.size(); i++) {
-         // to get direction from parent->child, rhs here on the left :/
-         db::pDB::oid parent = result[i].getAsOID("rhs_class_id");
-         db::pDB::oid child = result[i].getAsOID("lhs_class_id");
-         er = boost::add_edge(parent, child, *graph_);
-         // cache vertexes if we don't have them yet
-         if (vcache_.find(parent) == vcache_.end()) {
-             vcache_[parent] = boost::source(er.first, *graph_);
-         }
-         if (vcache_.find(child) == vcache_.end()) {
-             vcache_[child] = boost::target(er.first, *graph_);
-         }
-     }
+    graph_ = new GraphType(num_vertices);
+
+    db::pDB::RowList result;
+    const char *query = "SELECT lhs_class_id, rhs_class_id FROM class_relations";
+    db_->list_query(query, result);
+    std::pair<GraphType::edge_descriptor, bool> er;
+    for (int i = 0; i < result.size(); i++) {
+        // to get direction from parent->child, rhs here on the left :/
+        db::pDB::oid parent = result[i].getAsOID("rhs_class_id");
+        db::pDB::oid child = result[i].getAsOID("lhs_class_id");
+        //std::cout << "edge " << parent << " -> " << child << std::endl;
+        er = boost::add_edge(parent, child, *graph_);
+        // cache vertexes if we don't have them yet
+        if (vcache_.find(parent) == vcache_.end()) {
+            //std::cout << "caching parent " << parent << std::endl;
+            vcache_[parent] = boost::source(er.first, *graph_);
+        }
+        if (vcache_.find(child) == vcache_.end()) {
+            //std::cout << "caching child " << child << std::endl;
+            vcache_[child] = boost::target(er.first, *graph_);
+        }
+    }
 
 }
 
@@ -75,10 +85,7 @@ void pClassGraph::cache_class_decls(db::pDB::oid in_class_id, db::pDB::oid paren
     //    work_id = (parent_class_id != NULLID) ? parent_class_id : in_class_id
     db::pDB::oid work_id = (parent_class_id != db::pDB::NULLID) ? parent_class_id : in_class_id;
     if (db_->trace())
-        std::cout << "cache_class_decl(" << work_id << "," << parent_class_id << ")\n";
-
-    // find vertex in the graph
-    assert(vcache_.find(work_id) != vcache_.end() && "vertex not in cache");
+        std::cout << "cache_class_decl(" << work_id << "," << parent_class_id << ")" << std::endl;
 
     //    [LOOP] for each method|decl X in work_id list that doesn't match a symbol already in cache for in_class_id
     //      cache X for in_class_id
@@ -104,6 +111,13 @@ void pClassGraph::cache_class_decls(db::pDB::oid in_class_id, db::pDB::oid paren
                << result[i].getAsOID("id") << ")";
         db_->sql_execute(iquery.str());
         iquery.str("");
+    }
+
+    // see if vertex exists in the graph, to recurse for parents
+    if (vcache_.find(work_id) == vcache_.end()) {
+        if (db_->trace())
+            std::cout << " -- no vertex (no relations)\n";
+        return;
     }
 
     //    [LOOP] for each parent P of work_id
@@ -136,7 +150,7 @@ void pClassGraph::build() {
     // list of classes that have (rows(class_model_decl)==0 && rows(class_model_function)==0)
     // if there are none to rebuild, we're done (and we can skip the class heirarchy graph build)
     db::pDB::RowList result;
-    const char *query = "SELECT C.id AS in_class_id FROM class C LEFT JOIN class_model_decl CMD ON" \
+    const char *query = "SELECT C.id AS in_class_id, C.name AS name FROM class C LEFT JOIN class_model_decl CMD ON" \
              " C.id=CMD.class_id LEFT JOIN class_model_function CMF ON C.id=CMF.class_id" \
              " WHERE CMD.id IS NULL AND CMF.id IS NULL";
     db_->list_query(query, result);
@@ -144,12 +158,15 @@ void pClassGraph::build() {
         return;
 
     // so we'll build the full graph based on all edges in class_relations
+    // NOTE this excludes classes with NO (parent or child) relations
     build_graph();
 
     db_->begin();
 
     // cache decls for each class we're interested in
     for (int i = 0; i < result.size(); i++) {
+        if (db_->trace())
+            std::cout << "cache_class_decl top level on: " << result[i].get("name") << std::endl;
         cache_class_decls(result[i].getAsOID("in_class_id"), db::pDB::NULLID);
     }
 
