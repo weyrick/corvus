@@ -153,7 +153,7 @@ public:
 
     ClassList getUnresolvedClasses() const;
     void resolveClassRelations();
-    void refreshClassModel();
+    void refreshClassModel(pStringRef graphFileName="");
 
     ConstantList queryConstants(pStringRef name) const;
     ClassList queryClasses(oid ns_id, pStringRef name, oid m_id = pModel::NULLID) const;

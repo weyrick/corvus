@@ -17,6 +17,7 @@
 #include "corvus/pSourceManager.h"
 #include "corvus/pConfig.h"
 #include "corvus/pDiagnostic.h"
+#include "corvus/pModel.h"
 #include <llvm/Support/FileSystem.h>
 
 using namespace llvm;
@@ -25,10 +26,11 @@ using namespace corvus;
 struct option longopts[] = {
     {"print-toks", 0, 0, 't'},
     {"print-ast", 0, 0, 'a'},
+    {"class-graph", 1, 0, 'g'},
     {"debug-parse", 0, 0, 0},
     {"debug-model", 0, 0, 0},
     {"debug-diags", 0, 0, 0},
-    {"stubs", 1, 0, 's'},
+    {"include", 1, 0, 'i'},
     {"exts", 1, 0, 'e'},
     {"db", 1, 0, 'd'},
     {"help", 0, 0, 'h'},
@@ -55,6 +57,7 @@ void corvusVersion(void) {
                  " --debug-model            - Debug the model builder\n" \
                  " --debug-diags            - Debug the diagnostics\n" \
                  " --debug-parse            - Debug output from parser\n" \
+                 " --class-graph            - Generate a DOT graph of the class heirarchy\n" \
                  " -c,--config=<file>       - Load corvus config file\n" \
                  " -h,--help                - Display available options\n" \
                  " -a,--print-ast           - Print AST in XML format\n" \
@@ -130,6 +133,7 @@ int main( int argc, char* argv[] )
     int opt, idx, verbosity(0);
     bool debugParse(false), debugModel(false), debugDiags(false);
     bool printToks(false), printAST(false);
+    std::string graphFileName;
 
     std::vector<std::string> inputFiles;
 
@@ -171,6 +175,9 @@ int main( int argc, char* argv[] )
             break;
         case 't':
             printToks = true;
+            break;
+        case 'g':
+            graphFileName = optarg;
             break;
         case 'i':
             config.includePaths.push_back(optarg);
@@ -263,7 +270,7 @@ int main( int argc, char* argv[] )
         return 0;
     }
 
-    sm.refreshModel();
+    sm.refreshModel(graphFileName);
     sm.runDiagnostics();
 
     // render diagnostics

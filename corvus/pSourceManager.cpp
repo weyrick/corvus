@@ -320,7 +320,7 @@ void pSourceManager::addIncludeDir(pStringRef name, pStringRef exts) {
 
 }
 
-void pSourceManager::refreshModel() {
+void pSourceManager::refreshModel(pStringRef graphFileName) {
 
     if (!model_) {
         openModel();
@@ -332,7 +332,7 @@ void pSourceManager::refreshModel() {
     runPasses(&passManager);
     model_->commit();
     model_->resolveClassRelations();
-    model_->refreshClassModel();
+    model_->refreshClassModel(graphFileName);
     model_->setTrace(debugDiags_);
 
 }

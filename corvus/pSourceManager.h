@@ -74,7 +74,7 @@ public:
     void addSourceDir(pStringRef name, pStringRef exts);
     void addIncludeDir(pStringRef name, pStringRef exts);
 
-    void refreshModel();
+    void refreshModel(pStringRef graphFileName="");
     void runDiagnostics();
 
     const pModel* model() { return model_; }

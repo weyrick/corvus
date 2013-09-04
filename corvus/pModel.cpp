@@ -802,13 +802,14 @@ void pModel::resolveClassRelations() {
 
 }
 
-void pModel::refreshClassModel() {
+void pModel::refreshClassModel(pStringRef graphFileName) {
 
     pClassGraph cmb(db_);
     cmb.build();
 
-    // XXX
-    cmb.writeDot("corvus-class-hierarchy.dot");
+    if (!graphFileName.empty()) {
+        cmb.writeDot(graphFileName);
+    }
 
 }
 

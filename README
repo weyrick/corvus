@@ -2,9 +2,9 @@
 
 This is a fast (C++ based) PHP static analyzer with few dependencies.
 Its purpose is to catch programming errors by statically analyzing the
-source code, without running it.
+source code (without running it).
 
-It's meant to be a first code review, generally by being run automatically in
+It's meant to be a first, automated code review, generally by being run in
 a continuous integration system or even before allowing code to be checked into
 a repository.
 
@@ -29,12 +29,9 @@ corvus uses the CMake build system. Basic *nix instructions:
 
 == Status ==
 
-the parser in corvus is based on an earlier project (roadsend-php-raven) and is
-quite functional. the analysis passes are, however, still in progress.
+corvus can currently:
 
-corvus can:
-
- * parse php <= 5.3
+ * parse (most) php <= 5.3
  * dump tokens
  * dump AST in XML format
  * parse directories for source code by extension
@@ -42,12 +39,16 @@ corvus can:
  * build a model based on all source, cache it to a database
  * read YAML based config files
  * be used as a library (callable from e.g. an IDE or commandline tool)
+ * resolve namespaces properly
+ * provide a visual graph of the class hierarchy (DOT format)
  * report diagnostics on:
 
  1. in a function signature, using a parameter without a default after a parameter with one e.g. foo($bar, $baz='foo', $bip)
  2. function calls with the wrong number of arguments
- 3. calls to nonexistent functions
- 4. use of undefined constants
+ 3. calls to nonexistent functions/methods
+ 4. use of undefined constants (from define() or class constants), or class constant from undefined class
+ 5. functions defined more than once
+ 6. unresolved classes in 'extends' or 'implements'
 
 planned:
 

@@ -18,7 +18,6 @@
  - unused use statements
  - type analysis and use verification: unknown method
  - decl/use chains: use of uninitiazed, unused decl
-- commandline option for full class graph output, with labels
 - sqlite indexes on tables
 - db versioning support
 - query analysis and caching
