@@ -53,14 +53,14 @@ public:
     void visit_pre_signature(signature* n);    
     void visit_post_functionDecl(functionDecl *n);
 
+    void visit_pre_var(var *n);
+
     void visit_pre_functionInvoke(functionInvoke *n);
 
     /*
     void visit_pre_block(block* n);
     void visit_post_block(block* n);
     */
-
-    void visit_pre_assignment(assignment* n);
 
 };
 

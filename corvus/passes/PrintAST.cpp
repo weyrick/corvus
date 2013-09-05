@@ -82,6 +82,9 @@ void PrintAST::visit_pre_var(var* n) {
     if (n->indirectionCount()) {
         currentElement_->SetAttribute("indirectionCount",n->indirectionCount());
     }
+    if (n->isLval()) {
+        currentElement_->SetAttribute("isLval", "true");
+    }
 }
 
 void PrintAST::visit_pre_namespaceDecl(namespaceDecl* n) {

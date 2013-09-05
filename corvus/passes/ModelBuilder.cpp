@@ -234,17 +234,24 @@ void ModelBuilder::visit_post_functionDecl(functionDecl *n) {
 
 }
 
-void ModelBuilder::visit_pre_assignment(assignment* n) {
 
 
-    expr* lval = n->lVal();
-    if (var *i = llvm::dyn_cast<var>(lval)) {
-        //do_decl(i->name());
-    }
+void ModelBuilder::visit_pre_var(var* n) {
 
-    expr* rval = n->rVal();
-    if (var *i = llvm::dyn_cast<var>(rval)) {
-        //do_use(i->name());
+    // XXX right now only in the function context
+    if (f_id_list_.size() == 0)
+        return;
+
+    if (n->isLval()) {
+        model_->defineFunctionVar(f_id_list_.back(),
+                                 n->name(),
+                                 pModel::FREE_VAR,
+                                 pModel::NO_FLAGS,
+                                 pModel::T_UNKNOWN, // XXX
+                                 "", // XXX datatype obj
+                                 "", // default (only func params)
+                                 n->range()
+                    );
     }
 
 }

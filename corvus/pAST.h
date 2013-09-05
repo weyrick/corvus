@@ -261,7 +261,7 @@ public:
     static const nodeKind firstExprKind = assignmentKind;
     static const nodeKind lastExprKind = unaryOpKind;
 
-    expr(nodeKind k): stmt(k) { }
+    expr(nodeKind k): stmt(k), isLval_(false) { }
 
     static bool classof(const expr* s) { return true; }
     static bool classof(const stmt* s) {
@@ -272,8 +272,16 @@ public:
     // We include that clone here so we get a clone which returns expr*.
     virtual expr* clone(pParseContext& C) const = 0;
     expr* retain() { stmt::retain(); return this; }
-    
+
+    bool isLval(void) const {
+        return isLval_;
+    }
+
+    void setIsLval() { isLval_ = true; }
+
 protected:
+    bool isLval_;
+
     expr(const expr& other): stmt(other) {}
 };
 
@@ -2015,6 +2023,7 @@ protected:
 public:
     assignment(expr* lVal, expr* rVal, bool r): expr(assignmentKind), children_(), byRef_(r)
     {
+        lVal->setIsLval();
         children_[LVAL] = static_cast<stmt*>(lVal);
         children_[RVAL] = static_cast<stmt*>(rVal);
     }
@@ -2102,6 +2111,7 @@ protected:
 public:
     opAssignment(expr* lVal, expr* rVal, opKind op): expr(assignmentKind), children_(), opKind_(op)
     {
+        lVal->setIsLval();
         children_[LVAL] = static_cast<stmt*>(lVal);
         children_[RVAL] = static_cast<stmt*>(rVal);
     }

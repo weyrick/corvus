@@ -1773,6 +1773,7 @@ opAssignment(A) ::= var(L) T_SR_EQUAL(OP) expr(R).
     A->setLine(TOKEN_LINE(OP));
 }
 
+// XXX need to SetIsLval() on the listElements if they are expr
 %type listAssignment {AST::listAssignment*}
 listAssignment(A) ::= T_LIST(LIST) T_LEFTPAREN listAssignmentList(VARS) T_RIGHTPAREN T_ASSIGN expr(RVAL).
 {
