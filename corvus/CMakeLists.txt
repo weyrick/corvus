@@ -106,6 +106,7 @@ set_target_properties(libcorvus
                       PROPERTIES
                       OUTPUT_NAME corvus
                      )
+IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")                
 target_link_libraries ( libcorvus
                         tinyxml
                         corvus_md5
@@ -114,3 +115,13 @@ target_link_libraries ( libcorvus
                         dl pthread
                         ${SQLITE3_LIBRARIES}
                         )
+ELSE(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+target_link_libraries ( libcorvus
+                        tinyxml
+                        corvus_md5
+                        ${LLVM_LIBS_SUPPORT}
+                        dl pthread
+                        ${SQLITE3_LIBRARIES}
+                        )
+ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+

@@ -17,12 +17,11 @@ if (LLVM_INCLUDE_DIR)
   set(LLVM_FOUND TRUE)
 else (LLVM_INCLUDE_DIR)
 
-  find_program(LLVM_CONFIG_EXECUTABLE
-      NAMES llvm-config llvm-config-3.3
-      PATHS
-      /opt/local/bin
-  )
-  
+find_program(LLVM_CONFIG_EXECUTABLE
+             NAMES llvm-config-3.1 llvm-config llvm-config-3.2 llvm-config-3.3
+             PATHS /opt/local/bin
+             HINTS "$ENV{LLVM_DIR}/bin"
+            )
 #  find_program(LLVM_CLANGXX_EXECUTABLE
 #      NAMES clang++
 #      PATHS

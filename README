@@ -10,9 +10,12 @@ a repository.
 
 == Requires ==
 
- * [http://llvm.org LLVM] 3.0+
- * [http://boost.org Boost] 1.38+
- * [http://cmake.org CMake] 2.6+
+ * [http://llvm.org LLVM] 3.1+ (llvm-3.[123]-dev)
+ * [http://boost.org Boost] 1.38+ (libboost-dev)
+ * [http://cmake.org CMake] 2.6+ (cmake)
+ * [http://sqlite.org SQLite] 3.7+ (libsqlite3-dev)
+
+ Corvus is tested on Linux (Ubuntu) and OSX.
 
 == Source ==
 
@@ -23,9 +26,13 @@ https://github.com/weyrick/corvus
 
 corvus uses the CMake build system. Basic *nix instructions:
 
+ * ensure dependencies are installed (see Requires above)
  * create "build" directory inside of corvus/
  * in the build directory, type "cmake .."
  * make
+ * make check
+
+the corvus binary is located in build/frontend/corvus. there is no "make install" yet.
 
 == Status ==
 
@@ -52,6 +59,7 @@ corvus can currently:
 
 planned:
 
- * 5.4 source compatibility
- * many more diagnostics, configurable
+ * 5.4/5.5 source compatibility
+ * many more diagnostics, configurable (see TODO)
  * asynchronous parsing
+ 

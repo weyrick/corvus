@@ -16,8 +16,12 @@
 - diagnostic wish list
  - warn on new ternary operator with implicit true expression
  - unused use statements
- - type analysis and use verification: unknown method
+ - type analysis and use verification: unknown method call when class type is known
  - decl/use chains: use of uninitiazed, unused decl
+ - protected/private access
+ - unreachable code
+ - unused properties, methods, functions
+ - all compile time class checks: interfaces, abstract classes, etc
 - sqlite indexes on tables
 - db versioning support
 - query analysis and caching

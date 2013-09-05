@@ -13,7 +13,13 @@
 #include <iostream>
 
 #include <llvm/ADT/OwningPtr.h>
+
+#if (LLVM_VERSION >= 3003000)
 #include <llvm/IR/Value.h> // isa
+#else
+#include <llvm/Value.h>
+#endif
+
 #include <llvm/Support/SourceMgr.h>
 #include <llvm/Support/YAMLParser.h>
 #include <llvm/Support/MemoryBuffer.h>
