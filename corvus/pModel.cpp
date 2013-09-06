@@ -282,7 +282,7 @@ void pModel::makeTables() {
 
 }
 
-bool pModel::sourceModuleDirty(pStringRef realPath, pStringRef hash) {
+bool pModel::sourceModuleDirty(pStringRef realPath, pStringRef hash) const {
 
     std::stringstream sql;
 
@@ -477,6 +477,28 @@ void pModel::defineFunctionVar(oid f_id, pStringRef name,
         << datatype << ','
         << db_->sql_string(datatype_obj) << ","
         << db_->sql_string(defaultVal) << ","
+        << range.startLine  << ',' << range.startCol
+        << ")";
+    db_->sql_insert(sql.str().c_str());
+
+}
+
+void pModel::defineFunctionUse(oid f_id, pStringRef name, pSourceRange range) {
+
+    std::stringstream sql;
+
+    // first we see if there's an associated decl.
+    sql << "SELECT id FROM function_var WHERE name=" << "'" << name.str() << "'" <<
+           " AND function_id=" << f_id << " AND start_line <= " << range.startLine;
+
+    oid f_v_id = db_->sql_select_single_id(sql.str());
+
+    sql.str("");
+
+    sql << "INSERT INTO function_var_use VALUES (NULL,"
+        << f_id << ','
+        << db_->oidOrNull(f_v_id) << ','
+        << ((f_v_id != pModel::NULLID) ? "''" : db_->sql_string(name.str())) << ','
         << range.startLine  << ',' << range.startCol
         << ")";
     db_->sql_insert(sql.str().c_str());
@@ -698,13 +720,12 @@ pModel::oid pModel::lookupFunction(oid ns_id, oid c_id, pStringRef name) const {
 pModel::ClassList pModel::getUnresolvedClasses() const {
 
     ClassList result;
-    std::stringstream query;
 
     // the method to retrieve this right now is to compare the count of
     // extends and implements as recorded by the class declaration against
     // the count of relations we have in the relations table. if there are fewer
     // in the relations table than in the class table, then we have unresolved
-    query << "SELECT class.id, namespace_id, name, type, flags, extends, implements, extends_count, implements_count, " \
+    const char *query = "SELECT class.id, namespace_id, name, type, flags, extends, implements, extends_count, implements_count, " \
              " unresolved_extends, unresolved_implements, " \
              " (select count(*) from class_relations where lhs_class_id=class.id and type=0) as resolved_extends_count, " \
              " (select count(*) from class_relations where lhs_class_id=class.id and type=1) as resolved_implements_count, " \
@@ -714,7 +735,21 @@ pModel::ClassList pModel::getUnresolvedClasses() const {
              " ((extends_count > resolved_extends_count) or (implements_count > resolved_implements_count))";
 
     //db_->list_query<ClassList>(query.str(), result);
-    db_->list_query(query.str(), result);
+    db_->list_query(query, result);
+
+    return result;
+
+}
+
+pModel::UndeclList pModel::getUndeclaredUses() const {
+
+    UndeclList result;
+
+    const char *query = "SELECT function_var_use.*, realPath FROM function_var_use, "\
+            "function, sourceModule WHERE function_var_id IS NULL AND "\
+            "function.id=function_id AND sourceModule.id=function.sourceModule_id";
+
+    db_->list_query(query, result);
 
     return result;
 

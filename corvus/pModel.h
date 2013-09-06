@@ -50,6 +50,7 @@ public:
     typedef db::pDB::RowList ClassList;
     typedef db::pDB::RowList ClassDeclList;
     typedef db::pDB::RowList ConstantList;
+    typedef db::pDB::RowList UndeclList;
 
     typedef std::map<std::string, oid> IDMap;
 
@@ -130,14 +131,8 @@ public:
         if (db_) db_->begin();
     }
 
-    bool sourceModuleDirty(pStringRef realPath, pStringRef hash);
+    // DEFINE, MUTATE
     oid getSourceModuleOID(pStringRef realPath, pStringRef hash="", bool deleteFirst=false);
-    oid getNamespaceOID(pStringRef ns, bool create=false) const;
-    std::string getNamespaceName(oid ns_id) const;
-    oid getRootNamespaceOID() const {
-        return getNamespaceOID("\\", true);
-    }
-
     oid defineClass(oid ns_id, oid m_id, pStringRef name, int type, int extends_count, int implements_count,
                     pStringRef extends, pStringRef implements, pSourceRange range);
     void defineClassDecl(oid c_id, pStringRef name, int type, int flags, int vis, pStringRef defaultVal, pSourceRange range);
@@ -148,12 +143,20 @@ public:
                           int type, int flags, int datatype, pStringRef datatype_obj,
                           pStringRef defaultVal,
                           pSourceRange range);
+    void defineFunctionUse(oid f_id, pStringRef name, pSourceRange range);
 
     void defineConstant(oid m_id, pStringRef name, int type, pStringRef val, pSourceRange range);
 
-    ClassList getUnresolvedClasses() const;
     void resolveClassRelations();
     void refreshClassModel(pStringRef graphFileName="");
+
+    // QUERY
+    bool sourceModuleDirty(pStringRef realPath, pStringRef hash) const;
+    oid getNamespaceOID(pStringRef ns, bool create=false) const;
+    std::string getNamespaceName(oid ns_id) const;
+    oid getRootNamespaceOID() const {
+        return getNamespaceOID("\\", true);
+    }
 
     ConstantList queryConstants(pStringRef name) const;
     ClassList queryClasses(oid ns_id, pStringRef name, oid m_id = pModel::NULLID) const;
@@ -165,6 +168,10 @@ public:
 
     oid lookupClass(oid ns_id, pStringRef name, oid m_id = pModel::NULLID) const;
     oid lookupFunction(oid ns_id, oid c_id, pStringRef name) const;
+
+    ClassList getUnresolvedClasses() const;
+    UndeclList getUndeclaredUses() const;
+
 
 };
 

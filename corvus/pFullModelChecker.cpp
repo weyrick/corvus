@@ -24,6 +24,29 @@ void pFullModelChecker::addDiagnostic(pStringRef realPath, int sl, int sc, pStri
 
 void pFullModelChecker::run() {
 
+    classRelations();
+    declUse();
+
+}
+
+void pFullModelChecker::declUse() {
+
+    // diag any uses which had no decl
+    pModel::UndeclList undecl = model_->getUndeclaredUses();
+    for (int i = 0; i < undecl.size(); ++i) {
+        std::stringstream diag;
+        diag << "$" << undecl[i].get("name") << " used but not defined";
+        addDiagnostic(undecl[i].get("realpath"),
+                      undecl[i].getAsInt("start_line"),
+                      undecl[i].getAsInt("start_col"),
+                      diag.str()
+                    );
+    }
+
+}
+
+void pFullModelChecker::classRelations() {
+
     // make sure all classes are resolved (extends and implements)
     pModel::ClassList unresolved = model_->getUnresolvedClasses();
     for (int i = 0; i < unresolved.size(); ++i) {

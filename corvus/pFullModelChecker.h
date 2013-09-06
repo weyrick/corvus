@@ -27,6 +27,9 @@ private:
 
     void addDiagnostic(pStringRef realPath, int sl, int sc, pStringRef msg);
 
+    void classRelations();
+    void declUse();
+
 public:
 
     pFullModelChecker(pSourceManager *s, const pModel* m):

@@ -242,7 +242,16 @@ void ModelBuilder::visit_pre_var(var* n) {
     if (f_id_list_.size() == 0)
         return;
 
+    // can't handle dynamic vars
+    if (n->hasDynamicName())
+        return;
+
+    // XXX handle target i.e. class::$foo
+    if (n->target() != NULL)
+        return;
+
     if (n->isLval()) {
+        // if it's an lval, it's a declaration
         model_->defineFunctionVar(f_id_list_.back(),
                                  n->name(),
                                  pModel::FREE_VAR,
@@ -252,6 +261,14 @@ void ModelBuilder::visit_pre_var(var* n) {
                                  "", // default (only func params)
                                  n->range()
                     );
+    }
+    else {
+        // if it's an rval, it's a use and it should have had a decl
+        // by now since we would have visited it in the tree before
+        // now
+        model_->defineFunctionUse(f_id_list_.back(),
+                                  n->name(),
+                                  n->range());
     }
 
 }
@@ -274,7 +291,9 @@ void ModelBuilder::visit_pre_functionInvoke(functionInvoke *n) {
             expr* name = n->arg(0);
             expr* value = n->arg(1);
             if (!llvm::isa<literalExpr>(name)) {
-                addDiagnostic(n, "expected literal name for define()");
+                // this happens if they, e.g. contact a string together
+                // to build a dynamic constant name. we can't handle those.
+                //addDiagnostic(n, "expected literal name for define()");
                 return;
             }
             std::string strval;

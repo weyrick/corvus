@@ -42,7 +42,6 @@ class myclass {
     $hey = 5;
     // nodiag on self
     $boo = self::FOO;
-    echo $baz;
   }
 
   static public function bip($one) {
@@ -82,7 +81,7 @@ class myclass3 extends \test_other\myclass implements \test_other\iface { }
 
 function foo($one, $two) {
     if (1) return 5;
-    // futurediag: undefined variable $hello
+    // DIAG: undefined variable $hello
     echo $hello;
 }
 

@@ -118,7 +118,7 @@ int main( int argc, char* argv[] )
     pSourceModule::DiagListType dList = mList[0]->getDiagnostics();
 
     // DIAG COUNT
-    cassert(dList.size(), 10, __LINE__);
+    cassert(dList.size(), 11, __LINE__);
 
     // DIAGS
 
@@ -129,6 +129,9 @@ int main( int argc, char* argv[] )
 
     i++;
     ASSERT(dList[i]->msg(), "class myclass2 implements noiface which is unresolved");
+
+    i++;
+    ASSERT(dList[i]->msg(), "$hello used but not defined");
 
     i++;
     ASSERT(dList[i]->msg(), "function 'nonexist' not defined");
