@@ -755,6 +755,21 @@ pModel::UndeclList pModel::getUndeclaredUses() const {
 
 }
 
+pModel::UnusedList pModel::getUnusedDecls() const {
+
+    UnusedList result;
+
+    const char *query = "SELECT function_var.*, realPath FROM function_var LEFT OUTER JOIN "\
+            "function_var_use ON function_var.id=function_var_id, " \
+            "function, sourceModule WHERE function.id=function_var.function_id AND "\
+            "sourceModule.id=function.sourceModule_id AND function_var_use.id IS NULL";
+
+    db_->list_query(query, result);
+
+    return result;
+
+}
+
 void pModel::resolveClassRelations() {
 
     ClassList unresolved = getUnresolvedClasses();

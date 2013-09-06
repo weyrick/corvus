@@ -51,6 +51,7 @@ public:
     typedef db::pDB::RowList ClassDeclList;
     typedef db::pDB::RowList ConstantList;
     typedef db::pDB::RowList UndeclList;
+    typedef db::pDB::RowList UnusedList;
 
     typedef std::map<std::string, oid> IDMap;
 
@@ -171,6 +172,7 @@ public:
 
     ClassList getUnresolvedClasses() const;
     UndeclList getUndeclaredUses() const;
+    UnusedList getUnusedDecls() const;
 
 
 };

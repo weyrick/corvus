@@ -212,7 +212,7 @@ void ModelBuilder::visit_pre_signature(signature* n) {
                           n->range()
                           ));
 
-    for (int i = 0; i < n->numParams(); i++) {
+    for (int i = n->numParams()-1; i >= 0; i--) {
         formalParam *p = n->getParam(i);
         model_->defineFunctionVar(f_id_list_.back(),
                                  p->name(),

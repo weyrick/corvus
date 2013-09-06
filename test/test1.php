@@ -14,6 +14,7 @@ interface iface {
 }
 
 function foo($one, $two, $three) {
+    echo $one, $two, $three;
 }
 
 }
@@ -35,22 +36,24 @@ class myclass {
   static protected $svar2 = 1;
   static private $svar3 = 1;
 
-  public function __construct($one) {
+  public function __construct() {
   }
 
-  public function bar($one) {
+  public function bar() {
     $hey = 5;
+    echo $hey;
     // nodiag on self
     $boo = self::FOO;
+    echo $boo;
   }
 
-  static public function bip($one) {
+  static public function bip() {
   }
 
-  static protected function bip2($one) {
+  static protected function bip2() {
   }
 
-  static private function bip3($one) {
+  static private function bip3() {
   }
 
 }
@@ -71,7 +74,8 @@ interface realiface {
 
 // DIAG: unknown class "noclass" and "noiface"
 class myclass2 extends noclass implements noiface, realiface {
-  public function myclass2($one) { }
+  // nodiag: empty class body, $one should not report unused
+  public function myclass2($fixme) { }
   public function foo() { }
   // futurediag: unimplemented interface method bar()
 }
@@ -83,10 +87,11 @@ function foo($one, $two) {
     if (1) return 5;
     // DIAG: undefined variable $hello
     echo $hello;
+    echo $one, $two;
 }
 
 function baz($foo1, $foo2=5, $foo3=10) {
-  // futurediag: unused variables $foo1, $foo2, $foo3
+  // DIAG: unused variables $foo1, $foo2, $foo3
 }
 
 $two = 2;
@@ -124,31 +129,39 @@ $a1 = myclass::$svar1;
 $a2 = myclass::$svar2;
 // futurediag: static access to private
 $a3 = myclass::$svar3;
+echo $a1, $a2, $a3;
 
 // nodiag: define()'d constant
 $b1 = MYSECOND;
 // DIAG undefine()'d constant
 $b2 = MYTHIRD;
+echo $b1, $b2;
 
 // futurediag: myclass2 has constructor which requires args
 $foo2 = new myclass2();
+$foo2->bar();
 
 // nodiag: class constant
 $foo3 = myclass::FOO;
+echo $foo3;
 
 // DIAG nonexistant class constant (class)
 $foo4 = myclassne::FOO;
+echo $foo4;
 // DIAG nonexistant class constant (constant)
 $foo45 = myclass::FOO2;
+echo $foo45;
 
 // futurediag: using return value from function not returning anything
 $foo5 = baz();
+echo $foo5;
 
-// futurediag: unused variable $f
+// DIAG: unused variable
 $unused = 5;
 
 // DIAG: $three needs default
 function bar($hey, $two=5, $three) {
+    echo $hey, $two, $three;
 }
 
 }

@@ -18,7 +18,10 @@ namespace corvus {
 
 void pFullModelChecker::addDiagnostic(pStringRef realPath, int sl, int sc, pStringRef msg) {
     pSourceModule *sm = sourceMgr_->getSourceModuleByRealpath(realPath);
-    assert(sm && "lost source module");
+    //assert(sm && "lost source module");
+    if (sm == NULL)
+        // XXX happens on diagnostics in includeDir
+        return;
     sm->addDiagnostic(new pDiagnostic(pSourceLoc(sm, sl, sc), msg));
 }
 
@@ -31,16 +34,30 @@ void pFullModelChecker::run() {
 
 void pFullModelChecker::declUse() {
 
+    std::stringstream diag;
+
     // diag any uses which had no decl
     pModel::UndeclList undecl = model_->getUndeclaredUses();
     for (int i = 0; i < undecl.size(); ++i) {
-        std::stringstream diag;
         diag << "$" << undecl[i].get("name") << " used but not defined";
         addDiagnostic(undecl[i].get("realpath"),
                       undecl[i].getAsInt("start_line"),
                       undecl[i].getAsInt("start_col"),
                       diag.str()
                     );
+        diag.str("");
+    }
+
+    // diag any decls which had no uses
+    pModel::UnusedList unused = model_->getUnusedDecls();
+    for (int i = 0; i < unused.size(); ++i) {
+        diag << "$" << unused[i].get("name") << " unused";
+        addDiagnostic(unused[i].get("realpath"),
+                      unused[i].getAsInt("start_line"),
+                      unused[i].getAsInt("start_col"),
+                      diag.str()
+                    );
+        diag.str("");
     }
 
 }
