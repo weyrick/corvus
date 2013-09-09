@@ -266,6 +266,11 @@ void ModelBuilder::visit_pre_var(var* n) {
         // if it's an rval, it's a use and it should have had a decl
         // by now since we would have visited it in the tree before
         // now
+
+        // if we're in a class and the var is the implicit $this, skip it
+        if (n->name() == "this" && c_id_ != pModel::NULLID)
+            return;
+
         model_->defineFunctionUse(f_id_list_.back(),
                                   n->name(),
                                   n->range());
