@@ -118,7 +118,7 @@ int main( int argc, char* argv[] )
     pSourceModule::DiagListType dList = mList[0]->getDiagnostics();
 
     // DIAG COUNT
-    cassert(dList.size(), 11, __LINE__);
+    cassert(dList.size(), 15, __LINE__);
 
     // DIAGS
 
@@ -132,6 +132,13 @@ int main( int argc, char* argv[] )
 
     i++;
     ASSERT(dList[i]->msg(), "$hello used but not defined");
+
+    i++;
+    ASSERT(dList[i]->msg(), "$foo1 unused");
+    i++;
+    ASSERT(dList[i]->msg(), "$foo2 unused");
+    i++;
+    ASSERT(dList[i]->msg(), "$foo3 unused");
 
     i++;
     ASSERT(dList[i]->msg(), "function 'nonexist' not defined");
@@ -154,6 +161,9 @@ int main( int argc, char* argv[] )
 
     i++;
     ASSERT(dList[i]->msg(), "undefined class constant: myclass::FOO2");
+
+    i++;
+    ASSERT(dList[i]->msg(), "$unused unused");
 
     i++;
     ASSERT(dList[i]->msg(), "parameter should have default because previous parameter does");

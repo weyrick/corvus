@@ -74,8 +74,7 @@ interface realiface {
 
 // DIAG: unknown class "noclass" and "noiface"
 class myclass2 extends noclass implements noiface, realiface {
-  // nodiag: empty class body, $one should not report unused
-  public function myclass2($fixme) { }
+  public function myclass2() { }
   public function foo() { }
   // futurediag: unimplemented interface method bar()
 }
@@ -94,7 +93,11 @@ function baz($foo1, $foo2=5, $foo3=10) {
   // DIAG: unused variables $foo1, $foo2, $foo3
 }
 
-$two = 2;
+//$two = 2;
+// BUG: need to parse double quote so we can get uses
+echo "$two";
+
+// futurediag: quoted string
 $x = foo(1, "$two");
 echo $x;
 
