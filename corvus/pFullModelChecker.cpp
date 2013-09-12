@@ -48,6 +48,23 @@ void pFullModelChecker::declUse() {
         diag.str("");
     }
 
+    // diag any decls where the same symbol had more than one decl
+    pModel::MultipleDeclList redecl = model_->getMultipleDecls();
+    for (int i = 0; i < redecl.size(); ++i) {
+        for (int j = 0; j < redecl[i].redecl_locs.size(); ++j) {
+            if (j == 0)
+                diag << "$" << redecl[i].symbol << " first declared here";
+            else
+                diag << "$" << redecl[i].symbol << " redeclared";
+            addDiagnostic(redecl[i].realPath,
+                          redecl[i].redecl_locs[j].second.startLine,
+                          redecl[i].redecl_locs[j].second.startCol,
+                          diag.str()
+                        );
+            diag.str("");
+        }
+    }
+
     // diag any decls which had no uses
     pModel::UnusedList unused = model_->getUnusedDecls();
     for (int i = 0; i < unused.size(); ++i) {

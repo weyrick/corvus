@@ -28,7 +28,7 @@ int dbRow::getAsInt(pStringRef key) const {
 }
 
 sqlite3_int64 dbRow::getAsOID(pStringRef key) const {
-    assert(fields_.find(key) != fields_.end() && "getAsInt key not found");
+    assert(fields_.find(key) != fields_.end() && "getAsOID key not found");
     StringMap::const_iterator v = fields_.find(key);
     return atoll(v->second.c_str());
 }

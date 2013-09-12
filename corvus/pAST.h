@@ -1101,6 +1101,10 @@ public:
             body = new (C) block(C, body);
         }
 
+        val->setIsLval();
+        if (key)
+            key->setIsLval();
+
         children_[RVAL] = static_cast<stmt*>(rVal);
         children_[KEY] = static_cast<stmt*>(key);
         children_[VAL] = static_cast<stmt*>(val);
@@ -2111,7 +2115,9 @@ protected:
 public:
     opAssignment(expr* lVal, expr* rVal, opKind op): expr(assignmentKind), children_(), opKind_(op)
     {
-        lVal->setIsLval();
+        // XXX this really is an lVal, but also an rVal and could
+        // be both a use and (a potentially implicit) decl.
+        //lVal->setIsLval();
         children_[LVAL] = static_cast<stmt*>(lVal);
         children_[RVAL] = static_cast<stmt*>(rVal);
     }

@@ -118,7 +118,7 @@ int main( int argc, char* argv[] )
     pSourceModule::DiagListType dList = mList[0]->getDiagnostics();
 
     // DIAG COUNT
-    cassert(dList.size(), 15, __LINE__);
+    cassert(dList.size(), 20, __LINE__);
 
     // DIAGS
 
@@ -166,12 +166,27 @@ int main( int argc, char* argv[] )
     ASSERT(dList[i]->msg(), "$unused unused");
 
     i++;
-    ASSERT(dList[i]->msg(), "parameter should have default because previous parameter does");
+    ASSERT(dList[i]->msg(), "$two should have explicit default value (currently implicit NULL)");
     //ASSERT(dList[i]->location().range(), pSourceRange(109,28,109,34));
 
     i++;
-    ASSERT(dList[i]->msg(), "first parameter with default defined here");
-    //ASSERT(dList[i]->location().range(), pSourceRange(109,20,109,24));
+    ASSERT(dList[i]->msg(), "$dbl first declared here");
+
+    i++;
+    ASSERT(dList[i]->msg(), "$dbl redeclared");
+
+    i++;
+    ASSERT(dList[i]->msg(), "$dbl redeclared");
+
+    i++;
+    ASSERT(dList[i]->msg(), "$baz first declared here");
+
+    i++;
+    ASSERT(dList[i]->msg(), "$baz unused");
+
+    i++;
+    ASSERT(dList[i]->msg(), "$baz redeclared");
+
 
     // MODEL QUERIES
     const pModel *m = sm.model();

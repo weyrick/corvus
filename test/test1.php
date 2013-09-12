@@ -167,6 +167,28 @@ function bar($hey, $two=5, $three) {
     echo $hey, $two, $three;
 }
 
+// nodiag: arr defined, k and v used
+$arr = array();
+foreach ($arr as $k => $v) {
+    echo $k, $v;
+}
+
+function returncheck() {
+    // no diag: a used in return
+    $a = "one";
+    $a .= "two";
+    return $a;
+}
+
+// DIAG: multiple assignment
+$dbl = 1;
+$dbl = 5;
+$dbl = 9;
+echo $dbl;
+
+$baz = 5;
+$baz = 10;
+
 }
 
 

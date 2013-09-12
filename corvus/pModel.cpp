@@ -244,6 +244,11 @@ void pModel::makeTables() {
                          "datatype INTEGER NOT NULL," \
                          "datatype_obj TEXT NULL," \
                          "defaultVal TEXT NULL," \
+                         // filled in after initial model build, set to
+                         // 1 if this symbol is a redeclare so
+                         // we can skip it in the use check (and only check
+                         // the first declaration)
+                         "is_redecl INTEGER NOT NULL,"
                          "start_line INTEGER NOT NULL," \
                          "start_col INTEGER NOT NULL," \
                          "FOREIGN KEY(function_id) REFERENCES function(id) ON DELETE CASCADE"
@@ -477,6 +482,7 @@ void pModel::defineFunctionVar(oid f_id, pStringRef name,
         << datatype << ','
         << db_->sql_string(datatype_obj) << ","
         << db_->sql_string(defaultVal) << ","
+        << "0," // is_redecl
         << range.startLine  << ',' << range.startCol
         << ")";
     db_->sql_insert(sql.str().c_str());
@@ -741,6 +747,70 @@ pModel::ClassList pModel::getUnresolvedClasses() const {
 
 }
 
+pModel::MultipleDeclList pModel::getMultipleDecls() const {
+
+    MultipleDeclList result;
+    db::pDB::RowList db_result;
+
+    const char *query = "SELECT A.*, realPath FROM function_var A, function_var B, "\
+            "function, sourceModule WHERE function.id=A.function_id AND "\
+            "sourceModule.id=function.sourceModule_id AND "\
+            "A.name=B.name and A.function_id=B.function_id AND "\
+            "(A.start_line != B.start_line) GROUP BY A.function_id,A.name,A.start_line "\
+            "ORDER BY A.start_line";
+
+    db_->list_query(query, db_result);
+
+    if (db_result.size() == 0)
+        return result;
+
+    // we put this in a convenient form for the caller
+    // a vector of symbols and their duplicate locations, first def first
+    model::mMultipleDecl entry;
+    for (int i = 0; i < db_result.size(); ++i) {
+        if (entry.symbol != db_result[i].get("name")) {
+            // finish up the last one
+            if (!entry.symbol.empty())
+                result.push_back(entry);
+            // new entry in result
+            entry.symbol = db_result[i].get("name");
+            entry.realPath = db_result[i].get("realpath");
+            entry.redecl_locs.clear();
+        }
+        entry.redecl_locs.push_back(model::mMultipleDecl::locData(db_result[i].getAsOID("id"),
+                                       pSourceRange(db_result[i].getAsInt("start_line"),
+                                                    db_result[i].getAsInt("start_col"))));
+    }
+    result.push_back(entry);
+
+    return result;
+
+}
+
+void pModel::resolveMultipleDecls() {
+
+    pModel::MultipleDeclList redecl = getMultipleDecls();
+    if (redecl.size() == 0)
+        return;
+
+    std::stringstream query;
+
+    // update function_var to flag decls which were redeclared
+    // so they won't be checked for use
+    query << "UPDATE function_var SET is_redecl=1 WHERE id IN (";
+
+    for (int i = 0; i < redecl.size(); ++i) {
+        // note the j = 1, meaning only flag the duplicates, not the initial
+        assert(redecl[i].redecl_locs.size() > 1 && "redecl had no redecls");
+        for (int j = 1; j < redecl[i].redecl_locs.size(); ++j) {
+            query << redecl[i].redecl_locs[j].first << ",";
+        }
+    }
+    query << "0)"; // cheat with the 0 to avoid substr
+    db_->sql_execute(query.str());
+
+}
+
 pModel::UndeclList pModel::getUndeclaredUses() const {
 
     UndeclList result;
@@ -762,7 +832,8 @@ pModel::UnusedList pModel::getUnusedDecls() const {
     const char *query = "SELECT function_var.*, realPath FROM function_var LEFT OUTER JOIN "\
             "function_var_use ON function_var.id=function_var_id, " \
             "function, sourceModule WHERE function.id=function_var.function_id AND "\
-            "sourceModule.id=function.sourceModule_id AND function_var_use.id IS NULL";
+            "sourceModule.id=function.sourceModule_id AND function_var_use.id IS NULL AND "\
+            "is_redecl=0";
 
     db_->list_query(query, result);
 

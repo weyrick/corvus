@@ -65,7 +65,10 @@ void pSourceModule::applyVisitor(AST::pBaseVisitor* v) {
 }
 
 bool compareDiagLine(pDiagnostic* lhs, pDiagnostic* rhs) {
-    return (lhs->location().range().startLine < rhs->location().range().startLine);
+    if (lhs->location().range().startLine == rhs->location().range().startLine)
+        return (lhs->location().range().startCol < rhs->location().range().startCol);
+    else
+        return (lhs->location().range().startLine < rhs->location().range().startLine);
 }
 
 pSourceModule::DiagListType &pSourceModule::getDiagnostics(void) {

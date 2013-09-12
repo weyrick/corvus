@@ -9,6 +9,7 @@
 */
 
 #include "corvus/passes/Trivial.h"
+#include <sstream>
 
 namespace corvus { namespace AST { namespace Pass {
 
@@ -21,6 +22,8 @@ void Trivial::post_run(void) {
 */
 
 void Trivial::visit_pre_signature(signature* n) {
+
+
 
     // verify that if we see a parameter with a default, that
     // we don't find a parameter after it with no default
@@ -38,8 +41,10 @@ void Trivial::visit_pre_signature(signature* n) {
                 firstParam = param;
         }
         else if (firstParam) {
-            addDiagnostic(param, "parameter should have default because previous parameter does");
-            addDiagnostic(firstParam, "first parameter with default defined here");
+            std::stringstream diag;
+            diag << "$" << firstParam->name().str() << " should have explicit default value (currently implicit NULL)";
+            addDiagnostic(param, diag.str());
+            //addDiagnostic(firstParam, "first parameter with default defined here");
             // return so that we only show the diag once
             return;
         }

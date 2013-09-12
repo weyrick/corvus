@@ -35,6 +35,13 @@ class mClassDecl: public db::dbRow { };
 
 class mConstant: public db::dbRow { };
 
+struct mMultipleDecl {
+    typedef std::pair<db::pDB::oid, pSourceRange> locData;
+    std::string symbol;
+    std::string realPath;
+    std::vector<locData> redecl_locs;
+};
+
 } // end model namespace
 
 class pModel {
@@ -52,6 +59,7 @@ public:
     typedef db::pDB::RowList ConstantList;
     typedef db::pDB::RowList UndeclList;
     typedef db::pDB::RowList UnusedList;
+    typedef std::vector<model::mMultipleDecl> MultipleDeclList;
 
     typedef std::map<std::string, oid> IDMap;
 
@@ -149,6 +157,7 @@ public:
     void defineConstant(oid m_id, pStringRef name, int type, pStringRef val, pSourceRange range);
 
     void resolveClassRelations();
+    void resolveMultipleDecls();
     void refreshClassModel(pStringRef graphFileName="");
 
     // QUERY
@@ -171,6 +180,7 @@ public:
     oid lookupFunction(oid ns_id, oid c_id, pStringRef name) const;
 
     ClassList getUnresolvedClasses() const;
+    MultipleDeclList getMultipleDecls() const;
     UndeclList getUndeclaredUses() const;
     UnusedList getUnusedDecls() const;
 

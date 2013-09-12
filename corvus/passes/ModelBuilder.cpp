@@ -70,6 +70,7 @@ void ModelBuilder::pre_run(void) {
 
 void ModelBuilder::post_run(void) {
 
+    model_->resolveMultipleDecls();
 
 }
 
@@ -165,6 +166,8 @@ void ModelBuilder::visit_post_propertyDecl(propertyDecl *n) {
                     break;
                 case unaryOp::BITWISENOT:
                     def.push_back('~');
+                    break;
+                default:
                     break;
             }
             value = llvm::dyn_cast<unaryOp>(value)->rVal();

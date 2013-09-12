@@ -43,6 +43,8 @@ public:
         }
     }
     const std::string& get(pStringRef key) const {
+        // NOTE: if you're seeing this 'key not found' assertion,
+        // uncomment the following line to find which key it is
         //std::cout << "key: " << key.str() << std::endl;
         StringMap::const_iterator i = fields_.find(key);
         assert(i != fields_.end() && "key not found");
