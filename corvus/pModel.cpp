@@ -53,6 +53,9 @@ void pModel::makeTables() {
                          ");";
     db_->sql_execute(SM);
 
+    const char *SM_I1 = "CREATE INDEX IF NOT EXISTS i1 ON sourceModule (realpath)";
+    db_->sql_execute(SM_I1);
+
     // type:
     //   0 - const (outside class)
     //   1 - define()
@@ -68,6 +71,11 @@ void pModel::makeTables() {
                          ")";
     db_->sql_execute(SD);
 
+    const char *SD_I1 = "CREATE INDEX IF NOT EXISTS i1 ON constant (sourceModule_id)";
+    db_->sql_execute(SD_I1);
+    const char *SD_I2 = "CREATE INDEX IF NOT EXISTS i2 ON constant (type, name)";
+    db_->sql_execute(SD_I2);
+
     const char *SU = "CREATE TABLE IF NOT EXISTS constant_use (" \
                          "id INTEGER PRIMARY KEY,"
                          "constant_id INTEGER NOT NULL," \
@@ -76,6 +84,9 @@ void pModel::makeTables() {
                              "FOREIGN KEY(constant_id) REFERENCES constant(id) ON DELETE CASCADE"
                          ")";
     db_->sql_execute(SU);
+
+    const char *SU_I1 = "CREATE INDEX IF NOT EXISTS i1 ON constant_use (constant_id)";
+    db_->sql_execute(SU_I1);
 
     const char *NS = "CREATE TABLE IF NOT EXISTS namespace (" \
                          "id INTEGER PRIMARY KEY,"
@@ -112,6 +123,13 @@ void pModel::makeTables() {
                          ")";
     db_->sql_execute(CL);
 
+    const char *CL_I1 = "CREATE INDEX IF NOT EXISTS i1 ON class (sourceModule_id)";
+    db_->sql_execute(CL_I1);
+    const char *CL_I2 = "CREATE INDEX IF NOT EXISTS i2 ON class (namespace_id)";
+    db_->sql_execute(CL_I2);
+    const char *CL_I3 = "CREATE INDEX IF NOT EXISTS i3 ON class (name)";
+    db_->sql_execute(CL_I3);
+
     // the relations go "lhs TYPE rhs"
     // type:
     //   0 - extends
@@ -125,6 +143,11 @@ void pModel::makeTables() {
             "FOREIGN KEY(rhs_class_id) REFERENCES class(id) ON DELETE CASCADE" \
                          ")";
     db_->sql_execute(CR);
+
+    const char *CR_I1 = "CREATE INDEX IF NOT EXISTS i1 ON class_relations (lhs_class_id,type)";
+    db_->sql_execute(CR_I1);
+    const char *CR_I2 = "CREATE INDEX IF NOT EXISTS i2 ON class_relations (rhs_class_id)";
+    db_->sql_execute(CR_I2);
 
 
     // type:
@@ -151,6 +174,11 @@ void pModel::makeTables() {
                          ")";
     db_->sql_execute(CD);
 
+    const char *CD_I1 = "CREATE INDEX IF NOT EXISTS i1 ON class_decl (class_id)";
+    db_->sql_execute(CD_I1);
+    const char *CD_I2 = "CREATE INDEX IF NOT EXISTS i2 ON class_decl (name)";
+    db_->sql_execute(CD_I2);
+
     const char *CU = "CREATE TABLE IF NOT EXISTS class_decl_use (" \
                          "id INTEGER PRIMARY KEY,"
                          "class_id INTEGER NOT NULL," \
@@ -165,6 +193,10 @@ void pModel::makeTables() {
                          ")";
     db_->sql_execute(CU);
 
+    const char *CU_I1 = "CREATE INDEX IF NOT EXISTS i1 ON class_decl_use (class_id)";
+    db_->sql_execute(CU_I1);
+    const char *CU_I2 = "CREATE INDEX IF NOT EXISTS i2 ON class_decl_use (class_decl_id)";
+    db_->sql_execute(CU_I2);
 
     // class model version: considering the class heirarchy
     const char *CMD = "CREATE TABLE IF NOT EXISTS class_model_decl (" \
@@ -177,6 +209,11 @@ void pModel::makeTables() {
                          "FOREIGN KEY(class_id) REFERENCES class(id) ON DELETE CASCADE"
                          ")";
     db_->sql_execute(CMD);
+
+    const char *CMD_I1 = "CREATE INDEX IF NOT EXISTS i1 ON class_model_decl (class_id)";
+    db_->sql_execute(CMD_I1);
+    const char *CMD_I2 = "CREATE INDEX IF NOT EXISTS i2 ON class_model_decl (class_decl_id)";
+    db_->sql_execute(CMD_I2);
 
     // type:
     //   0 - top level main
@@ -210,6 +247,15 @@ void pModel::makeTables() {
                          ")";
     db_->sql_execute(FN);
 
+    const char *FN_I1 = "CREATE INDEX IF NOT EXISTS i1 ON function (namespace_id)";
+    db_->sql_execute(FN_I1);
+    const char *FN_I2 = "CREATE INDEX IF NOT EXISTS i2 ON function (class_id)";
+    db_->sql_execute(FN_I2);
+    const char *FN_I3 = "CREATE INDEX IF NOT EXISTS i3 ON function (sourceModule_id)";
+    db_->sql_execute(FN_I3);
+    const char *FN_I4 = "CREATE INDEX IF NOT EXISTS i4 ON function (name)";
+    db_->sql_execute(FN_I4);
+
     // class model version: considering the class heirarchy
     const char *CMF = "CREATE TABLE IF NOT EXISTS class_model_function (" \
                          "id INTEGER PRIMARY KEY," \
@@ -221,6 +267,11 @@ void pModel::makeTables() {
                          "FOREIGN KEY(class_id) REFERENCES class(id) ON DELETE CASCADE"
                          ")";
     db_->sql_execute(CMF);
+
+    const char *CMF_I1 = "CREATE INDEX IF NOT EXISTS i1 ON class_model_function (class_id)";
+    db_->sql_execute(CMF_I1);
+    const char *CMF_I2 = "CREATE INDEX IF NOT EXISTS i1 ON class_model_function (class_function_id)";
+    db_->sql_execute(CMF_I2);
 
     // type:
     //   0 - parameter
@@ -255,6 +306,11 @@ void pModel::makeTables() {
                          ")";
     db_->sql_execute(FV);
 
+    const char *FV_I1 = "CREATE INDEX IF NOT EXISTS i1 on function_var (function_id,name,start_line)";
+    db_->sql_execute(FV_I1);
+    const char *FV_I2 = "CREATE INDEX IF NOT EXISTS i2 on function_var (is_redecl)";
+    db_->sql_execute(FV_I2);
+
 
     const char *FVU = "CREATE TABLE IF NOT EXISTS function_var_use (" \
                          "id INTEGER PRIMARY KEY,"
@@ -270,6 +326,10 @@ void pModel::makeTables() {
                          ")";
     db_->sql_execute(FVU);
 
+    const char *FVU_I1 = "CREATE INDEX IF NOT EXISTS i1 on function_var_use (function_id)";
+    db_->sql_execute(FVU_I1);
+    const char *FVU_I2 = "CREATE INDEX IF NOT EXISTS i2 on function_var_use (function_var_id)";
+    db_->sql_execute(FVU_I2);
 
     const char *FU = "CREATE TABLE IF NOT EXISTS function_use (" \
                          "id INTEGER PRIMARY KEY,"
@@ -282,6 +342,9 @@ void pModel::makeTables() {
                          "FOREIGN KEY(function_id) REFERENCES function(id) ON DELETE CASCADE" \
                          ")";
     db_->sql_execute(FU);
+
+    const char *FU_I1 = "CREATE INDEX IF NOT EXISTS i1 on function_use (function_id)";
+    db_->sql_execute(FU_I1);
 
     db_->commit();
 
@@ -793,6 +856,8 @@ void pModel::resolveMultipleDecls() {
     if (redecl.size() == 0)
         return;
 
+    begin();
+
     std::stringstream query;
 
     // update function_var to flag decls which were redeclared
@@ -801,13 +866,21 @@ void pModel::resolveMultipleDecls() {
 
     for (int i = 0; i < redecl.size(); ++i) {
         // note the j = 1, meaning only flag the duplicates, not the initial
-        assert(redecl[i].redecl_locs.size() > 1 && "redecl had no redecls");
+        //assert(redecl[i].redecl_locs.size() > 1 && "redecl had no redecls");
+
+        if (redecl[i].redecl_locs.size() <= 1) {
+            std::cout << "XXXXX redecl had no redecls: " << redecl[i].redecl_locs[0].first << "\n";
+            continue;
+        }
+
         for (int j = 1; j < redecl[i].redecl_locs.size(); ++j) {
             query << redecl[i].redecl_locs[j].first << ",";
         }
     }
     query << "0)"; // cheat with the 0 to avoid substr
     db_->sql_execute(query.str());
+
+    commit();
 
 }
 

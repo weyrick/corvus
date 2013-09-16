@@ -70,7 +70,6 @@ void ModelBuilder::pre_run(void) {
 
 void ModelBuilder::post_run(void) {
 
-    model_->resolveMultipleDecls();
 
 }
 
@@ -253,7 +252,11 @@ void ModelBuilder::visit_pre_var(var* n) {
     if (n->target() != NULL)
         return;
 
-    if (n->isLval()) {
+    // it's only considered a decl if we have no indices
+    // i.e. $arr = array() is a decl but $arr['foo'] = 5 is not
+    // if there are indices it's always a use
+
+    if (n->isLval() && n->numIndices() == 0) {
         // if it's an lval, it's a declaration
         model_->defineFunctionVar(f_id_list_.back(),
                                  n->name(),
@@ -266,7 +269,8 @@ void ModelBuilder::visit_pre_var(var* n) {
                     );
     }
     else {
-        // if it's an rval, it's a use and it should have had a decl
+        // if it's an rval or array assign
+        // it's a use and it should have had a decl
         // by now since we would have visited it in the tree before
         // now
 

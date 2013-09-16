@@ -331,6 +331,7 @@ void pSourceManager::refreshModel(pStringRef graphFileName) {
     passManager.addPass<AST::Pass::ModelBuilder>();
     runPasses(&passManager);
     model_->commit();
+    model_->resolveMultipleDecls();
     model_->resolveClassRelations();
     model_->refreshClassModel(graphFileName);
     model_->setTrace(debugDiags_);

@@ -118,7 +118,7 @@ int main( int argc, char* argv[] )
     pSourceModule::DiagListType dList = mList[0]->getDiagnostics();
 
     // DIAG COUNT
-    cassert(dList.size(), 20, __LINE__);
+    cassert(dList.size(), 22, __LINE__);
 
     // DIAGS
 
@@ -186,6 +186,11 @@ int main( int argc, char* argv[] )
 
     i++;
     ASSERT(dList[i]->msg(), "$baz redeclared");
+
+    i++;
+    ASSERT(dList[i]->msg(), "$arr2 used but not defined");
+    i++;
+    ASSERT(dList[i]->msg(), "$arr2 used but not defined");
 
 
     // MODEL QUERIES

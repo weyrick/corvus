@@ -189,6 +189,11 @@ echo $dbl;
 $baz = 5;
 $baz = 10;
 
+// DIAG: $arr2 not declared (i.e. with $arr2 = array())
+// nodiag: different keys in array are not multiple assign
+$arr2['foo'] = 1;
+$arr2['bar'] = 2;
+
 }
 
 

@@ -23,6 +23,6 @@
  - unused properties, methods, functions
  - all compile time class checks: interfaces, abstract classes, etc
  - undoc'ed
-- sqlite indexes on tables
+- explain query plan tuning
 - db versioning support
 - query analysis and caching
