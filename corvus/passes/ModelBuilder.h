@@ -50,6 +50,8 @@ public:
     void visit_post_classDecl(classDecl* n);
     void visit_post_propertyDecl(propertyDecl *n);
 
+    void visit_pre_literalArray(literalArray* n);
+
     void visit_pre_signature(signature* n);    
     void visit_post_functionDecl(functionDecl *n);
 

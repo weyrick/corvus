@@ -1706,6 +1706,9 @@ struct arrayItem {
 typedef std::vector<arrayItem> arrayList;
 
 // NODE: literal array
+// XXX note that unlike other AST nodes, this one doesn't define
+// the normal child iterators which means literal items current have
+// to be visited manually via iteration of itemList! see PrintAST or ModelBuilder
 class literalArray: public literalExpr {
 
     arrayList itemList_;

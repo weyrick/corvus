@@ -285,6 +285,18 @@ void ModelBuilder::visit_pre_var(var* n) {
 
 }
 
+void ModelBuilder::visit_pre_literalArray(literalArray* n)  {
+    for (arrayList::reverse_iterator i = n->itemList().rbegin();
+        i != n->itemList().rend();
+        ++i)
+    {
+        if ((*i).key) {
+            visit((*i).key);
+        }
+        visit((*i).val);
+    }
+}
+
 void ModelBuilder::visit_pre_functionInvoke(functionInvoke *n) {
 
     // can't do anything with dynamics

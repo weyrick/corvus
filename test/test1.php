@@ -194,7 +194,12 @@ $baz = 10;
 $arr2['foo'] = 1;
 $arr2['bar'] = 2;
 
+// nodiag: param used in array
+function check1($param) {
+    foo(1, array('key' => $param));
 }
+
+} // namespace
 
 
 ?>
