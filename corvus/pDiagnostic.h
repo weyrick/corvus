@@ -24,16 +24,24 @@ private:
 
     pSourceLoc loc_;
     std::string msg_;
+    int seq_; // so we can maintain order of diags as added by passes when
+              // on the same line/col
 
 public:    
 
-    pDiagnostic(const pSourceLoc &loc, pStringRef msg) :
+    pDiagnostic(const pSourceLoc &loc, pStringRef msg, int seq=0) :
         loc_(loc),
-        msg_(msg.str()) { }
+        msg_(msg.str()),
+        seq_(seq)
+    { }
+
+    void setSeq(int s) { seq_ = s; }
 
     const pSourceLoc& location(void) const { return loc_; }
 
     pStringRef msg(void) const { return msg_; }
+
+    int seq(void) const { return seq_; }
 
 };
 
