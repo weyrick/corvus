@@ -159,9 +159,6 @@ echo $foo45;
 $foo5 = baz();
 echo $foo5;
 
-// DIAG: unused variable
-$unused = 5;
-
 // DIAG: $three needs default
 function bar($hey, $two=5, $three) {
     echo $hey, $two, $three;
@@ -180,6 +177,11 @@ function returncheck() {
     return $a;
 }
 
+// XXX tmp, wrap in function since we don't do mains yet
+function decluse() {
+// DIAG: unused variable
+$unused = 5;
+
 // DIAG: multiple assignment
 $dbl = 1;
 $dbl = 5;
@@ -194,9 +196,20 @@ $baz = 10;
 $arr2['foo'] = 1;
 $arr2['bar'] = 2;
 
+// nodiag
+$arr3 = array();
+$arr3['foo'] = 1;
+
 // nodiag: param used in array
 function check1($param) {
     foo(1, array('key' => $param));
+}
+
+$vcheck1 = null;
+// nodiag: defining as null will not flag a redeclare
+$vcheck1 = 5;
+echo $vcheck1;
+
 }
 
 } // namespace

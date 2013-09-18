@@ -92,6 +92,7 @@ set(PARSER_SRC_FILES
   passes/Trivial.cpp
   passes/ModelBuilder.cpp
   passes/ModelChecker.cpp
+  passes/TypeAnalysis.cpp
 )
 
 # PASSES

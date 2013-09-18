@@ -163,11 +163,10 @@ int main( int argc, char* argv[] )
     ASSERT(dList[i]->msg(), "undefined class constant: myclass::FOO2");
 
     i++;
-    ASSERT(dList[i]->msg(), "$unused unused");
+    ASSERT(dList[i]->msg(), "$two should have explicit default value (currently implicit NULL)");
 
     i++;
-    ASSERT(dList[i]->msg(), "$two should have explicit default value (currently implicit NULL)");
-    //ASSERT(dList[i]->location().range(), pSourceRange(109,28,109,34));
+    ASSERT(dList[i]->msg(), "$unused unused");
 
     i++;
     ASSERT(dList[i]->msg(), "$dbl first declared here");

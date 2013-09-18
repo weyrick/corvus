@@ -28,6 +28,7 @@
 #include <iterator>
 #include <boost/range/iterator_range.hpp>
 #include <boost/foreach.hpp>
+#include <boost/unordered_map.hpp>
 
 #include <llvm/Support/Casting.h>
 #include <llvm/ADT/SmallVector.h>
@@ -131,6 +132,8 @@ class stmt {
 
 protected:
     pSourceRange range_;
+    typedef boost::unordered_map<std::string, std::string> PropertyMap;
+    PropertyMap properties_;
 
   void* operator new(size_t bytes) throw() {
     assert(0 && "stmt cannot be allocated with regular 'new'.");
@@ -153,7 +156,8 @@ protected:
 
   void destroyChildren(pParseContext& C);
   
-  stmt(const stmt& other): kind_(other.kind_), refCount_(1), range_(other.range_) { }
+  // we do not copy properties
+  stmt(const stmt& other): kind_(other.kind_), refCount_(1), range_(other.range_), properties_() { }
     
   // This method assists in deep-copys of stmt**'s which are present for example in block nodes.
   void deepCopyChildren(stmt**& newChildren, stmt** const& oldChildren, pUInt numChildren, pParseContext& C) {
@@ -242,6 +246,21 @@ public:
     pColRange cols(void) const { return pColRange(range_.startCol, range_.endCol); }
 
     const pSourceRange& range() const { return range_; }
+
+    void setProp(pStringRef key, pStringRef val) {
+        properties_[key.str()] = val.str();
+    }
+
+    std::string prop(pStringRef key) {
+
+        PropertyMap::iterator i = properties_.find(key.str());
+        if (i == properties_.end()) {
+            return "";
+        }
+        else {
+            return i->second;
+        }
+    }
 
     // Polymorphic deep copying.
     virtual stmt* clone(pParseContext& C) const = 0;

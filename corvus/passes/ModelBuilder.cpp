@@ -70,6 +70,7 @@ void ModelBuilder::pre_run(void) {
 
 void ModelBuilder::post_run(void) {
 
+    model_->resolveMultipleDecls(m_id_);
 
 }
 
@@ -216,11 +217,12 @@ void ModelBuilder::visit_pre_signature(signature* n) {
 
     for (int i = n->numParams()-1; i >= 0; i--) {
         formalParam *p = n->getParam(i);
+        // XXX get types based on hints and defaults
         model_->defineFunctionVar(f_id_list_.back(),
                                  p->name(),
                                  pModel::PARAM,
                                  pModel::NO_FLAGS,
-                                 pModel::T_UNKNOWN,
+                                 pModel::TYPE_UNKNOWN, // XXX
                                  "", // XXX datatype obj
                                  "", // XXX default
                                  p->range()
@@ -230,13 +232,12 @@ void ModelBuilder::visit_pre_signature(signature* n) {
 }
 
 void ModelBuilder::visit_post_functionDecl(functionDecl *n) {
-
-
     f_id_list_.pop_back();
-
 }
 
-
+void ModelBuilder::visit_post_methodDecl(methodDecl *n) {
+    f_id_list_.pop_back();
+}
 
 void ModelBuilder::visit_pre_var(var* n) {
 
@@ -256,14 +257,19 @@ void ModelBuilder::visit_pre_var(var* n) {
     // i.e. $arr = array() is a decl but $arr['foo'] = 5 is not
     // if there are indices it's always a use
 
+    int datatype = pModel::TYPE_UNKNOWN;
+    if (n->prop("datatype") == "null") {
+        datatype = pModel::TYPE_NULL;
+    }
+
     if (n->isLval() && n->numIndices() == 0) {
         // if it's an lval, it's a declaration
         model_->defineFunctionVar(f_id_list_.back(),
                                  n->name(),
                                  pModel::FREE_VAR,
                                  pModel::NO_FLAGS,
-                                 pModel::T_UNKNOWN, // XXX
-                                 "", // XXX datatype obj
+                                 datatype,
+                                 "", // XXX if object, the class name we think it is
                                  "", // default (only func params)
                                  n->range()
                     );
@@ -278,7 +284,7 @@ void ModelBuilder::visit_pre_var(var* n) {
         if (n->name() == "this" && c_id_ != pModel::NULLID)
             return;
 
-        model_->defineFunctionUse(f_id_list_.back(),
+        model_->defineFunctionVarUse(f_id_list_.back(),
                                   n->name(),
                                   n->range());
     }

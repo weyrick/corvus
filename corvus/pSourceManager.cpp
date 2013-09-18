@@ -21,6 +21,7 @@
 #include "corvus/passes/Trivial.h"
 #include "corvus/passes/ModelBuilder.h"
 #include "corvus/passes/ModelChecker.h"
+#include "corvus/passes/TypeAnalysis.h"
 
 #include <llvm/Support/PathV2.h>
 #include <llvm/Support/FileSystem.h>
@@ -284,6 +285,7 @@ void pSourceManager::addIncludeDir(pStringRef name, pStringRef exts) {
     }
 
     pPassManager passManager(model_);
+    passManager.addPass<AST::Pass::TypeAnalysis>();
     passManager.addPass<AST::Pass::ModelBuilder>();
     for (std::vector<pSourceModule*>::iterator i = includeList.begin();
          i != includeList.end();
@@ -328,10 +330,10 @@ void pSourceManager::refreshModel(pStringRef graphFileName) {
     model_->setTrace(debugModel_);
     model_->begin();
     pPassManager passManager(model_);
+    passManager.addPass<AST::Pass::TypeAnalysis>();
     passManager.addPass<AST::Pass::ModelBuilder>();
     runPasses(&passManager);
     model_->commit();
-    model_->resolveMultipleDecls();
     model_->resolveClassRelations();
     model_->refreshClassModel(graphFileName);
     model_->setTrace(debugDiags_);

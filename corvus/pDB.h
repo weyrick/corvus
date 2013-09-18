@@ -88,6 +88,13 @@ public:
     void sql_setup();
     void sql_done();
 
+    int sql_changes() const {
+        if (db_)
+            return sqlite3_changes(db_);
+        else
+            return 0;
+    }
+
     std::string oidOrNull(oid val);
     std::string sql_string(pStringRef val, bool allowNull=true);
 

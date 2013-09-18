@@ -299,7 +299,8 @@ void pModel::makeTables() {
                          // 1 if this symbol is a redeclare so
                          // we can skip it in the use check (and only check
                          // the first declaration)
-                         "is_redecl INTEGER NOT NULL,"
+                         "is_redecl INTEGER NOT NULL," \
+                         "use_count INTEGER NOT NULL," \
                          "start_line INTEGER NOT NULL," \
                          "start_col INTEGER NOT NULL," \
                          "FOREIGN KEY(function_id) REFERENCES function(id) ON DELETE CASCADE"
@@ -311,25 +312,18 @@ void pModel::makeTables() {
     const char *FV_I2 = "CREATE INDEX IF NOT EXISTS i2 on function_var (is_redecl)";
     db_->sql_execute(FV_I2);
 
-
-    const char *FVU = "CREATE TABLE IF NOT EXISTS function_var_use (" \
+    const char *FVU = "CREATE TABLE IF NOT EXISTS function_var_usenodecl (" \
                          "id INTEGER PRIMARY KEY,"
                          "function_id INTEGER NOT NULL," \
-                         // if using an undeclared, this will be NULL
-                         "function_var_id INTEGER NULL," \
-                         // if using an undeclared, this will contain the name
                          "name TEXT NULL," \
                          "start_line INTEGER NOT NULL," \
                          "start_col INTEGER NOT NULL," \
-                         "FOREIGN KEY(function_id) REFERENCES function(id) ON DELETE CASCADE," \
-                         "FOREIGN KEY(function_var_id) REFERENCES function_var(id) ON DELETE CASCADE"
+                         "FOREIGN KEY(function_id) REFERENCES function(id) ON DELETE CASCADE" \
                          ")";
     db_->sql_execute(FVU);
 
-    const char *FVU_I1 = "CREATE INDEX IF NOT EXISTS i1 on function_var_use (function_id)";
+    const char *FVU_I1 = "CREATE INDEX IF NOT EXISTS i1 on function_var_usenodecl (function_id)";
     db_->sql_execute(FVU_I1);
-    const char *FVU_I2 = "CREATE INDEX IF NOT EXISTS i2 on function_var_use (function_var_id)";
-    db_->sql_execute(FVU_I2);
 
     const char *FU = "CREATE TABLE IF NOT EXISTS function_use (" \
                          "id INTEGER PRIMARY KEY,"
@@ -546,31 +540,35 @@ void pModel::defineFunctionVar(oid f_id, pStringRef name,
         << db_->sql_string(datatype_obj) << ","
         << db_->sql_string(defaultVal) << ","
         << "0," // is_redecl
+        << "0," // use_count
         << range.startLine  << ',' << range.startCol
         << ")";
     db_->sql_insert(sql.str().c_str());
 
 }
 
-void pModel::defineFunctionUse(oid f_id, pStringRef name, pSourceRange range) {
+void pModel::defineFunctionVarUse(oid f_id, pStringRef name, pSourceRange range) {
 
     std::stringstream sql;
 
-    // first we see if there's an associated decl.
-    sql << "SELECT id FROM function_var WHERE name=" << "'" << name.str() << "'" <<
+    // first we see if there is/are associated decl(s) defined before this use
+    sql << "UPDATE function_var SET use_count=use_count+1 WHERE name=" << "'" << name.str() << "'" <<
            " AND function_id=" << f_id << " AND start_line <= " << range.startLine;
 
-    oid f_v_id = db_->sql_select_single_id(sql.str());
+    db_->sql_execute(sql.str());
 
-    sql.str("");
+    // if there were no updates, the symbol was not defined
+    if (db_->sql_changes() == 0) {
 
-    sql << "INSERT INTO function_var_use VALUES (NULL,"
-        << f_id << ','
-        << db_->oidOrNull(f_v_id) << ','
-        << ((f_v_id != pModel::NULLID) ? "''" : db_->sql_string(name.str())) << ','
-        << range.startLine  << ',' << range.startCol
-        << ")";
-    db_->sql_insert(sql.str().c_str());
+        sql.str("");
+        sql << "INSERT INTO function_var_usenodecl VALUES (NULL,"
+            << f_id << ','
+            << db_->sql_string(name.str()) << ','
+            << range.startLine  << ',' << range.startCol
+            << ")";
+        db_->sql_insert(sql.str().c_str());
+
+    }
 
 }
 
@@ -810,19 +808,26 @@ pModel::ClassList pModel::getUnresolvedClasses() const {
 
 }
 
-pModel::MultipleDeclList pModel::getMultipleDecls() const {
+pModel::MultipleDeclList pModel::getMultipleDecls(oid m_id) const {
 
     MultipleDeclList result;
     db::pDB::RowList db_result;
+    std::stringstream query;
 
-    const char *query = "SELECT A.*, realPath FROM function_var A, function_var B, "\
+    query << "SELECT A.*, realPath FROM function_var A, function_var B, "\
             "function, sourceModule WHERE function.id=A.function_id AND "\
             "sourceModule.id=function.sourceModule_id AND "\
             "A.name=B.name and A.function_id=B.function_id AND "\
-            "(A.start_line != B.start_line) GROUP BY A.function_id,A.name,A.start_line "\
+            // this says not to count a variable defined as null as a multiple
+             "(A.datatype != 1 AND B.datatype != 1) AND ";
+
+    if (m_id != pModel::NULLID)
+        query << "sourceModule.id=" << m_id << " AND ";
+
+    query << "(A.start_line != B.start_line) GROUP BY A.function_id,A.name,A.start_line "\
             "ORDER BY A.start_line";
 
-    db_->list_query(query, db_result);
+    db_->list_query(query.str(), db_result);
 
     if (db_result.size() == 0)
         return result;
@@ -850,13 +855,11 @@ pModel::MultipleDeclList pModel::getMultipleDecls() const {
 
 }
 
-void pModel::resolveMultipleDecls() {
+void pModel::resolveMultipleDecls(oid m_id) {
 
-    pModel::MultipleDeclList redecl = getMultipleDecls();
+    pModel::MultipleDeclList redecl = getMultipleDecls(m_id);
     if (redecl.size() == 0)
         return;
-
-    begin();
 
     std::stringstream query;
 
@@ -880,35 +883,40 @@ void pModel::resolveMultipleDecls() {
     query << "0)"; // cheat with the 0 to avoid substr
     db_->sql_execute(query.str());
 
-    commit();
-
 }
 
-pModel::UndeclList pModel::getUndeclaredUses() const {
+pModel::UndeclList pModel::getUndeclaredUses(oid m_id) const {
 
     UndeclList result;
+    std::stringstream query;
 
-    const char *query = "SELECT function_var_use.*, realPath FROM function_var_use, "\
-            "function, sourceModule WHERE function_var_id IS NULL AND "\
-            "function.id=function_id AND sourceModule.id=function.sourceModule_id";
+    query << "SELECT function_var_usenodecl.*, realPath FROM function_var_usenodecl, "\
+            "function, sourceModule WHERE "\
+            "function.id=function_id AND function.sourceModule_id=sourceModule.id";
 
-    db_->list_query(query, result);
+    if (m_id != pModel::NULLID)
+        query << " AND sourceModule.id=" << m_id;
+
+    db_->list_query(query.str(), result);
 
     return result;
 
 }
 
-pModel::UnusedList pModel::getUnusedDecls() const {
+pModel::UnusedList pModel::getUnusedDecls(oid m_id) const {
 
     UnusedList result;
+    std::stringstream query;
 
-    const char *query = "SELECT function_var.*, realPath FROM function_var LEFT OUTER JOIN "\
-            "function_var_use ON function_var.id=function_var_id, " \
+    query << "SELECT function_var.*, realPath FROM function_var, "\
             "function, sourceModule WHERE function.id=function_var.function_id AND "\
-            "sourceModule.id=function.sourceModule_id AND function_var_use.id IS NULL AND "\
-            "is_redecl=0";
+            "sourceModule.id=function.sourceModule_id AND use_count=0 AND "\
+             "is_redecl=0";
 
-    db_->list_query(query, result);
+    if (m_id != pModel::NULLID)
+        query << " AND sourceModule.id=" << m_id;
+
+    db_->list_query(query.str(), result);
 
     return result;
 

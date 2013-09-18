@@ -93,7 +93,8 @@ public:
     PRIVATE   = 2,
 
     // data types
-    T_UNKNOWN = 0,
+    TYPE_UNKNOWN = 0,
+    TYPE_NULL = 1,
     // array, str, bool, etc
 
     // class types
@@ -152,12 +153,12 @@ public:
                           int type, int flags, int datatype, pStringRef datatype_obj,
                           pStringRef defaultVal,
                           pSourceRange range);
-    void defineFunctionUse(oid f_id, pStringRef name, pSourceRange range);
+    void defineFunctionVarUse(oid f_id, pStringRef name, pSourceRange range);
 
     void defineConstant(oid m_id, pStringRef name, int type, pStringRef val, pSourceRange range);
 
     void resolveClassRelations();
-    void resolveMultipleDecls();
+    void resolveMultipleDecls(oid m_id);
     void refreshClassModel(pStringRef graphFileName="");
 
     // QUERY
@@ -180,9 +181,9 @@ public:
     oid lookupFunction(oid ns_id, oid c_id, pStringRef name) const;
 
     ClassList getUnresolvedClasses() const;
-    MultipleDeclList getMultipleDecls() const;
-    UndeclList getUndeclaredUses() const;
-    UnusedList getUnusedDecls() const;
+    MultipleDeclList getMultipleDecls(oid m_id = pModel::NULLID) const;
+    UndeclList getUndeclaredUses(oid m_id = pModel::NULLID) const;
+    UnusedList getUnusedDecls(oid m_id = pModel::NULLID) const;
 
 
 };
