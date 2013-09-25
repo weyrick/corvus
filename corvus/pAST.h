@@ -400,6 +400,7 @@ public:
 
 };
 
+
 class staticDecl: public decl {
 
     enum { DEFAULT=0, VARS=1 };
@@ -1802,7 +1803,7 @@ public:
 
 };
 
-// literal ID (always represents a class or function symbol name)
+// literal ID (always represents a const, class, or function symbol name)
 //TODO: doesn't inherit by literalExpr?
 class literalID: public expr {
 
@@ -1855,6 +1856,7 @@ public:
 };
 
 // literal constant (always represents a runtime value symbol. optional target for static or dynamic class)
+// this is always an RVAL referencing a declared symbol, not a decl
 class literalConstant: public literalExpr {
 
     std::string name_;
@@ -1864,7 +1866,7 @@ protected:
     literalConstant(const literalConstant& other, pParseContext& C): literalExpr(other),
             name_(other.name_), target_(0)
     {
-        if(other.target_)
+        if (other.target_)
             target_ = other.target_->clone(C);
     }
     
@@ -1888,6 +1890,48 @@ public:
     IMPLEMENT_SUPPORT_MEMBERS(literalConstant);
 
 };
+
+// literalID => literalExpr
+typedef std::pair<expr*, expr*> exprPair;
+typedef std::vector<exprPair> exprPairList;
+
+// e.g. a top level/namespace constant... "const foo=5;" not in a class
+class constDecl: public decl {
+
+    stmt** children_;
+    pUInt numChildren_;
+
+protected:
+    constDecl(const constDecl& other, pParseContext& C): decl(other),
+        children_(0),
+        numChildren_(other.numChildren_)
+    {
+        deepCopyChildren(children_, other.children_, numChildren_, C);
+    }
+
+public:
+    constDecl(const exprPairList* list,
+              pParseContext& C):
+        decl(constDeclKind),
+        children_(0),
+        numChildren_(list->size()*2) // pairs
+    {
+        std::cout << "constDecl: " << list->size() << "," << numChildren_ << "\n";
+        children_ = new (C) stmt*[numChildren_];
+        for (int i = 0, j = 0; i < list->size(); i++, j+=2) {
+            std::cout << "loop " << (*list)[i].first->kind() << "\n";
+            children_[j] = (*list)[i].first;
+            children_[j+1] = (*list)[i].second;
+        }
+    }
+
+    stmt::child_iterator child_begin() { return &children_[0]; }
+    stmt::child_iterator child_end() { return &children_[0]+numChildren_; }
+
+    IMPLEMENT_SUPPORT_MEMBERS(constDecl);
+
+};
+
 
 // dynamic ID, i.e. variable variable, or runtime class/method/function name
 // Reflection in phc

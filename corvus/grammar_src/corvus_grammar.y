@@ -249,6 +249,7 @@ statement(A) ::= return(B) T_SEMI. { A = B; }
 statement(A) ::= break(B) T_SEMI. { A = B; }
 statement(A) ::= continue(B) T_SEMI. { A = B; }
 statement(A) ::= global(B) T_SEMI. { A = B; }
+statement(A) ::= constDecl(B) T_SEMI. { A = B; }
 statement(A) ::= T_SEMI.
 {
     A = new (CTXT) AST::emptyStmt();
@@ -344,6 +345,35 @@ useIdent(A) ::= T_NS_SEPARATOR namespaceName(NSNAME) T_AS T_IDENTIFIER(ID).
     A = new (CTXT) AST::useIdent(NSNAME, *ID, CTXT);
     delete NSNAME;
 }
+
+// top level/namespace constant
+%type constDecl {AST::constDecl*}
+constDecl(A) ::= T_CONST constVarList(LIST).
+{
+    A = new (CTXT) AST::constDecl(LIST, CTXT);
+    A->setLine(CURRENT_LINE);
+    // free the LIST, but the expr pairs in it are owned by constDecl
+    delete LIST;
+}
+
+%type constVarList {AST::exprPairList*}
+constVarList(A) ::= T_IDENTIFIER(ID) T_ASSIGN staticScalar(DEFAULT).
+{
+    A = new AST::exprPairList();
+    AST::literalID* cid = new (CTXT) AST::literalID(*ID, CTXT);
+    cid->setLine(CURRENT_LINE);
+    DEFAULT->setLine(CURRENT_LINE);
+    A->push_back(AST::exprPair(cid, DEFAULT));
+}
+constVarList(A) ::= constVarList(LIST) T_COMMA T_IDENTIFIER(ID) T_ASSIGN staticScalar(DEFAULT).
+{
+    AST::literalID* cid = new (CTXT) AST::literalID(*ID, CTXT);
+    cid->setLine(CURRENT_LINE);
+    DEFAULT->setLine(CURRENT_LINE);
+    LIST->push_back(AST::exprPair(cid, DEFAULT));
+    A = LIST;
+}
+
 
 // echo
 %type echo {AST::builtin*}
@@ -1321,6 +1351,22 @@ scalar(A) ::= T_IDENTIFIER(B).
 {
     A = new (CTXT) AST::literalConstant(*B, CTXT);
     A->setLine(CURRENT_LINE);
+}
+// namespace constant, i.e. foo\bar\some_const
+scalar(A) ::= namespaceName(B).
+{
+    A = new (CTXT) AST::literalConstant(B->getFullName(), CTXT);
+    A->setLine(CURRENT_LINE);
+    A->setCol(B->cols());
+    delete B;
+}
+scalar(A) ::= T_NS_SEPARATOR namespaceName(B).
+{
+    B->setAbsolute();
+    A = new (CTXT) AST::literalConstant(B->getFullName(), CTXT);
+    A->setLine(CURRENT_LINE);
+    A->setCol(B->cols());
+    delete B;
 }
 
 // static class constant
