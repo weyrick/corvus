@@ -253,6 +253,16 @@ void ModelBuilder::visit_pre_var(var* n) {
     if (n->target() != NULL)
         return;
 
+    // if it's a superglobal, we ignore
+    if (n->name() == "_REQUEST" ||
+        n->name() == "_GET" ||
+        n->name() == "_POST" ||
+        n->name() == "_COOKIE" ||
+        n->name() == "_SERVER" ||
+        n->name() == "GLOBALS" ||
+        n->name() == "_ENV")
+        return;
+
     // it's only considered a decl if we have no indices
     // i.e. $arr = array() is a decl but $arr['foo'] = 5 is not
     // if there are indices it's always a use

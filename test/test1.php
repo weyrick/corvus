@@ -222,5 +222,12 @@ echo $vcheck1;
 
 } // namespace
 
+// nodiag: can use superglobals w/o decl
+function sgcheck() {
+    echo $_REQUEST['foo'];
+    echo $_SERVER['foo'];
+    echo $_ENV['foo'];
+    echo $GLOBALS['foo'];
+}
 
 ?>
