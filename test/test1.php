@@ -91,10 +91,13 @@ class myclass2 extends noclass implements noiface, realiface {
 class myclass3 extends \test_other\myclass implements \test_other\iface { }
 
 function foo($one, $two) {
+    global $bipmore;
     if (1) return 5;
     // DIAG: undefined variable $hello
     echo $hello;
     echo $one, $two;
+    // nodiag: decl was in global
+    echo $bipmore;
 }
 
 function baz($foo1, $foo2=5, $foo3=10) {

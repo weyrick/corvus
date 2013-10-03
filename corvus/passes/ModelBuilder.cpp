@@ -231,6 +231,14 @@ void ModelBuilder::visit_pre_signature(signature* n) {
 
 }
 
+void ModelBuilder::visit_pre_globalDecl(globalDecl* n) {
+    global_ = true;
+}
+
+void ModelBuilder::visit_post_globalDecl(globalDecl* n) {
+    global_ = false;
+}
+
 void ModelBuilder::visit_post_functionDecl(functionDecl *n) {
     f_id_list_.pop_back();
 }
@@ -272,7 +280,7 @@ void ModelBuilder::visit_pre_var(var* n) {
         datatype = pModel::TYPE_NULL;
     }
 
-    if (n->isLval() && n->numIndices() == 0) {
+    if ((n->isLval() && n->numIndices() == 0) || global_) {
         // if it's an lval, it's a declaration
         model_->defineFunctionVar(f_id_list_.back(),
                                  n->name(),
