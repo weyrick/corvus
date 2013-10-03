@@ -1916,10 +1916,8 @@ public:
         children_(0),
         numChildren_(list->size()*2) // pairs
     {
-        std::cout << "constDecl: " << list->size() << "," << numChildren_ << "\n";
         children_ = new (C) stmt*[numChildren_];
         for (int i = 0, j = 0; i < list->size(); i++, j+=2) {
-            std::cout << "loop " << (*list)[i].first->kind() << "\n";
             children_[j] = (*list)[i].first;
             children_[j+1] = (*list)[i].second;
         }

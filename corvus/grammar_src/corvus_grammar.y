@@ -1347,11 +1347,6 @@ scalar(A) ::= literal(B). { A = B; }
 scalar(A) ::= literalMagic(B). { A = B; }
 scalar(A) ::= classConstant(B). { A = B; }
 // static constant
-scalar(A) ::= T_IDENTIFIER(B).
-{
-    A = new (CTXT) AST::literalConstant(*B, CTXT);
-    A->setLine(CURRENT_LINE);
-}
 // namespace constant, i.e. foo\bar\some_const
 scalar(A) ::= namespaceName(B).
 {
