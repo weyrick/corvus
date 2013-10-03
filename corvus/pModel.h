@@ -156,6 +156,7 @@ public:
     void defineFunctionVarUse(oid f_id, pStringRef name, pSourceRange range);
 
     void defineConstant(oid m_id, pStringRef name, int type, pStringRef val, pSourceRange range);
+    void defineConstant(oid m_id, oid ns_id, pStringRef name, int type, pStringRef val, pSourceRange range);
 
     void resolveClassRelations();
     void resolveMultipleDecls(oid m_id);
@@ -169,7 +170,7 @@ public:
         return getNamespaceOID("\\", true);
     }
 
-    ConstantList queryConstants(pStringRef name) const;
+    ConstantList queryConstants(pStringRef name, oid ns_id) const;
     ClassList queryClasses(oid ns_id, pStringRef name, oid m_id = pModel::NULLID) const;
     ClassDeclList queryClassDecls(oid c_id, pStringRef name) const;
     ClassDeclList queryClassDecls(std::vector<oid> c_id_list, pStringRef name) const;

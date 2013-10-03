@@ -29,6 +29,14 @@ define('MYEXPR', 2+2); // define with exp in val
 // futurediag: redefined constant
 define('MYSECOND', 7);
 
+const nsconst = 5;
+const nsconst2 = 1, nsconst3 = 2;
+
+$cc1 = nsconst;
+$cc2 = \test_main\nsconst2;
+// DIAG not defined
+$cc3 = \test_main\nsconst4;
+
 class myclass {
   const FOO = 1;
 

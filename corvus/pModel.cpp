@@ -62,6 +62,7 @@ void pModel::makeTables() {
     const char *SD = "CREATE TABLE IF NOT EXISTS constant (" \
                          "id INTEGER PRIMARY KEY,"
                          "sourceModule_id INTEGER NOT NULL," \
+                         "namespace_id INTEGER NULL," \
                          "type INTEGER NOT NULL," \
                          "name TEXT NOT NULL," \
                          "value TEXT NOT NULL," \
@@ -578,6 +579,7 @@ void pModel::defineConstant(oid m_id, pStringRef name, int type, pStringRef val,
 
     sql << "INSERT INTO constant VALUES (NULL,"
         << m_id << ','
+        << "NULL" << ',' // namespace
         << type << ','
         << "'" << name.str() << "'" << ','
         << db_->sql_string(val,false) << ','
@@ -586,6 +588,23 @@ void pModel::defineConstant(oid m_id, pStringRef name, int type, pStringRef val,
     db_->sql_insert(sql.str().c_str());
 
 }
+
+void pModel::defineConstant(oid m_id, oid ns_id, pStringRef name, int type, pStringRef val, pSourceRange range) {
+
+    std::stringstream sql;
+
+    sql << "INSERT INTO constant VALUES (NULL,"
+        << m_id << ','
+        << ns_id << ','
+        << type << ','
+        << "'" << name.str() << "'" << ','
+        << db_->sql_string(val,false) << ','
+        << range.startLine  << ',' << range.startCol
+        << ")";
+    db_->sql_insert(sql.str().c_str());
+
+}
+
 
 pModel::FunctionList pModel::queryFunctions(oid ns_id, oid c_id, pStringRef name) const {
 
@@ -678,15 +697,21 @@ pModel::ClassDeclList pModel::queryClassDecls(oid c_id, pStringRef name) const {
 }
 
 
-pModel::ConstantList pModel::queryConstants(pStringRef name) const {
+pModel::ConstantList pModel::queryConstants(pStringRef name, oid ns_id) const {
 
     pModel::ConstantList result;
     std::stringstream query;
 
+    std::pair<oid, std::string> resolved = resolveFQN(ns_id, name);
+    oid res_ns_id = ns_id;
+    if (resolved.first != pModel::NULLID)
+        res_ns_id = resolved.first;
+
     query << "SELECT name, " \
              " start_line, start_col, sourceModule.realPath FROM " \
              " constant, sourceModule WHERE sourceModule.id=sourceModule_id AND" \
-             " type=" << pModel::DEFINE << " AND name='" << name.str() << "'";
+             " name='" << resolved.second << "' AND (type=" << pModel::DEFINE <<
+             " OR (type=" << pModel::CONST << " AND namespace_id=" << res_ns_id << "))";
 
     //db_->list_query<pModel::ConstantList>(query.str(), result);
     db_->list_query(query.str(), result);

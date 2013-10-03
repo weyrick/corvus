@@ -303,6 +303,29 @@ void ModelBuilder::visit_pre_literalArray(literalArray* n)  {
     }
 }
 
+void ModelBuilder::visit_pre_constDecl(constDecl* n) {
+
+    for (stmt::child_iterator i = n->child_begin(), e = n->child_end(); i != e; ) {
+
+        expr* name =  llvm::dyn_cast<expr>(*i++);
+        expr* value =  llvm::dyn_cast<expr>(*i++);
+
+        std::string strval;
+        if (llvm::isa<literalExpr>(value)) {
+            strval = llvm::dyn_cast<literalExpr>(value)->getStringVal();
+        }
+
+        model_->defineConstant(m_id_,
+                               ns_id_,
+                               llvm::dyn_cast<literalID>(name)->name(),
+                               pModel::CONST,
+                               strval,
+                               n->range());
+
+    }
+
+}
+
 void ModelBuilder::visit_pre_functionInvoke(functionInvoke *n) {
 
     // can't do anything with dynamics

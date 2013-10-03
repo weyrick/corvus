@@ -278,7 +278,7 @@ class expr: public stmt {
 public:
     // see astNodes.def
     static const nodeKind firstExprKind = assignmentKind;
-    static const nodeKind lastExprKind = unaryOpKind;
+    static const nodeKind lastExprKind = inlineHtmlKind;
 
     expr(nodeKind k): stmt(k), isLval_(false) { }
 

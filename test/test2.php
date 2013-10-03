@@ -6,6 +6,7 @@ const nsconst = 5;
 const nsconst2 = 1, nsconst3 = 2;
 
 $b = \test_other\nsconst;
+$b = \test_other\nsconst4;
 
 class foo {
     const DEF1 = 5;

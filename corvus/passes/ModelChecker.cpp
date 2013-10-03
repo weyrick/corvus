@@ -110,7 +110,7 @@ void ModelChecker::visit_pre_literalConstant(literalConstant* n) {
 
     // make sure this was define()'d
     if (!n->target()) {
-        pModel::ConstantList cn = model_->queryConstants(RESOLVE_FQN(n->name().str()));
+        pModel::ConstantList cn = model_->queryConstants(RESOLVE_FQN(n->name().str()), ns_id_);
         if (cn.size() == 0) {
             std::stringstream diag;
             diag << "undefined constant: " << n->name().str();

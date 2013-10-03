@@ -118,13 +118,15 @@ int main( int argc, char* argv[] )
     pSourceModule::DiagListType dList = mList[0]->getDiagnostics();
 
     // DIAG COUNT
-    cassert(dList.size(), 22, __LINE__);
+    cassert(dList.size(), 23, __LINE__);
 
     // DIAGS
 
     int i = 0;
 
+    ASSERT(dList[i]->msg(), "undefined constant: \\test_main\\nsconst4");
 
+    i++;
     ASSERT(dList[i]->msg(), "class myclass2 extends noclass which is unresolved");
 
     i++;
@@ -217,7 +219,7 @@ int main( int argc, char* argv[] )
     // constants
     pModel::ConstantList cn;
     // define('MYFIRST' .. )
-    cn = m->queryConstants("MYFIRST");
+    cn = m->queryConstants("MYFIRST", main_ns);
     ASSERT(cn.size(), 1);
 
     // class constants
