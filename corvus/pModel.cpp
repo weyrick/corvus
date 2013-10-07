@@ -850,7 +850,7 @@ pModel::MultipleDeclList pModel::getMultipleDecls(oid m_id) const {
         query << "sourceModule.id=" << m_id << " AND ";
 
     query << "(A.start_line != B.start_line) GROUP BY A.function_id,A.name,A.start_line "\
-            "ORDER BY A.start_line";
+            "ORDER BY A.name,A.start_line";
 
     db_->list_query(query.str(), db_result);
 

@@ -190,36 +190,41 @@ function returncheck() {
 
 // XXX tmp, wrap in function since we don't do mains yet
 function decluse() {
-// DIAG: unused variable
-$unused = 5;
+    // DIAG: unused variable
+    $unused = 5;
 
-// DIAG: multiple assignment
-$dbl = 1;
-$dbl = 5;
-$dbl = 9;
-echo $dbl;
+    // DIAG: multiple assignment
+    $dbl = 1;
+    $dbl = 5;
+    $dbl = 9;
+    echo $dbl;
 
-$baz = 5;
-$baz = 10;
+    $baz = 5;
+    $baz = 10;
 
-// DIAG: $arr2 not declared (i.e. with $arr2 = array())
-// nodiag: different keys in array are not multiple assign
-$arr2['foo'] = 1;
-$arr2['bar'] = 2;
+    // DIAG: $arr2 not declared (i.e. with $arr2 = array())
+    // nodiag: different keys in array are not multiple assign
+    $arr2['foo'] = 1;
+    $arr2['bar'] = 2;
 
-// nodiag
-$arr3 = array();
-$arr3['foo'] = 1;
+    // nodiag
+    $arr3 = array();
+    $arr3['foo'] = 1;
 
-// nodiag: param used in array
-function check1($param) {
-    foo(1, array('key' => $param));
-}
+    // nodiag: param used in array
+    function check1($param) {
+        foo(1, array('key' => $param));
+    }
 
-$vcheck1 = null;
-// nodiag: defining as null will not flag a redeclare
-$vcheck1 = 5;
-echo $vcheck1;
+    $vcheck1 = null;
+    // nodiag: defining as null will not flag a redeclare
+    $vcheck1 = 5;
+    echo $vcheck1;
+
+    $fparam1 = 5;
+    $fparam2 = 6;
+    $fparam1 = 7;
+    $fparam2 = 8;
 
 }
 
