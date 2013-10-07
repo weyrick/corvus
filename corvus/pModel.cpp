@@ -894,12 +894,14 @@ void pModel::resolveMultipleDecls(oid m_id) {
 
     for (int i = 0; i < redecl.size(); ++i) {
         // note the j = 1, meaning only flag the duplicates, not the initial
-        //assert(redecl[i].redecl_locs.size() > 1 && "redecl had no redecls");
+        assert(redecl[i].redecl_locs.size() > 1 && "redecl had no redecls");
 
+        /*
         if (redecl[i].redecl_locs.size() <= 1) {
             std::cout << "XXXXX redecl had no redecls: " << redecl[i].redecl_locs[0].first << "\n";
             continue;
         }
+        */
 
         for (int j = 1; j < redecl[i].redecl_locs.size(); ++j) {
             query << redecl[i].redecl_locs[j].first << ",";
