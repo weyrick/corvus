@@ -223,6 +223,8 @@ void ModelBuilder::visit_pre_signature(signature* n) {
                                  pModel::PARAM,
                                  pModel::NO_FLAGS,
                                  pModel::TYPE_UNKNOWN, // XXX
+                                 0, // blockDepth
+                                 0, // branch
                                  "", // XXX datatype obj
                                  "", // XXX default
                                  p->range()
@@ -237,6 +239,27 @@ void ModelBuilder::visit_pre_globalDecl(globalDecl* n) {
 
 void ModelBuilder::visit_post_globalDecl(globalDecl* n) {
     global_ = false;
+}
+
+void ModelBuilder::visit_pre_ifStmt(ifStmt* n) {
+    blockDepth_++;
+}
+
+bool ModelBuilder::visit_children_ifStmt(ifStmt* n) {
+    branch_ = 0;
+    visit(n->condition());
+    branch_ = 1;
+    if (n->trueBlock())
+        visit(n->trueBlock());
+    branch_ = 2;
+    if (n->falseBlock())
+        visit(n->falseBlock());
+    branch_ = 0;
+    return true; // this says don't use standard child visitor
+}
+
+void ModelBuilder::visit_post_ifStmt(ifStmt* n) {
+    blockDepth_--;
 }
 
 void ModelBuilder::visit_post_functionDecl(functionDecl *n) {
@@ -280,13 +303,16 @@ void ModelBuilder::visit_pre_var(var* n) {
         datatype = pModel::TYPE_NULL;
     }
 
+    // if it's an lval which isn't an array, or a global, it's a declaration
+    // but not if we're inside a branch
     if ((n->isLval() && n->numIndices() == 0) || global_) {
-        // if it's an lval, it's a declaration
         model_->defineFunctionVar(f_id_list_.back(),
                                  n->name(),
                                  pModel::FREE_VAR,
                                  pModel::NO_FLAGS,
                                  datatype,
+                                 blockDepth_,
+                                 branch_,
                                  "", // XXX if object, the class name we think it is
                                  "", // default (only func params)
                                  n->range()
@@ -299,12 +325,14 @@ void ModelBuilder::visit_pre_var(var* n) {
         // now
 
         // if we're in a class and the var is the implicit $this, skip it
-        if (n->name() == "this" && c_id_ != pModel::NULLID)
+        if (c_id_ != pModel::NULLID && n->name() == "this")
             return;
 
         model_->defineFunctionVarUse(f_id_list_.back(),
-                                  n->name(),
-                                  n->range());
+                                     blockDepth_,
+                                     branch_,
+                                     n->name(),
+                                     n->range());
     }
 
 }

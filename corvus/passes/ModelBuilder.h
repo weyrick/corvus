@@ -34,13 +34,19 @@ private:
 
     // child of global node
     bool global_;
+    // depth of e.g. if blocks
+    int blockDepth_;
+    // branch of current if block e.g. true, false
+    int branch_;
 
 public:
     ModelBuilder():
             pNSVisitor("ModelBuilder","Build the code model"),
             c_id_(pModel::NULLID),
             m_id_(pModel::NULLID),
-            global_(false)
+            global_(false),
+            blockDepth_(0),
+            branch_(0)
             { }
 
     void pre_run(void);
@@ -51,6 +57,9 @@ public:
 
     void visit_post_useIdent(useIdent* n);
 
+    void visit_pre_ifStmt(ifStmt* n);
+    bool visit_children_ifStmt(ifStmt* n);
+    void visit_post_ifStmt(ifStmt* n);
     void visit_pre_globalDecl(globalDecl* n);
     void visit_post_globalDecl(globalDecl* n);
     void visit_pre_classDecl(classDecl* n);

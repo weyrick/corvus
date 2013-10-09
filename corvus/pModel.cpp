@@ -296,6 +296,10 @@ void pModel::makeTables() {
                          "datatype INTEGER NOT NULL," \
                          "datatype_obj TEXT NULL," \
                          "defaultVal TEXT NULL," \
+                         // this is e.g. if block depth
+                         "blockDepth INTEGER NOT NULL DEFAULT 0," \
+                         // branch e.g. true, false, else
+                         "branch INTEGER NOT NULL DEFAULT 0," \
                          // filled in after initial model build, set to
                          // 1 if this symbol is a redeclare so
                          // we can skip it in the use check (and only check
@@ -526,7 +530,9 @@ void pModel::defineClassRelation(oid lhs_c_id, int type, oid rhs_c_id) {
 
 
 void pModel::defineFunctionVar(oid f_id, pStringRef name,
-                    int type, int flags, int datatype, pStringRef datatype_obj,
+                    int type, int flags, int datatype, int blockDepth,
+                    int branch,
+                    pStringRef datatype_obj,
                     pStringRef defaultVal,
                     pSourceRange range) {
 
@@ -538,8 +544,10 @@ void pModel::defineFunctionVar(oid f_id, pStringRef name,
         << type << ','
         << flags << ','
         << datatype << ','
-        << db_->sql_string(datatype_obj) << ","
-        << db_->sql_string(defaultVal) << ","
+        << db_->sql_string(datatype_obj) << ','
+        << db_->sql_string(defaultVal) << ','
+        << blockDepth << ','
+        << branch << ','
         << "0," // is_redecl
         << "0," // use_count
         << range.startLine  << ',' << range.startCol
@@ -548,13 +556,14 @@ void pModel::defineFunctionVar(oid f_id, pStringRef name,
 
 }
 
-void pModel::defineFunctionVarUse(oid f_id, pStringRef name, pSourceRange range) {
+void pModel::defineFunctionVarUse(oid f_id, int blockDepth, int branch, pStringRef name, pSourceRange range) {
 
     std::stringstream sql;
 
     // first we see if there is/are associated decl(s) defined before this use
     sql << "UPDATE function_var SET use_count=use_count+1 WHERE name=" << "'" << name.str() << "'" <<
-           " AND function_id=" << f_id << " AND start_line <= " << range.startLine;
+           " AND function_id=" << f_id << " AND start_line <= " << range.startLine <<
+           " AND blockDepth <= " << blockDepth;
 
     db_->sql_execute(sql.str());
 
@@ -843,8 +852,12 @@ pModel::MultipleDeclList pModel::getMultipleDecls(oid m_id) const {
             "function, sourceModule WHERE function.id=A.function_id AND "\
             "sourceModule.id=function.sourceModule_id AND "\
             "A.name=B.name and A.function_id=B.function_id AND "\
+            // only check for multidecls in the same block depth
+            "(A.blockDepth == B.blockDepth) AND "\
+            // only check for multidecls in the same branch
+            "(A.branch == B.branch) AND "\
             // this says not to count a variable defined as null as a multiple
-             "(A.datatype != 1 AND B.datatype != 1) AND ";
+            "(A.datatype != 1 AND B.datatype != 1) AND ";
 
     if (m_id != pModel::NULLID)
         query << "sourceModule.id=" << m_id << " AND ";
@@ -895,14 +908,6 @@ void pModel::resolveMultipleDecls(oid m_id) {
     for (int i = 0; i < redecl.size(); ++i) {
         // note the j = 1, meaning only flag the duplicates, not the initial
         assert(redecl[i].redecl_locs.size() > 1 && "redecl had no redecls");
-
-        /*
-        if (redecl[i].redecl_locs.size() <= 1) {
-            std::cout << "XXXXX redecl had no redecls: " << redecl[i].redecl_locs[0].first << "\n";
-            continue;
-        }
-        */
-
         for (int j = 1; j < redecl[i].redecl_locs.size(); ++j) {
             query << redecl[i].redecl_locs[j].first << ",";
         }
@@ -938,7 +943,7 @@ pModel::UnusedList pModel::getUnusedDecls(oid m_id) const {
     query << "SELECT function_var.*, realPath FROM function_var, "\
             "function, sourceModule WHERE function.id=function_var.function_id AND "\
             "sourceModule.id=function.sourceModule_id AND use_count=0 AND "\
-             "is_redecl=0";
+             "is_redecl=0 AND branch=0";
 
     if (m_id != pModel::NULLID)
         query << " AND sourceModule.id=" << m_id;

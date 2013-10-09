@@ -226,6 +226,26 @@ function decluse() {
     $fparam1 = 7;
     $fparam2 = 8;
 
+    // branch handling
+    $vcheck2 = NULL;
+    if (true)
+        // nodiag: no redecl, decl is outside branch
+        $vcheck2 = true;
+    else
+        // nodiag: no redecl, decl is outside branch
+        $vcheck2 = false;
+
+    if (true) {
+        // nodiag: defined and used in branch
+        $vcheck3 = true;
+        echo $vcheck3;
+    }
+
+    // nodiag: defined ok outside branch
+    echo $vcheck2;
+    // DIAG: not defined (was defined only in branch)
+    echo $vcheck3;
+
 }
 
 } // namespace

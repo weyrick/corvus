@@ -150,10 +150,10 @@ public:
     oid defineFunction(oid ns_id, oid m_id, oid c_id, pStringRef name,
                         int type, int flags, int vis, int minA, int maxA, pSourceRange range);
     void defineFunctionVar(oid f_id, pStringRef name,
-                          int type, int flags, int datatype, pStringRef datatype_obj,
+                          int type, int flags, int datatype, int blockDepth, int branch, pStringRef datatype_obj,
                           pStringRef defaultVal,
                           pSourceRange range);
-    void defineFunctionVarUse(oid f_id, pStringRef name, pSourceRange range);
+    void defineFunctionVarUse(oid f_id, int blockDepth, int branch, pStringRef name, pSourceRange range);
 
     void defineConstant(oid m_id, pStringRef name, int type, pStringRef val, pSourceRange range);
     void defineConstant(oid m_id, oid ns_id, pStringRef name, int type, pStringRef val, pSourceRange range);
