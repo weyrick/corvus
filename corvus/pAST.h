@@ -227,23 +227,19 @@ public:
 
     nodeKind kind(void) const { return kind_; }
 
-    void setLine(pUInt start) { range_.startLine = start; range_.endLine = start; }
-    // simple case where one token defines col range
-    void setCol(pColRange cols) { range_.startCol = cols.first; range_.endCol = cols.second; }
-    // start/end on multiple lines so cols come from different tokens
-    // this presumes startCols was generated from the token on startLine and endCols
-    // was generated from the token on endLine
-    void setCol(pColRange startCols, pColRange endCols) {
-        range_.startCol = startCols.first;
-        range_.endCol = endCols.second;
+    void setRange(const pSourceRange& range) { range_ = range; }
+    void setEndRange(const pSourceRange& range) {
+        range_.endLine = range.endLine;
+        range_.endCol = range.endCol;
     }
-    void setLine(pUInt start, pUInt end) { range_.startLine = start; range_.endLine = end; }
+
+    void setEndLine(const pSourceRange& range) { range_.endLine = range.endLine; }
+    void setEndCol(const pSourceRange& range) { range_.endCol = range.endCol; }
 
     pUInt startLineNum(void) const { return range_.startLine; }
     pUInt endLineNum(void) const { return range_.endLine; }
     pUInt startCol(void) const { return range_.startCol; }
     pUInt endCol(void) const { return range_.endCol; }
-    pColRange cols(void) const { return pColRange(range_.startCol, range_.endCol); }
 
     const pSourceRange& range() const { return range_; }
 
@@ -451,20 +447,20 @@ public:
     typedef std::vector<std::string> partsType;
 
 protected:
-    pColRange cols_;
+    pSourceRange range_;
     partsType parts_;
     bool absolute_;
 
 public:
-    namespaceName(int startCol): absolute_(false) {
-        cols_.first = startCol;
+    namespaceName(const pSourceRange& range): absolute_(false) {
+        range_ = range;
     }
 
     void setEndCol(int endCol) {
-        cols_.second = endCol;
+        range_.endCol = endCol;
     }
 
-    pColRange cols() const { return cols_; }
+    pSourceRange range() const { return range_; }
 
     void push_back(pStringRef part) {
         parts_.push_back(part);
@@ -1407,40 +1403,38 @@ public:
 // catch
 class catchStmt: public stmt {
 
-    std::string className_;
-    std::string varName_;
-    block* body_;
+    enum { CLASS, VAR, BODY, END_EXPR };
+    stmt* children_[END_EXPR];
     
 protected:
-    catchStmt(const catchStmt& other, pParseContext& C): stmt(other),
-        className_(other.className_), varName_(other.varName_), body_(0)
+    catchStmt(const catchStmt& other, pParseContext& C): stmt(other)
     {
-        if(other.body_)
-            body_ = other.body_->clone(C);
+        memset(children_, 0, sizeof(children_));
+        children_[CLASS] = other.children_[CLASS]->clone(C);
+        children_[VAR] = other.children_[VAR]->clone(C);
+        children_[BODY] = other.children_[BODY]->clone(C);
     }
 
 public:
-    catchStmt(const namespaceName* className,
-              const pSourceRef& varName,
-              pParseContext& C,
+    catchStmt(pParseContext& C,
+              expr* classID,
+              expr* var,
               block* body):
     stmt(catchStmtKind),
-    className_(className->getFullName()),
-    varName_(pStringRef(varName.begin(), (varName.end()-varName.begin()))),
-    body_(body)
+      children_()
     {
+        var->setIsLval();
+        children_[CLASS] = classID;
+        children_[VAR] = var;
+        children_[BODY] = body;
     }
 
-    pStringRef className(void) const {
-        return className_;
-    }
+    expr* classID(void) { return static_cast<expr*>(children_[BODY]); }
+    expr* var(void) { return static_cast<expr*>(children_[VAR]); }
+    stmt* body(void) { return children_[BODY]; }
 
-    pStringRef varName(void) const {
-        return varName_;
-    }
-
-    stmt::child_iterator child_begin() { return (stmt**)&body_; }
-    stmt::child_iterator child_end() { return (stmt**)&body_+1; }
+    stmt::child_iterator child_begin() { return (stmt**)&children_[0]; }
+    stmt::child_iterator child_end() { return (stmt**)&children_[0]+END_EXPR; }
 
     IMPLEMENT_SUPPORT_MEMBERS(catchStmt);
 

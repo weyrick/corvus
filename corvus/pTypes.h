@@ -37,11 +37,13 @@ typedef boost::uint_fast32_t pUInt;
 /// if they will live past the life of the buffer they came from (source file)
 typedef pStringRef pSourceRef;
 typedef pStringRef::iterator pSourceCharIterator;
-typedef std::pair<pUInt,pUInt> pColRange;
 
 struct pSourceRange {
 
     pSourceRange(void): startLine(0), endLine(0), startCol(0), endCol(0) { }
+
+    pSourceRange(pUInt sl): startLine(sl), endLine(0),
+        startCol(0), endCol(0) { }
 
     pSourceRange(pUInt sl, pUInt sc): startLine(sl), endLine(0),
         startCol(sc), endCol(0) { }

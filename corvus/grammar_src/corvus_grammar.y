@@ -21,9 +21,7 @@
 using namespace corvus;
 
 #define CTXT               pMod->context()
-#define TOKEN_LINE(T)      CTXT.getTokenLine(T)
-#define TOKEN_COL(T)       CTXT.getColPair(T)
-#define TOKEN_RANGE(T)     pSourceRange(TOKEN_LINE(T), TOKEN_COL(T).first, TOKEN_LINE(T), TOKEN_COL(T).second)
+#define TOKEN_RANGE(T)     CTXT.getRange(T)
 #define CURRENT_LINE       CTXT.currentLineNum()
 
 AST::literalExpr* extractLiteralString(pSourceRef* B, pSourceModule* pMod, bool isSimple) {
@@ -260,7 +258,8 @@ statement(A) ::= T_SEMI.
 statementBlock(A) ::= T_LEFTCURLY(LC) statement_list(B) T_RIGHTCURLY(RC).
 {
     A = new (CTXT) AST::block(CTXT, B);
-    A->setLine(TOKEN_LINE(LC), TOKEN_LINE(RC));
+    A->setRange(TOKEN_RANGE(LC));
+    A->setEndCol(TOKEN_RANGE(RC));
     delete B;
 }
 
@@ -268,39 +267,42 @@ statementBlock(A) ::= T_LEFTCURLY(LC) statement_list(B) T_RIGHTCURLY(RC).
 %type namespaceName {AST::namespaceName*}
 namespaceName(A) ::= T_IDENTIFIER(PART).
 {
-    A = new AST::namespaceName(TOKEN_COL(PART).first);
+    A = new AST::namespaceName(TOKEN_RANGE(PART));
     A->push_back(*PART);
 }
 namespaceName(A) ::= namespaceName(PARTS) T_NS_SEPARATOR T_IDENTIFIER(PART).
 {
     PARTS->push_back(*PART);
-    PARTS->setEndCol(TOKEN_COL(PART).second);
+    PARTS->setEndCol(TOKEN_RANGE(PART).endCol);
     A = PARTS;
 }
 
 %type namespaceDecl{AST::namespaceDecl*}
-namespaceDecl(A) ::= T_NAMESPACE namespaceName(NSNAME) T_SEMI.
+namespaceDecl(A) ::= T_NAMESPACE(NS) namespaceName(NSNAME) T_SEMI.
 {
     NSNAME->setAbsolute();
     A = new (CTXT) AST::namespaceDecl(NSNAME, CTXT);
     // namespace decls are always absolute?
-    A->setLine(CURRENT_LINE);
+    A->setRange(TOKEN_RANGE(NS));
+    A->setEndRange(NSNAME->range());
     delete NSNAME;
 }
-namespaceDecl(A) ::= T_NAMESPACE namespaceName(NSNAME) statementBlock(BODY).
+namespaceDecl(A) ::= T_NAMESPACE(NS) namespaceName(NSNAME) statementBlock(BODY).
 {
     NSNAME->setAbsolute();
     A = new (CTXT) AST::namespaceDecl(NSNAME, BODY, CTXT);
     // namespace decls are always absolute?
-    A->setLine(CURRENT_LINE);
+    A->setRange(TOKEN_RANGE(NS));
+    A->setEndRange(NSNAME->range());
     delete NSNAME;
 }
 
 %type useDecl{AST::useDecl*}
-useDecl(A) ::= T_USE useIdentList(L) T_SEMI.
+useDecl(A) ::= T_USE(U) useIdentList(L) T_SEMI(S).
 {
     A = new (CTXT) AST::useDecl(L, CTXT);
-    A->setLine(CURRENT_LINE);
+    A->setRange(TOKEN_RANGE(U));
+    A->setEndRange(TOKEN_RANGE(S));
     // note this deletes the vector, not the pointers is contains,
     // which are now owned by the useDecl as children
     delete L;
@@ -351,7 +353,7 @@ useIdent(A) ::= T_NS_SEPARATOR namespaceName(NSNAME) T_AS T_IDENTIFIER(ID).
 constDecl(A) ::= T_CONST constVarList(LIST).
 {
     A = new (CTXT) AST::constDecl(LIST, CTXT);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
     // free the LIST, but the expr pairs in it are owned by constDecl
     delete LIST;
 }
@@ -361,15 +363,15 @@ constVarList(A) ::= T_IDENTIFIER(ID) T_ASSIGN staticScalar(DEFAULT).
 {
     A = new AST::exprPairList();
     AST::literalID* cid = new (CTXT) AST::literalID(*ID, CTXT);
-    cid->setLine(CURRENT_LINE);
-    DEFAULT->setLine(CURRENT_LINE);
+    cid->setRange(CURRENT_LINE);
+    DEFAULT->setRange(CURRENT_LINE);
     A->push_back(AST::exprPair(cid, DEFAULT));
 }
 constVarList(A) ::= constVarList(LIST) T_COMMA T_IDENTIFIER(ID) T_ASSIGN staticScalar(DEFAULT).
 {
     AST::literalID* cid = new (CTXT) AST::literalID(*ID, CTXT);
-    cid->setLine(CURRENT_LINE);
-    DEFAULT->setLine(CURRENT_LINE);
+    cid->setRange(CURRENT_LINE);
+    DEFAULT->setRange(CURRENT_LINE);
     LIST->push_back(AST::exprPair(cid, DEFAULT));
     A = LIST;
 }
@@ -380,7 +382,7 @@ constVarList(A) ::= constVarList(LIST) T_COMMA T_IDENTIFIER(ID) T_ASSIGN staticS
 echo(A) ::= T_ECHO commaExprList(EXPRS).
 {
    A = new (CTXT) AST::builtin(CTXT, AST::builtin::ECHO, EXPRS);
-   A->setLine(CURRENT_LINE);
+   A->setRange(CURRENT_LINE);
    delete EXPRS;
 }
 
@@ -392,7 +394,7 @@ throw(A) ::= T_THROW expr(RVAL).
     rVal->push_back(RVAL);
     A = new (CTXT) AST::builtin(CTXT, AST::builtin::THROW, rVal);
     delete rVal;
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 
 // return
@@ -400,36 +402,36 @@ throw(A) ::= T_THROW expr(RVAL).
 return(A) ::= T_RETURN.
 {
     A = new (CTXT) AST::returnStmt(NULL);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 return(A) ::= T_RETURN expr(B).
 {
     A = new (CTXT) AST::returnStmt(B);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 // break
 %type break {AST::breakStmt*}
 break(A) ::= T_BREAK.
 {
     A = new (CTXT) AST::breakStmt(NULL);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 break(A) ::= T_BREAK expr(B).
 {
     A = new (CTXT) AST::breakStmt(B);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 // continue
 %type continue {AST::continueStmt*}
 continue(A) ::= T_CONTINUE.
 {
     A = new (CTXT) AST::continueStmt(NULL);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 continue(A) ::= T_CONTINUE expr(B).
 {
     A = new (CTXT) AST::continueStmt(B);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 
 // global
@@ -437,7 +439,7 @@ continue(A) ::= T_CONTINUE expr(B).
 global(A) ::= T_GLOBAL globalVarList(B).
 {
     A = new (CTXT) AST::globalDecl(B, CTXT);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
     delete B;
 }
 
@@ -446,7 +448,7 @@ global(A) ::= T_GLOBAL globalVarList(B).
 inlineHTML(A) ::= T_INLINE_HTML(B).
 {
     A = new (CTXT) AST::inlineHtml(*B);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 
 // try/catch
@@ -469,7 +471,7 @@ tryCatch(A) ::= T_TRY statementBlock(BODY)
     }
 
     A = new (CTXT) AST::tryStmt(CTXT, new (CTXT) AST::block(CTXT, BODY), &catchList);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
     // catchList goes out of scope and frees
 
 }
@@ -491,19 +493,35 @@ nonEmptyCatches(A) ::= nonEmptyCatches(LIST) catch(C).
 }
 
 %type catch {AST::catchStmt*}
-catch(A) ::= T_CATCH T_LEFTPAREN namespaceName(CLASSNAME) T_VARIABLE(VAR) T_RIGHTPAREN
+catch(A) ::= T_CATCH(CT) T_LEFTPAREN namespaceName(CLASSNAME) T_VARIABLE(VAR) T_RIGHTPAREN
              statementBlock(CATCHBODY).
 {
-    A = new (CTXT) AST::catchStmt(CLASSNAME, *VAR, CTXT, new (CTXT) AST::block(CTXT, CATCHBODY));
-    A->setLine(CURRENT_LINE);
+    AST::var *v = new (CTXT) AST::var((*VAR).substr(1), CTXT);
+    v->setRange(TOKEN_RANGE(VAR));
+    AST::literalID *id = new (CTXT) AST::literalID(CLASSNAME, CTXT);
+    id->setRange(CLASSNAME->range());
+    A = new (CTXT) AST::catchStmt(CTXT,
+                                  id,
+                                  v,
+                                  new (CTXT) AST::block(CTXT, CATCHBODY));
+    A->setRange(TOKEN_RANGE(CT));
+    A->setEndRange(CATCHBODY->range());
     delete CLASSNAME;
 }
-catch(A) ::= T_CATCH T_LEFTPAREN T_NS_SEPARATOR namespaceName(CLASSNAME) T_VARIABLE(VAR) T_RIGHTPAREN
+catch(A) ::= T_CATCH(CT) T_LEFTPAREN T_NS_SEPARATOR namespaceName(CLASSNAME) T_VARIABLE(VAR) T_RIGHTPAREN
              statementBlock(CATCHBODY).
 {
     CLASSNAME->setAbsolute();
-    A = new (CTXT) AST::catchStmt(CLASSNAME, *VAR, CTXT, new (CTXT) AST::block(CTXT, CATCHBODY));
-    A->setLine(CURRENT_LINE);
+    AST::var *v = new (CTXT) AST::var((*VAR).substr(1), CTXT);
+    v->setRange(TOKEN_RANGE(VAR));
+    AST::literalID *id = new (CTXT) AST::literalID(CLASSNAME, CTXT);
+    id->setRange(CLASSNAME->range());
+    A = new (CTXT) AST::catchStmt(CTXT,
+                                  id,
+                                  v,
+                                  new (CTXT) AST::block(CTXT, CATCHBODY));
+    A->setRange(TOKEN_RANGE(CT));
+    A->setEndRange(CATCHBODY->range());
     delete CLASSNAME;
 }
 
@@ -523,13 +541,13 @@ elseSingle(A) ::= T_ELSE statement(BODY).
 elseSeries(A) ::=  T_ELSEIF(EIF) T_LEFTPAREN expr(COND) T_RIGHTPAREN statement(TRUE) elseSingle(ELSE).
 {
     A = new (CTXT) AST::ifStmt(CTXT, COND, TRUE, ELSE);
-    A->setLine(TOKEN_LINE(EIF));
+    A->setRange(TOKEN_RANGE(EIF));
 }
 // elseif series
 elseSeries(A) ::=  T_ELSEIF(EIF) T_LEFTPAREN expr(COND) T_RIGHTPAREN statement(TRUE) elseSeries(ELSE).
 {
     A = new (CTXT) AST::ifStmt(CTXT, COND, TRUE, ELSE);
-    A->setLine(TOKEN_LINE(EIF));
+    A->setRange(TOKEN_RANGE(EIF));
 }
 
 // if
@@ -537,12 +555,12 @@ elseSeries(A) ::=  T_ELSEIF(EIF) T_LEFTPAREN expr(COND) T_RIGHTPAREN statement(T
 ifBlock(A) ::= T_IF(IF) T_LEFTPAREN expr(COND) T_RIGHTPAREN statement(TRUE) elseSeries(ELSE).
 {
     A = new (CTXT) AST::ifStmt(CTXT, COND, TRUE, ELSE);
-    A->setLine(TOKEN_LINE(IF));
+    A->setRange(TOKEN_RANGE(IF));
 }
 ifBlock(A) ::= T_IF(IF) T_LEFTPAREN expr(COND) T_RIGHTPAREN statement(TRUE) elseSingle(ELSE).
 {
     A = new (CTXT) AST::ifStmt(CTXT, COND, TRUE, ELSE);
-    A->setLine(TOKEN_LINE(IF));
+    A->setRange(TOKEN_RANGE(IF));
 }
 
 // foreach
@@ -551,25 +569,25 @@ ifBlock(A) ::= T_IF(IF) T_LEFTPAREN expr(COND) T_RIGHTPAREN statement(TRUE) else
 forEach(A) ::= T_FOREACH(F) T_LEFTPAREN expr(RVAL) T_AS var(VAL) T_RIGHTPAREN statement(BODY).
 {
     A = new (CTXT) AST::forEach(RVAL, BODY, CTXT, VAL, false /*by ref*/ );
-    A->setLine(TOKEN_LINE(F));
+    A->setRange(TOKEN_RANGE(F));
 }
 // foreach($expr as $key => $val)
 forEach(A) ::= T_FOREACH(F) T_LEFTPAREN expr(RVAL) T_AS var(KEY) T_ARROWKEY var(VAL) T_RIGHTPAREN statement(BODY).
 {
     A = new (CTXT) AST::forEach(RVAL, BODY, CTXT, VAL, false /*by ref*/, KEY);
-    A->setLine(TOKEN_LINE(F));
+    A->setRange(TOKEN_RANGE(F));
 }
 // foreach($expr as &$val)
 forEach(A) ::= T_FOREACH(F) T_LEFTPAREN expr(RVAL) T_AS T_AND var(VAL) T_RIGHTPAREN statement(BODY).
 {
     A = new (CTXT) AST::forEach(RVAL, BODY, CTXT, VAL, true /*by ref*/);
-    A->setLine(TOKEN_LINE(F));
+    A->setRange(TOKEN_RANGE(F));
 }
 // foreach($expr as $key => &$val)
 forEach(A) ::= T_FOREACH(F) T_LEFTPAREN expr(RVAL) T_AS var(KEY) T_ARROWKEY T_AND var(VAL) T_RIGHTPAREN statement(BODY).
 {
     A = new (CTXT) AST::forEach(RVAL, BODY, CTXT, VAL, true /*by ref*/, KEY);
-    A->setLine(TOKEN_LINE(F));
+    A->setRange(TOKEN_RANGE(F));
 }
 
 // for
@@ -577,7 +595,7 @@ forEach(A) ::= T_FOREACH(F) T_LEFTPAREN expr(RVAL) T_AS var(KEY) T_ARROWKEY T_AN
 forStmt(A) ::= T_FOR(F) T_LEFTPAREN forExpr(INIT) T_SEMI forExpr(COND) T_SEMI forExpr(INC) T_RIGHTPAREN statement(BODY).
 {
     A = new (CTXT) AST::forStmt(CTXT, INIT, COND, INC, BODY);
-    A->setLine(TOKEN_LINE(F));
+    A->setRange(TOKEN_RANGE(F));
 }
 
 %type forExpr {AST::stmt*}
@@ -602,7 +620,7 @@ forExpr(A) ::= commaExprList(B).
 doStmt(A) ::= T_DO statement(BODY) T_WHILE T_LEFTPAREN expr(COND) T_RIGHTPAREN.
 {
     A = new (CTXT) AST::doStmt(CTXT, COND, BODY);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 
 // while
@@ -610,7 +628,7 @@ doStmt(A) ::= T_DO statement(BODY) T_WHILE T_LEFTPAREN expr(COND) T_RIGHTPAREN.
 whileStmt(A) ::= T_WHILE T_LEFTPAREN expr(COND) T_RIGHTPAREN statement(BODY).
 {
     A = new (CTXT) AST::whileStmt(CTXT, COND, BODY);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 
 // switch
@@ -618,32 +636,36 @@ whileStmt(A) ::= T_WHILE T_LEFTPAREN expr(COND) T_RIGHTPAREN statement(BODY).
 switchStmt(A) ::= T_SWITCH T_LEFTPAREN expr(RVAL) T_RIGHTPAREN switchCaseList(CASES).
 {
     A = new (CTXT) AST::switchStmt(RVAL, CASES);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 
 %type switchCaseList {AST::block*}
 switchCaseList(A) ::= T_LEFTCURLY(LC) caseList(CASES) T_RIGHTCURLY(RC).
 {
     A = new (CTXT) AST::block(CTXT, CASES);
-    A->setLine(TOKEN_LINE(LC), TOKEN_LINE(RC));
+    A->setRange(TOKEN_RANGE(LC));
+    A->setEndRange(TOKEN_RANGE(RC));
     delete CASES;
 }
 switchCaseList(A) ::= T_LEFTCURLY(LC) T_SEMI caseList(CASES) T_RIGHTCURLY(RC).
 {
     A = new (CTXT) AST::block(CTXT, CASES);
-    A->setLine(TOKEN_LINE(LC), TOKEN_LINE(RC));
+    A->setRange(TOKEN_RANGE(LC));
+    A->setEndRange(TOKEN_RANGE(RC));
     delete CASES;
 }
 switchCaseList(A) ::= T_COLON(LC) caseList(CASES) T_ENDSWITCH(RC).
 {
     A = new (CTXT) AST::block(CTXT, CASES);
-    A->setLine(TOKEN_LINE(LC), TOKEN_LINE(RC));
+    A->setRange(TOKEN_RANGE(LC));
+    A->setEndRange(TOKEN_RANGE(RC));
     delete CASES;
 }
 switchCaseList(A) ::= T_COLON(LC) T_SEMI caseList(CASES) T_ENDSWITCH(RC).
 {
     A = new (CTXT) AST::block(CTXT, CASES);
-    A->setLine(TOKEN_LINE(LC), TOKEN_LINE(RC));
+    A->setRange(TOKEN_RANGE(LC));
+    A->setEndRange(TOKEN_RANGE(RC));
     delete CASES;
 }
 
@@ -656,7 +678,7 @@ caseList(A) ::= caseList(LIST) T_CASE expr(COND) caseSeparator statement_list(ST
 {
     AST::switchCase* c = new (CTXT) AST::switchCase(COND,
                                                     new (CTXT) AST::block(CTXT, STMTS));
-    c->setLine(CURRENT_LINE);
+    c->setRange(CURRENT_LINE);
     LIST->push_back(static_cast<AST::stmt*>(c));
     delete STMTS;
     A = LIST;
@@ -665,7 +687,7 @@ caseList(A) ::= caseList(LIST) T_DEFAULT caseSeparator statement_list(STMTS).
 {
     AST::switchCase* c = new (CTXT) AST::switchCase(NULL,
                                                      new (CTXT) AST::block(CTXT, STMTS));
-    c->setLine(CURRENT_LINE);
+    c->setRange(CURRENT_LINE);
     LIST->push_back(static_cast<AST::stmt*>(c));
     delete STMTS;
     A = LIST;
@@ -681,14 +703,14 @@ caseSeparator ::= T_SEMI.
 staticDecl(A) ::= T_STATIC staticVarList(VARLIST).
 {
     A = new (CTXT) AST::staticDecl(VARLIST, CTXT);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
     delete VARLIST;
 }
 
 staticDecl(A) ::= T_STATIC staticVarList(VARLIST) T_ASSIGN staticScalar(DEF).
 {
     A = new (CTXT) AST::staticDecl(VARLIST, CTXT, DEF);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
     delete VARLIST;
 }
 
@@ -703,8 +725,7 @@ formalParam(A) ::= maybeHint(HINT) T_VARIABLE(PARAM).
         A->setHint(*HINT);
         delete HINT;
     }
-    A->setLine(TOKEN_LINE(PARAM));
-    A->setCol(TOKEN_COL(PARAM));
+    A->setRange(TOKEN_RANGE(PARAM));
 }
 formalParam(A) ::= maybeHint(HINT) T_AND T_VARIABLE(PARAM).
 {
@@ -714,8 +735,7 @@ formalParam(A) ::= maybeHint(HINT) T_AND T_VARIABLE(PARAM).
         A->setHint(*HINT);
         delete HINT;
     }
-    A->setLine(TOKEN_LINE(PARAM));
-    A->setCol(TOKEN_COL(PARAM));
+    A->setRange(TOKEN_RANGE(PARAM));
 }
 formalParam(A) ::= maybeHint(HINT) T_VARIABLE(PARAM) T_ASSIGN staticScalar(DEF).
 {
@@ -725,8 +745,7 @@ formalParam(A) ::= maybeHint(HINT) T_VARIABLE(PARAM) T_ASSIGN staticScalar(DEF).
         A->setHint(*HINT);
         delete HINT;
     }
-    A->setLine(TOKEN_LINE(PARAM));
-    A->setCol(TOKEN_COL(PARAM));
+    A->setRange(TOKEN_RANGE(PARAM));
 }
 formalParam(A) ::= maybeHint(HINT) T_AND T_VARIABLE(PARAM) T_ASSIGN staticScalar(DEF).
 {
@@ -736,8 +755,7 @@ formalParam(A) ::= maybeHint(HINT) T_AND T_VARIABLE(PARAM) T_ASSIGN staticScalar
         A->setHint(*HINT);
         delete HINT;
     }
-    A->setLine(TOKEN_LINE(PARAM));
-    A->setCol(TOKEN_COL(PARAM));
+    A->setRange(TOKEN_RANGE(PARAM));
 }
 
 // this will be NULL (no hint) or a string rep of the hint
@@ -775,13 +793,13 @@ formalParamList(A) ::= .
 signature(A) ::= T_IDENTIFIER(NAME) T_LEFTPAREN formalParamList(PARAMS) T_RIGHTPAREN.
 {
     A = new (CTXT) AST::signature(*NAME, CTXT, PARAMS, false/*ref*/);
-    A->setLine(TOKEN_LINE(NAME));
+    A->setRange(TOKEN_RANGE(NAME));
     delete PARAMS;
 }
 signature(A) ::= T_AND T_IDENTIFIER(NAME) T_LEFTPAREN formalParamList(PARAMS) T_RIGHTPAREN.
 {
     A = new (CTXT) AST::signature(*NAME, CTXT, PARAMS, true/*ref*/);
-    A->setLine(TOKEN_LINE(NAME));
+    A->setRange(TOKEN_RANGE(NAME));
     delete PARAMS;
 }
 
@@ -789,7 +807,7 @@ signature(A) ::= T_AND T_IDENTIFIER(NAME) T_LEFTPAREN formalParamList(PARAMS) T_
 lambdaSignature(A) ::= T_LEFTPAREN(LP) formalParamList(PARAMS) T_RIGHTPAREN.
 {
     A = new (CTXT) AST::signature(CTXT, PARAMS);
-    A->setLine(TOKEN_LINE(LP));
+    A->setRange(TOKEN_RANGE(LP));
     delete PARAMS;
 }
 // XXX we cheat here and use formalParamList. that wouldn't be acceptable
@@ -798,7 +816,7 @@ lambdaSignature(A) ::= T_LEFTPAREN(LP) formalParamList(PARAMS) T_RIGHTPAREN.
 lambdaSignature(A) ::= T_LEFTPAREN(LP) formalParamList(PARAMS) T_RIGHTPAREN T_USE T_LEFTPAREN formalParamList(USE_PARAMS) T_RIGHTPAREN.
 {
     A = new (CTXT) AST::signature(CTXT, PARAMS, USE_PARAMS);
-    A->setLine(TOKEN_LINE(LP));
+    A->setRange(TOKEN_RANGE(LP));
     delete PARAMS;
     delete USE_PARAMS;
 }
@@ -820,7 +838,8 @@ classDecl(A) ::= T_CLASS(C) T_IDENTIFIER(NAME) classExtends(EXTENDS) classImplem
                                   EXTENDS,
                                   IMPLEMENTS,
                                   new (CTXT) AST::block(CTXT, MEMBERS));
-    A->setLine(TOKEN_LINE(C), TOKEN_LINE(RC));
+    A->setRange(TOKEN_RANGE(C));
+    A->setEndCol(TOKEN_RANGE(RC));
     // EXTENDS and IMPLEMENTS memory managed in classDecl constructor
     delete MEMBERS;
 }
@@ -833,7 +852,8 @@ classDecl(A) ::= T_FINAL T_CLASS(C) T_IDENTIFIER(NAME) classExtends(EXTENDS) cla
                                   EXTENDS,
                                   IMPLEMENTS,
                                   new (CTXT) AST::block(CTXT, MEMBERS));
-    A->setLine(TOKEN_LINE(C), TOKEN_LINE(RC));
+    A->setRange(TOKEN_RANGE(C));
+    A->setEndCol(TOKEN_RANGE(RC));
     // EXTENDS and IMPLEMENTS memory managed in classDecl constructor
     delete MEMBERS;
 }
@@ -846,7 +866,8 @@ classDecl(A) ::= T_ABSTRACT T_CLASS(C) T_IDENTIFIER(NAME) classExtends(EXTENDS) 
                                   EXTENDS,
                                   IMPLEMENTS,
                                   new (CTXT) AST::block(CTXT, MEMBERS));
-    A->setLine(TOKEN_LINE(C), TOKEN_LINE(RC));
+    A->setRange(TOKEN_RANGE(C));
+    A->setEndCol(TOKEN_RANGE(RC));
     // EXTENDS and IMPLEMENTS memory managed in classDecl constructor
     delete MEMBERS;
 }
@@ -859,7 +880,8 @@ classDecl(A) ::= T_INTERFACE(C) T_IDENTIFIER(NAME) interfaceExtends(EXTENDS)
                                   EXTENDS,
                                   NULL, /* interfaces can't implement */
                                   new (CTXT) AST::block(CTXT, MEMBERS));
-    A->setLine(TOKEN_LINE(C), TOKEN_LINE(RC));
+    A->setRange(TOKEN_RANGE(C));
+    A->setEndCol(TOKEN_RANGE(RC));
     // XXX this is double freeing??
     //if (EXTENDS)
         //delete EXTENDS;
@@ -1113,12 +1135,12 @@ expr(A) ::= rVar(B). { A = B; }
 builtin(A) ::= T_EXIT.
 {
     A = new (CTXT) AST::builtin(CTXT, AST::builtin::EXIT);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 builtin(A) ::= T_EXIT T_LEFTPAREN T_RIGHTPAREN.
 {
     A = new (CTXT) AST::builtin(CTXT, AST::builtin::EXIT);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 builtin(A) ::= T_EXIT T_LEFTPAREN expr(RVAL) T_RIGHTPAREN.
 {
@@ -1126,7 +1148,7 @@ builtin(A) ::= T_EXIT T_LEFTPAREN expr(RVAL) T_RIGHTPAREN.
     rVal->push_back(RVAL);
     A = new (CTXT) AST::builtin(CTXT, AST::builtin::EXIT, rVal);
     delete rVal;
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 // empty
 builtin(A) ::= T_EMPTY T_LEFTPAREN var(RVAL) T_RIGHTPAREN.
@@ -1135,20 +1157,20 @@ builtin(A) ::= T_EMPTY T_LEFTPAREN var(RVAL) T_RIGHTPAREN.
     rVal->push_back(RVAL);
     A = new (CTXT) AST::builtin(CTXT, AST::builtin::EMPTY, rVal);
     delete rVal;
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 // isset
  builtin(A) ::= T_ISSET T_LEFTPAREN commaVarList(VARS) T_RIGHTPAREN.
 {
    A = new (CTXT) AST::builtin(CTXT, AST::builtin::ISSET, VARS);
-   A->setLine(CURRENT_LINE);
+   A->setRange(CURRENT_LINE);
    delete VARS;
 }
 // unset
 builtin(A) ::= T_UNSET T_LEFTPAREN commaVarList(VARS) T_RIGHTPAREN.
 {
    A = new (CTXT) AST::builtin(CTXT, AST::builtin::UNSET, VARS);
-   A->setLine(CURRENT_LINE);
+   A->setRange(CURRENT_LINE);
    delete VARS;
 }
 // print
@@ -1158,7 +1180,7 @@ builtin(A) ::= T_PRINT expr(RVAL).
     rVal->push_back(RVAL);
     A = new (CTXT) AST::builtin(CTXT, AST::builtin::PRINT, rVal);
     delete rVal;
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 // clone
 builtin(A) ::= T_CLONE expr(RVAL).
@@ -1167,7 +1189,7 @@ builtin(A) ::= T_CLONE expr(RVAL).
     rVal->push_back(RVAL);
     A = new (CTXT) AST::builtin(CTXT, AST::builtin::CLONE, rVal);
     delete rVal;
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 // include/require
 builtin(A) ::= T_REQUIRE expr(RVAL).
@@ -1176,7 +1198,7 @@ builtin(A) ::= T_REQUIRE expr(RVAL).
     rVal->push_back(RVAL);
     A = new (CTXT) AST::builtin(CTXT, AST::builtin::REQUIRE, rVal);
     delete rVal;
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 builtin(A) ::= T_REQUIRE_ONCE expr(RVAL).
 {
@@ -1184,7 +1206,7 @@ builtin(A) ::= T_REQUIRE_ONCE expr(RVAL).
     rVal->push_back(RVAL);
     A = new (CTXT) AST::builtin(CTXT, AST::builtin::REQUIRE_ONCE, rVal);
     delete rVal;
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 builtin(A) ::= T_INCLUDE expr(RVAL).
 {
@@ -1192,7 +1214,7 @@ builtin(A) ::= T_INCLUDE expr(RVAL).
     rVal->push_back(RVAL);
     A = new (CTXT) AST::builtin(CTXT, AST::builtin::INCLUDE, rVal);
     delete rVal;
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 builtin(A) ::= T_INCLUDE_ONCE expr(RVAL).
 {
@@ -1200,7 +1222,7 @@ builtin(A) ::= T_INCLUDE_ONCE expr(RVAL).
     rVal->push_back(RVAL);
     A = new (CTXT) AST::builtin(CTXT, AST::builtin::INCLUDE_ONCE, rVal);
     delete rVal;
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 builtin(A) ::= T_AT expr(RVAL).
 {
@@ -1208,7 +1230,7 @@ builtin(A) ::= T_AT expr(RVAL).
     rVal->push_back(RVAL);
     A = new (CTXT) AST::builtin(CTXT, AST::builtin::IGNORE_WARNING, rVal);
     delete rVal;
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 
 %type commaVarList {AST::expressionList*}
@@ -1239,12 +1261,12 @@ globalVar(A) ::= T_VARIABLE(B).
 {
     // strip $
     A = new (CTXT) AST::var((*B).substr(1), CTXT);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 globalVar(A) ::= T_DOLLAR rVar(B).
 {
     AST::dynamicID* r = new (CTXT) AST::dynamicID(B);
-    r->setLine(CURRENT_LINE);
+    r->setRange(CURRENT_LINE);
     A = r;
 }
 // XXX support ${expr} format for globals here?
@@ -1254,14 +1276,14 @@ staticVarList(A) ::= T_VARIABLE(B).
 {
     A = new AST::expressionList();
     AST::var* V= new (CTXT) AST::var((*B).substr(1), CTXT);
-    V->setLine(CURRENT_LINE);
+    V->setRange(CURRENT_LINE);
     A->push_back(V);
 }
 staticVarList(A) ::= staticVarList(LIST) T_COMMA T_VARIABLE(B).
 {
     // strip $
     AST::var* V= new (CTXT) AST::var((*B).substr(1), CTXT);
-    V->setLine(CURRENT_LINE);
+    V->setRange(CURRENT_LINE);
     LIST->push_back(V);
     A = LIST;
 }
@@ -1283,13 +1305,13 @@ commaExprList(A) ::= commaExprList(LIST) T_COMMA expr(E).
 conditionalExpr(A) ::= expr(COND) T_QUESTION expr(TRUE) T_COLON expr(FALSE).
 {
     A = new (CTXT) AST::conditionalExpr(COND, TRUE, FALSE);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 // 5.3 ternary with implicit true condition
 conditionalExpr(A) ::= expr(COND) T_QUESTION T_COLON expr(FALSE).
 {
     A = new (CTXT) AST::conditionalExpr(COND, COND->clone(CTXT), FALSE);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 
 /** TYPECASTS **/
@@ -1297,47 +1319,47 @@ conditionalExpr(A) ::= expr(COND) T_QUESTION T_COLON expr(FALSE).
 typeCast(A) ::= T_FLOAT_CAST expr(rVal).
 {
     A = new (CTXT) AST::typeCast(AST::typeCast::REAL, rVal);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 typeCast(A) ::= T_INT_CAST expr(rVal).
 {
     A = new (CTXT) AST::typeCast(AST::typeCast::INT, rVal);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 typeCast(A) ::= T_STRING_CAST expr(rVal).
 {
     A = new (CTXT) AST::typeCast(AST::typeCast::STRING, rVal);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 typeCast(A) ::= T_BINARY_CAST expr(rVal).
 {
     A = new (CTXT) AST::typeCast(AST::typeCast::BINARY, rVal);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 typeCast(A) ::= T_UNICODE_CAST expr(rVal).
 {
     A = new (CTXT) AST::typeCast(AST::typeCast::UNICODE, rVal);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 typeCast(A) ::= T_ARRAY_CAST expr(rVal).
 {
     A = new (CTXT) AST::typeCast(AST::typeCast::ARRAY, rVal);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 typeCast(A) ::= T_OBJECT_CAST expr(rVal).
 {
     A = new (CTXT) AST::typeCast(AST::typeCast::OBJECT, rVal);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 typeCast(A) ::= T_UNSET_CAST expr(rVal).
 {
     A = new (CTXT) AST::typeCast(AST::typeCast::UNSET, rVal);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 typeCast(A) ::= T_BOOL_CAST expr(rVal).
 {
     A = new (CTXT) AST::typeCast(AST::typeCast::BOOL, rVal);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 
 
@@ -1351,16 +1373,14 @@ scalar(A) ::= classConstant(B). { A = B; }
 scalar(A) ::= namespaceName(B).
 {
     A = new (CTXT) AST::literalConstant(B->getFullName(), CTXT);
-    A->setLine(CURRENT_LINE);
-    A->setCol(B->cols());
+    A->setRange(CURRENT_LINE);
     delete B;
 }
 scalar(A) ::= T_NS_SEPARATOR namespaceName(B).
 {
     B->setAbsolute();
     A = new (CTXT) AST::literalConstant(B->getFullName(), CTXT);
-    A->setLine(CURRENT_LINE);
-    A->setCol(B->cols());
+    A->setRange(CURRENT_LINE);
     delete B;
 }
 
@@ -1369,23 +1389,21 @@ scalar(A) ::= T_NS_SEPARATOR namespaceName(B).
 classConstant(A) ::= namespaceName(TARGET) T_DBL_COLON T_IDENTIFIER(ID).
 {
     A = new (CTXT) AST::literalConstant(*ID, CTXT, new (CTXT) AST::literalID(TARGET, TOKEN_RANGE(ID), CTXT));
-    A->setLine(CURRENT_LINE);
-    A->setCol(TARGET->cols());
+    A->setRange(CURRENT_LINE);
     delete TARGET;
 }
 classConstant(A) ::= T_NS_SEPARATOR namespaceName(TARGET) T_DBL_COLON T_IDENTIFIER(ID).
 {
     TARGET->setAbsolute();
     A = new (CTXT) AST::literalConstant(*ID, CTXT, new (CTXT) AST::literalID(TARGET, TOKEN_RANGE(ID), CTXT));
-    A->setLine(CURRENT_LINE);
-    A->setCol(TARGET->cols());
+    A->setRange(CURRENT_LINE);
     delete TARGET;
 }
 // variable class constant
 classConstant(A) ::= refVar(TARGET) T_DBL_COLON T_IDENTIFIER(ID).
 {
     A = new (CTXT) AST::literalConstant(*ID, CTXT, TARGET);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 
 // same as a scalar except can be +, - and array
@@ -1396,13 +1414,13 @@ staticScalar ::= T_PLUS staticScalar. // ignore
 staticScalar(A) ::= T_MINUS staticScalar(R).
 {
     A = new (CTXT) AST::unaryOp(R, AST::unaryOp::NEGATIVE);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 staticScalar(A) ::= T_HEREDOC_START T_HEREDOC_STRING(B) T_HEREDOC_END.
 {
   AST::literalString *hd = new (CTXT) AST::literalString(*B);
   hd->setIsSimple(false);
-  hd->setLine(CURRENT_LINE);
+  hd->setRange(CURRENT_LINE);
   A = hd;
 }
 
@@ -1411,23 +1429,23 @@ staticScalar(A) ::= T_HEREDOC_START T_HEREDOC_STRING(B) T_HEREDOC_END.
 literal(A) ::= T_SQ_STRING(B).
 {
   A = extractLiteralString(B, pMod, true);
-  A->setLine(CURRENT_LINE);
+  A->setRange(CURRENT_LINE);
 }
 literal(A) ::= T_DQ_STRING(B).
 {
   A = extractLiteralString(B, pMod, false);
-  A->setLine(CURRENT_LINE);
+  A->setRange(CURRENT_LINE);
 }
 literal(A) ::= T_TICK_STRING(B).
 {
   A = extractLiteralString(B, pMod, false);
-  A->setLine(CURRENT_LINE);
+  A->setRange(CURRENT_LINE);
 }
 literal(A) ::= T_HEREDOC_START T_HEREDOC_STRING(B) T_HEREDOC_END.
 {
   AST::literalString *hd = new (CTXT) AST::literalString(*B);
   hd->setIsSimple(false);
-  hd->setLine(CURRENT_LINE);
+  hd->setRange(CURRENT_LINE);
   A = hd;
 }
 
@@ -1435,63 +1453,63 @@ literal(A) ::= T_HEREDOC_START T_HEREDOC_STRING(B) T_HEREDOC_END.
 literal(A) ::= T_LNUMBER(B).
 {
     A = new (CTXT) AST::literalInt(*B);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 
 // literal integers (float)
 literal(A) ::= T_DNUMBER(B).
 {
     A = new (CTXT) AST::literalFloat(*B);
-    A->setLine(CURRENT_LINE);    
+    A->setRange(CURRENT_LINE);
 }
 
 // literal identifier: null, true, false or constant
 literal(A) ::= T_TRUE.
 {
     A = new (CTXT) AST::literalBool(true);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 literal(A) ::= T_FALSE.
 {
     A = new (CTXT) AST::literalBool(false);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 literal(A) ::= T_NULL.
 {
     A = new (CTXT) AST::literalNull();
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 
 %type literalMagic {AST::expr*}
 literalMagic(A) ::= T_MAGIC_FILE(ID).
 {
     A = new (CTXT) AST::literalID(*ID, TOKEN_RANGE(ID), CTXT);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 literalMagic(A) ::= T_MAGIC_LINE(ID).
 {
     A = new (CTXT) AST::literalID(*ID, TOKEN_RANGE(ID), CTXT);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 literalMagic(A) ::= T_MAGIC_CLASS(ID).
 {
     A = new (CTXT) AST::literalID(*ID, TOKEN_RANGE(ID), CTXT);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 literalMagic(A) ::= T_MAGIC_METHOD(ID).
 {
     A = new (CTXT) AST::literalID(*ID, TOKEN_RANGE(ID), CTXT);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 literalMagic(A) ::= T_MAGIC_FUNCTION(ID).
 {
     A = new (CTXT) AST::literalID(*ID, TOKEN_RANGE(ID), CTXT);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 literalMagic(A) ::= T_MAGIC_NS(ID).
 {
     A = new (CTXT) AST::literalID(*ID, TOKEN_RANGE(ID), CTXT);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 
 
@@ -1556,7 +1574,7 @@ arrayItems(A) ::= arrayItems(LIST) T_COMMA expr(KEY) T_ARROWKEY T_AND expr(VAL).
 literalArray(A) ::= T_ARRAY(ARY) T_LEFTPAREN arrayItemList(B) T_RIGHTPAREN.
 {
     A = new (CTXT) AST::literalArray(B);
-    A->setLine(TOKEN_LINE(ARY));
+    A->setRange(TOKEN_RANGE(ARY));
     delete B; // deletes the vector, NOT the exprs in it!
 }
 
@@ -1565,149 +1583,149 @@ literalArray(A) ::= T_ARRAY(ARY) T_LEFTPAREN arrayItemList(B) T_RIGHTPAREN.
 unaryOp(A) ::= T_PLUS expr(R).
 {
     A = new (CTXT) AST::unaryOp(R, AST::unaryOp::POSITIVE);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 unaryOp(A) ::= T_MINUS expr(R).
 {
     A = new (CTXT) AST::unaryOp(R, AST::unaryOp::NEGATIVE);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 unaryOp(A) ::= T_BOOLEAN_NOT expr(R).
 {
     A = new (CTXT) AST::unaryOp(R, AST::unaryOp::LOGICALNOT);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 unaryOp(A) ::= T_TILDE expr(R).
 {
     A = new (CTXT) AST::unaryOp(R, AST::unaryOp::BITWISENOT);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 /** BINARY OPERATORS **/
 %type binaryOp {AST::binaryOp*}
 binaryOp(A) ::= expr(L) T_DOT expr(R).
 {
     A = new (CTXT) AST::binaryOp(L, R, AST::binaryOp::CONCAT);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 binaryOp(A) ::= expr(L) T_BOOLEAN_AND expr(R).
 {
     A = new (CTXT) AST::binaryOp(L, R, AST::binaryOp::BOOLEAN_AND);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 binaryOp(A) ::= expr(L) T_BOOLEAN_AND_LIT expr(R).
 {
     A = new (CTXT) AST::binaryOp(L, R, AST::binaryOp::BOOLEAN_AND);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 binaryOp(A) ::= expr(L) T_BOOLEAN_OR expr(R).
 {
     A = new (CTXT) AST::binaryOp(L, R, AST::binaryOp::BOOLEAN_OR);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 binaryOp(A) ::= expr(L) T_BOOLEAN_OR_LIT expr(R).
 {
     A = new (CTXT) AST::binaryOp(L, R, AST::binaryOp::BOOLEAN_OR);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 binaryOp(A) ::= expr(L) T_BOOLEAN_XOR_LIT expr(R).
 {
     A = new (CTXT) AST::binaryOp(L, R, AST::binaryOp::BOOLEAN_XOR);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 binaryOp(A) ::= expr(L) T_DIV expr(R).
 {
     A = new (CTXT) AST::binaryOp(L, R, AST::binaryOp::DIV);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 binaryOp(A) ::= expr(L) T_MOD expr(R).
 {
     A = new (CTXT) AST::binaryOp(L, R, AST::binaryOp::MOD);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 binaryOp(A) ::= expr(L) T_MULT expr(R).
 {
     A = new (CTXT) AST::binaryOp(L, R, AST::binaryOp::MULT);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 binaryOp(A) ::= expr(L) T_PLUS expr(R).
 {
     A = new (CTXT) AST::binaryOp(L, R, AST::binaryOp::ADD);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 binaryOp(A) ::= expr(L) T_MINUS expr(R).
 {
     A = new (CTXT) AST::binaryOp(L, R, AST::binaryOp::SUB);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 binaryOp(A) ::= expr(L) T_GREATER_THAN expr(R).
 {
     A = new (CTXT) AST::binaryOp(L, R, AST::binaryOp::GREATER_THAN);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 binaryOp(A) ::= expr(L) T_LESS_THAN expr(R).
 {
     A = new (CTXT) AST::binaryOp(L, R, AST::binaryOp::LESS_THAN);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 binaryOp(A) ::= expr(L) T_GREATER_OR_EQUAL expr(R).
 {
     A = new (CTXT) AST::binaryOp(L, R, AST::binaryOp::GREATER_OR_EQUAL);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 binaryOp(A) ::= expr(L) T_LESS_OR_EQUAL expr(R).
 {
     A = new (CTXT) AST::binaryOp(L, R, AST::binaryOp::LESS_OR_EQUAL);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 binaryOp(A) ::= expr(L) T_EQUAL expr(R).
 {
     A = new (CTXT) AST::binaryOp(L, R, AST::binaryOp::EQUAL);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 binaryOp(A) ::= expr(L) T_NOT_EQUAL expr(R).
 {
     A = new (CTXT) AST::binaryOp(L, R, AST::binaryOp::NOT_EQUAL);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 binaryOp(A) ::= expr(L) T_IDENTICAL expr(R).
 {
     A = new (CTXT) AST::binaryOp(L, R, AST::binaryOp::IDENTICAL);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 binaryOp(A) ::= expr(L) T_NOT_IDENTICAL expr(R).
 {
     A = new (CTXT) AST::binaryOp(L, R, AST::binaryOp::NOT_IDENTICAL);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 binaryOp(A) ::= expr(L) T_CARET expr(R).
 {
     A = new (CTXT) AST::binaryOp(L, R, AST::binaryOp::BIT_XOR);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 binaryOp(A) ::= expr(L) T_PIPE expr(R).
 {
     A = new (CTXT) AST::binaryOp(L, R, AST::binaryOp::BIT_OR);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 binaryOp(A) ::= expr(L) T_AND expr(R).
 {
     A = new (CTXT) AST::binaryOp(L, R, AST::binaryOp::BIT_AND);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 binaryOp(A) ::= expr(L) T_SL expr(R).
 {
     A = new (CTXT) AST::binaryOp(L, R, AST::binaryOp::SHIFT_LEFT);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 binaryOp(A) ::= expr(L) T_SR expr(R).
 {
     A = new (CTXT) AST::binaryOp(L, R, AST::binaryOp::SHIFT_RIGHT);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 binaryOp(A) ::= expr(L) T_INSTANCEOF maybeDynamicID(R).
 {
     A = new (CTXT) AST::binaryOp(L, R, AST::binaryOp::INSTANCEOF);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 
 /** PRE/POST OP **/
@@ -1715,23 +1733,23 @@ binaryOp(A) ::= expr(L) T_INSTANCEOF maybeDynamicID(R).
 preOp(A) ::= T_INC var(R).
 {
     A = new (CTXT) AST::preOp(R, AST::preOp::INC);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 preOp(A) ::= T_DEC var(R).
 {
     A = new (CTXT) AST::preOp(R, AST::preOp::DEC);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 %type postOp {AST::postOp*}
 postOp(A) ::= var(R) T_INC.
 {
     A = new (CTXT) AST::postOp(R, AST::postOp::INC);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 postOp(A) ::= var(R) T_DEC.
 {
     A = new (CTXT) AST::postOp(R, AST::postOp::DEC);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 
 /** ASSIGNMENT **/
@@ -1739,79 +1757,79 @@ postOp(A) ::= var(R) T_DEC.
 assignment(A) ::= var(L) T_ASSIGN(EQ_SIGN) expr(R).
 {
     A = new (CTXT) AST::assignment(L, R, false);
-    A->setLine(TOKEN_LINE(EQ_SIGN));
+    A->setRange(TOKEN_RANGE(EQ_SIGN));
 }
 assignment(A) ::= var(L) T_ASSIGN T_AND(EQ_SIGN) var(R).
 {
     A = new (CTXT) AST::assignment(L, R, true);
-    A->setLine(TOKEN_LINE(EQ_SIGN));
+    A->setRange(TOKEN_RANGE(EQ_SIGN));
 }
 assignment(A) ::= var(L) T_ASSIGN T_AND(EQ_SIGN) functionInvoke(R).
 {
     A = new (CTXT) AST::assignment(L, R, true);
-    A->setLine(TOKEN_LINE(EQ_SIGN));
+    A->setRange(TOKEN_RANGE(EQ_SIGN));
 }
 assignment(A) ::= var(L) T_ASSIGN T_AND(EQ_SIGN) constructorInvoke(R).
 {
     A = new (CTXT) AST::assignment(L, R, true);
-    A->setLine(TOKEN_LINE(EQ_SIGN));
+    A->setRange(TOKEN_RANGE(EQ_SIGN));
 }
 
 %type opAssignment {AST::opAssignment*}
 opAssignment(A) ::= var(L) T_AND_EQUAL(EQ_SIGN) expr(R).
 {
     A = new (CTXT) AST::opAssignment(L, R, AST::opAssignment::AND);
-    A->setLine(TOKEN_LINE(EQ_SIGN));
+    A->setRange(TOKEN_RANGE(EQ_SIGN));
 }
 opAssignment(A) ::= var(L) T_OR_EQUAL(EQ_SIGN) expr(R).
 {
     A = new (CTXT) AST::opAssignment(L, R, AST::opAssignment::OR);
-    A->setLine(TOKEN_LINE(EQ_SIGN));
+    A->setRange(TOKEN_RANGE(EQ_SIGN));
 }
 opAssignment(A) ::= var(L) T_XOR_EQUAL(EQ_SIGN) expr(R).
 {
     A = new (CTXT) AST::opAssignment(L, R, AST::opAssignment::XOR);
-    A->setLine(TOKEN_LINE(EQ_SIGN));
+    A->setRange(TOKEN_RANGE(EQ_SIGN));
 }
 opAssignment(A) ::= var(L) T_CONCAT_EQUAL(OP) expr(R).
 {
     A = new (CTXT) AST::opAssignment(L, R, AST::opAssignment::CONCAT);
-    A->setLine(TOKEN_LINE(OP));
+    A->setRange(TOKEN_RANGE(OP));
 }
 opAssignment(A) ::= var(L) T_DIV_EQUAL(OP) expr(R).
 {
     A = new (CTXT) AST::opAssignment(L, R, AST::opAssignment::DIV);
-    A->setLine(TOKEN_LINE(OP));
+    A->setRange(TOKEN_RANGE(OP));
 }
 opAssignment(A) ::= var(L) T_MUL_EQUAL(OP) expr(R).
 {
     A = new (CTXT) AST::opAssignment(L, R, AST::opAssignment::MULT);
-    A->setLine(TOKEN_LINE(OP));
+    A->setRange(TOKEN_RANGE(OP));
 }
 opAssignment(A) ::= var(L) T_PLUS_EQUAL(OP) expr(R).
 {
     A = new (CTXT) AST::opAssignment(L, R, AST::opAssignment::ADD);
-    A->setLine(TOKEN_LINE(OP));
+    A->setRange(TOKEN_RANGE(OP));
 }
 opAssignment(A) ::= var(L) T_MINUS_EQUAL(OP) expr(R).
 {
     A = new (CTXT) AST::opAssignment(L, R, AST::opAssignment::SUB);
-    A->setLine(TOKEN_LINE(OP));
+    A->setRange(TOKEN_RANGE(OP));
 }
 opAssignment(A) ::= var(L) T_MOD_EQUAL(OP) expr(R).
 {
     A = new (CTXT) AST::opAssignment(L, R, AST::opAssignment::MOD);
-    A->setLine(TOKEN_LINE(OP));
+    A->setRange(TOKEN_RANGE(OP));
 }
 opAssignment(A) ::= var(L) T_SL_EQUAL(OP) expr(R).
 {
     A = new (CTXT) AST::opAssignment(L, R, AST::opAssignment::SHIFT_LEFT);
-    A->setLine(TOKEN_LINE(OP));
+    A->setRange(TOKEN_RANGE(OP));
 }
 opAssignment(A) ::= var(L) T_SR_EQUAL(OP) expr(R).
 {
     A = new (CTXT) AST::opAssignment(L, R, AST::opAssignment::SHIFT_RIGHT);
-    A->setLine(TOKEN_LINE(OP));
+    A->setRange(TOKEN_RANGE(OP));
 }
 
 // XXX need to SetIsLval() on the listElements if they are expr
@@ -1820,7 +1838,7 @@ listAssignment(A) ::= T_LIST(LIST) T_LEFTPAREN listAssignmentList(VARS) T_RIGHTP
 {
     AST::block* varList = new (CTXT) AST::block(CTXT, VARS);
     A = new (CTXT) AST::listAssignment(varList, RVAL);
-    A->setLine(TOKEN_LINE(LIST));
+    A->setRange(TOKEN_RANGE(LIST));
     delete VARS;
 }
 
@@ -2013,13 +2031,13 @@ refVar(A) ::= T_VARIABLE(B).
 {
     // strip $
     A = new (CTXT) AST::var((*B).substr(1), CTXT);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 refVar(A) ::= T_VARIABLE(B) arrayIndices(C).
 {
     // strip $
     A = new (CTXT) AST::var((*B).substr(1), CTXT, C);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
     delete C;
 }
 // XXX refVar: support ${expr} syntax here?
@@ -2029,12 +2047,12 @@ refVar(A) ::= T_VARIABLE(B) arrayIndices(C).
 objProperty(A) ::= T_IDENTIFIER(ID).
 {
     A = new (CTXT) AST::var(*ID, CTXT);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 objProperty(A) ::= T_IDENTIFIER(ID) arrayIndices(INDICES).
 {
     A = new (CTXT) AST::var(*ID, CTXT, INDICES);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
     delete INDICES;
 }
 // $foo->$bar
@@ -2048,7 +2066,7 @@ objProperty(A) ::= varNoObjects(VAR).
 objProperty(A) ::= T_LEFTCURLY expr(VAL) T_RIGHTCURLY.
 {
     A = new (CTXT) AST::var(VAL, CTXT);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }
 
 %type varVar {pUInt*}
@@ -2119,8 +2137,7 @@ functionInvoke(A) ::= maybeDynamicID(ID) T_LEFTPAREN argList(ARGS) T_RIGHTPAREN.
                                        CTXT,
                                        ARGS  // expression list: arguments, copied
                                        );
-    A->setLine(CURRENT_LINE);
-    A->setCol(ID->cols());
+    A->setRange(CURRENT_LINE);
     delete ARGS;
 }
 // foo::bar() (or self:: or parent::)
@@ -2133,8 +2150,7 @@ functionInvoke(A) ::= namespaceName(TARGET) T_DBL_COLON T_IDENTIFIER(ID) T_LEFTP
                                        ARGS,  // expression list: arguments, copied
                                        new (CTXT) AST::literalID(TARGET, CTXT)
                                        );
-    A->setLine(CURRENT_LINE);
-    A->setCol(TOKEN_COL(ID));
+    A->setRange(CURRENT_LINE);
     delete ARGS;
     delete TARGET;
 }
@@ -2147,7 +2163,7 @@ functionInvoke(A) ::= namespaceName(TARGET) T_DBL_COLON varNoObjects(DNAME) T_LE
                                        ARGS,  // expression list: arguments, copied
                                        new (CTXT) AST::literalID(TARGET, CTXT)
                                        );
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
     delete ARGS;
     delete TARGET;
 }
@@ -2161,8 +2177,7 @@ functionInvoke(A) ::= T_NS_SEPARATOR namespaceName(TARGET) T_DBL_COLON T_IDENTIF
                                        ARGS,  // expression list: arguments, copied
                                        new (CTXT) AST::literalID(TARGET, CTXT)
                                        );
-    A->setLine(CURRENT_LINE);
-    A->setCol(TOKEN_COL(ID));
+    A->setRange(CURRENT_LINE);
     delete ARGS;
     delete TARGET;
 }
@@ -2176,7 +2191,7 @@ functionInvoke(A) ::= T_NS_SEPARATOR namespaceName(TARGET) T_DBL_COLON varNoObje
                                        ARGS,  // expression list: arguments, copied
                                        new (CTXT) AST::literalID(TARGET, CTXT)
                                        );
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
     delete ARGS;
     delete TARGET;
 }
@@ -2190,8 +2205,7 @@ functionInvoke(A) ::= refVar(TARGET) T_DBL_COLON T_IDENTIFIER(ID) T_LEFTPAREN ar
                                        ARGS,  // expression list: arguments, copied
                                        TARGET
                                        );
-    A->setLine(CURRENT_LINE);
-    A->setCol(TOKEN_COL(ID));
+    A->setRange(CURRENT_LINE);
     delete ARGS;
 }
 // $foo()
@@ -2203,7 +2217,7 @@ functionInvoke(A) ::= varNoObjects(DNAME) T_LEFTPAREN argList(ARGS) T_RIGHTPAREN
                                        CTXT,
                                        ARGS  // expression list: arguments, copied
                                        );
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
     delete ARGS;
 }
 
@@ -2218,8 +2232,7 @@ constructorInvoke(A) ::= T_NEW maybeDynamicID(ID) T_LEFTPAREN argList(C) T_RIGHT
                                        CTXT,
                                        C  // expression list: arguments, copied
                                        );
-    A->setLine(CURRENT_LINE);
-    A->setCol(ID->cols());
+    A->setRange(CURRENT_LINE);
     A->setConstructor();
     delete C;
 }
@@ -2228,8 +2241,7 @@ constructorInvoke(A) ::= T_NEW maybeDynamicID(ID).
     A = new (CTXT) AST::functionInvoke(ID, // f name
                                        CTXT
                                        );
-    A->setLine(CURRENT_LINE);
-    A->setCol(ID->cols());
+    A->setRange(CURRENT_LINE);
     A->setConstructor();
 }
 
@@ -2242,16 +2254,14 @@ constructorInvoke(A) ::= T_NEW maybeDynamicID(ID).
 literalID(A) ::= namespaceName(NSNAME).
 {
     A = new (CTXT) AST::literalID(NSNAME, CTXT);
-    A->setLine(CURRENT_LINE);
-    A->setCol(NSNAME->cols());
+    A->setRange(CURRENT_LINE);
     delete NSNAME;
 }
 literalID(A) ::= T_NS_SEPARATOR namespaceName(NSNAME).
 {
     NSNAME->setAbsolute();
     A = new (CTXT) AST::literalID(NSNAME, CTXT);
-    A->setLine(CURRENT_LINE);
-    A->setCol(NSNAME->cols());
+    A->setRange(CURRENT_LINE);
     delete NSNAME;
 }
 %type maybeDynamicID {AST::expr*}
@@ -2259,5 +2269,5 @@ maybeDynamicID(A) ::= literalID(B). { A = B; }
 maybeDynamicID(A) ::= baseVar(VAL).
 {
     A = new (CTXT) AST::dynamicID(VAL);
-    A->setLine(CURRENT_LINE);
+    A->setRange(CURRENT_LINE);
 }

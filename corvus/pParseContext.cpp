@@ -21,14 +21,23 @@ namespace corvus {
 
 namespace AST {
 
-pColRange pParseContext::getColPair(pSourceRef* r) {
+pSourceRange pParseContext::getRange(pSourceRef* r) {
     // find the closest newline to the left of r->begin, without underrunning
     // the buffer
     pSourceCharIterator bufBegin = owner_->source()->contents()->getBufferStart();
     pSourceCharIterator i = r->begin();
     while (i != bufBegin && *i != '\n')
         i--;
-    return pColRange(r->begin()-i, r->end()-i);
+
+    pSourceRange rg;
+    rg.startCol = r->begin()-i;
+    rg.endCol = r->end()-i;
+    lineNumMapType::const_iterator il = tokenLineInfo_.find(r);
+    if (il != tokenLineInfo_.end()) {
+        rg.startLine = (*il).second;
+        rg.endLine = rg.startLine;
+    }
+    return rg;
 }
 
 void pParseContext::parseError(pStringRef msg) {

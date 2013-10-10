@@ -66,11 +66,11 @@ public:
     llvm::StringPool& idPool(void) { return idPool_; }
 
     // PARSING
-    pUInt currentLineNum() const { return currentLineNum_; }
+    pSourceRange currentLineNum() const { return pSourceRange(currentLineNum_); }
     void incLineNum(void) { ++currentLineNum_; }
     void incLineNum(pUInt i) { currentLineNum_ +=i; }
 
-    pColRange getColPair(pSourceRef* r);
+    pSourceRange getRange(pSourceRef* r);
 
     void setLastNewline(pSourceCharIterator i) { lastNewline_ = i; }
     const pSourceCharIterator& lastNewline(void) const { return lastNewline_; }
@@ -80,14 +80,6 @@ public:
 
     void setTokenLine(const pSourceRef* t) {
         tokenLineInfo_[t] = currentLineNum_;
-    }
-
-    pUInt getTokenLine(const pSourceRef* t) {
-        lineNumMapType::const_iterator i = tokenLineInfo_.find(t);
-        if (i == tokenLineInfo_.end())
-            return 0;
-        else
-            return (*i).second;
     }
 
     void finishParse(void) {

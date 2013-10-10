@@ -246,6 +246,14 @@ function decluse() {
     // DIAG: not defined (was defined only in branch)
     echo $vcheck3;
 
+    try {
+        echo "foo";
+    }
+    catch (\Exception $e) {
+        // nodiag: $e is defined
+        echo $e;
+    }
+
 }
 
 } // namespace
