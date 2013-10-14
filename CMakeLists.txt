@@ -73,4 +73,7 @@ install(DIRECTORY corvus/ DESTINATION
                   "include/corvus"
                    FILES_MATCHING PATTERN "*.h"
         )
-
+install(DIRECTORY corvus/ DESTINATION
+                  "include/corvus"
+                   FILES_MATCHING PATTERN "*.def"
+        )
