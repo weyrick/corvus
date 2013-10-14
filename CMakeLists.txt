@@ -67,3 +67,10 @@ ENDIF(DOXYGEN_FOUND)
 add_custom_target(check ${CMAKE_CURRENT_SOURCE_DIR}/test/corvus-test
                         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test/
                   )
+
+# XXX this includes more than necessary
+install(DIRECTORY corvus/ DESTINATION
+                  "include/corvus"
+                   FILES_MATCHING PATTERN "*.h"
+        )
+

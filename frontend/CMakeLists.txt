@@ -15,3 +15,9 @@ add_executable( corvus ${COR_ANALYSIS_FILES} )
 target_link_libraries ( corvus
                         libcorvus
 			)
+
+install(TARGETS corvus
+        RUNTIME DESTINATION bin
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+       )

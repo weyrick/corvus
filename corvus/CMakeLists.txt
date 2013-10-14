@@ -126,3 +126,9 @@ target_link_libraries ( libcorvus
                         )
 ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
+install(TARGETS libcorvus
+        RUNTIME DESTINATION bin
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+       )
+
