@@ -127,6 +127,60 @@ pSourceManager::~pSourceManager() {
     }
 }
 
+void pSourceManager::configure(const pConfig& config, std::ostream &log) {
+
+    std::vector<std::string> inputFiles;
+
+    verbosity_ = config.verbosity;
+    debugParse_ = config.debugParse;
+    debugModel_ = config.debugModel;
+    debugDiags_ = config.debugDiags;
+
+    // set values from config
+    if (!config.dbName.empty()) {
+        if (verbosity_)
+            log << "[config] setting db name: " << config.dbName;
+        setModelDBName(config.dbName);
+    }
+    if (!config.includePaths.empty()) {
+        for (unsigned i = 0; i != config.includePaths.size(); ++i) {
+            if (verbosity_)
+                log << "[config] adding include path: " << config.includePaths[i];
+            addIncludeDir(config.includePaths[i], config.exts);
+        }
+    }
+
+    if (!config.inputFiles.empty()) {
+        for (unsigned i = 0; i != config.inputFiles.size(); ++i) {
+            if (verbosity_)
+                log << "[config] adding input file: " << config.inputFiles[i];
+            inputFiles.push_back(config.inputFiles[i]);
+        }
+    }
+
+    if (inputFiles.empty()) {
+        return;
+    }
+
+    for (unsigned i = 0; i != inputFiles.size(); ++i) {
+
+        llvm::sys::fs::file_status stat;
+        llvm::sys::fs::status(inputFiles[i], stat);
+        if (llvm::sys::fs::is_directory(stat)) {
+            addSourceDir(inputFiles[i], config.exts);
+        }
+        else if (llvm::sys::fs::is_regular_file(stat)) {
+            addSourceFile(inputFiles[i]);
+        }
+        else {
+            if (verbosity_)
+                log << "[config] skipping unknown path: " << inputFiles[i];
+        }
+
+    }
+
+}
+
 void pSourceManager::addSourceFile(pStringRef name) {
 
     // only add it once, based on realpath

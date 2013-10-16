@@ -26,6 +26,13 @@ struct pConfig {
     StringListType diagFiles;
     std::string dbName;
     std::string exts;
+    int verbosity;
+    bool debugParse;
+    bool debugModel;
+    bool debugDiags;
+    pConfig(): exts("php"), verbosity(0), debugParse(false), debugModel(false),
+               debugDiags(false) { }
+
 };
 
 class pConfigMgr {

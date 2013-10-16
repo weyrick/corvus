@@ -24,6 +24,7 @@
 #include <llvm/Support/YAMLParser.h>
 #include <llvm/Support/MemoryBuffer.h>
 #include <llvm/Support/system_error.h>
+#include <llvm/ADT/APInt.h>
 
 namespace corvus { 
 
@@ -73,6 +74,11 @@ bool pConfigMgr::read(const llvm::Twine &file, pConfig &c) {
             }
             else if (key == "exts") {
                 c.exts = val.str();
+            }
+            else if (key == "verbosity") {
+                llvm::APInt result;
+                val.getAsInteger(10, result);
+                c.verbosity = result.getLimitedValue();
             }
             else {
                 std::cerr << "unknown key in config file: " << key.str() << std::endl;

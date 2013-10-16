@@ -13,7 +13,9 @@
 
 #include "corvus/pTypes.h"
 #include "corvus/pSourceModule.h"
+#include "corvus/pConfig.h"
 
+#include <ostream>
 #include <map>
 #include <string>
 
@@ -60,12 +62,7 @@ public:
 
     void setModelDBName(pStringRef db)  { dbName_ = db; }
 
-    void setDebug(int verbosity, bool debugParse, bool debugModel, bool debugDiags) {
-        verbosity_ = verbosity;
-        debugParse_ = debugParse;
-        debugModel_ = debugModel;
-        debugDiags_ = debugDiags;
-    }
+    void configure(const pConfig& config, std::ostream &log = std::cerr);
 
     void printAST();
     void printToks();

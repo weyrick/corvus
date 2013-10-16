@@ -131,7 +131,6 @@ int main( int argc, char* argv[] )
 {
 
     int opt, idx, verbosity(0);
-    bool debugParse(false), debugModel(false), debugDiags(false);
     bool printToks(false), printAST(false);
     std::string graphFileName;
 
@@ -139,7 +138,6 @@ int main( int argc, char* argv[] )
 
     pSourceManager sm;
     pConfig config;
-    config.exts = "php";
 
     // try to read home directory config file
     char *home = getenv("HOME");
@@ -157,15 +155,15 @@ int main( int argc, char* argv[] )
         case 0:
             // long option tied to a flag variable
             if (strcmp(longopts[idx].name,"debug-parse") == 0) {
-                debugParse = true;
+                config.debugParse = true;
                 continue;
             }
             if (strcmp(longopts[idx].name,"debug-model") == 0) {
-                debugModel = true;
+                config.debugModel = true;
                 continue;
             }
             if (strcmp(longopts[idx].name,"debug-diags") == 0) {
-                debugDiags = true;
+                config.debugDiags = true;
                 continue;
             }
             inputFiles.push_back(longopts[idx].name);
@@ -202,38 +200,14 @@ int main( int argc, char* argv[] )
         }
     }
 
-    sm.setDebug(verbosity, debugParse, debugModel, debugDiags);
-
-    // set values from config
-    if (!config.dbName.empty()) {
-        if (verbosity)
-            std::cout << "[config] setting db name: " << config.dbName << std::endl;
-        sm.setModelDBName(config.dbName);
-    }
-    if (!config.includePaths.empty()) {
-        for (unsigned i = 0; i != config.includePaths.size(); ++i) {
-            if (verbosity)
-                std::cout << "[config] adding include path: " << config.includePaths[i] << std::endl;
-            sm.addIncludeDir(config.includePaths[i], config.exts);
-        }
-    }
-
-    bool haveSourceFromConfig = false;
-    if (!config.inputFiles.empty()) {
-        haveSourceFromConfig = true;
-        for (unsigned i = 0; i != config.inputFiles.size(); ++i) {
-            if (verbosity)
-                std::cout << "[config] adding input file: " << config.inputFiles[i] << std::endl;
-            inputFiles.push_back(config.inputFiles[i]);
-        }
-    }
+    sm.configure(config, std::cout);
 
     if (optind < argc) {
         // if we have files on the command line, but there were already files
         // added via a config file, then instead of adding these files to
         // the list we will instead limit diagnostic output to just these
         // files
-        if (haveSourceFromConfig) {
+        if (!config.inputFiles.empty()) {
             while (optind < argc)
                 config.diagFiles.push_back(argv[optind++]);
         }
