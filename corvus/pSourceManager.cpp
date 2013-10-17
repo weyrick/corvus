@@ -107,8 +107,7 @@ pSourceManager::~pSourceManager() {
 
     if (db_) {
         if (!dbName_.empty()) {
-            if (verbosity_ > 2)
-                std::cerr << "flushing in memory db to: " << dbName_ << std::endl;
+            log("flushing in memory db to: " + dbName_, 2);
             int rc = loadOrSaveDb(db_, dbName_.c_str(), 1);
             if (rc != SQLITE_OK) {
                 std::cerr << "failing saving in memory db!" << std::endl;
@@ -127,7 +126,7 @@ pSourceManager::~pSourceManager() {
     }
 }
 
-void pSourceManager::configure(const pConfig& config, std::ostream &log) {
+void pSourceManager::configure(const pConfig& config) {
 
     std::vector<std::string> inputFiles;
 
@@ -136,29 +135,32 @@ void pSourceManager::configure(const pConfig& config, std::ostream &log) {
     debugModel_ = config.debugModel;
     debugDiags_ = config.debugDiags;
 
+    if (!config.rootDir.empty()) {
+        log("[config] switching to rootDir: " + config.rootDir);
+        chdir(config.rootDir.c_str());
+    }
+
     // set values from config
     if (!config.dbName.empty()) {
-        if (verbosity_)
-            log << "[config] setting db name: " << config.dbName;
+        log("[config] setting db name: " + config.dbName);
         setModelDBName(config.dbName);
     }
     if (!config.includePaths.empty()) {
         for (unsigned i = 0; i != config.includePaths.size(); ++i) {
-            if (verbosity_)
-                log << "[config] adding include path: " << config.includePaths[i];
+            log("[config] adding include path: " + config.includePaths[i]);
             addIncludeDir(config.includePaths[i], config.exts);
         }
     }
 
     if (!config.inputFiles.empty()) {
         for (unsigned i = 0; i != config.inputFiles.size(); ++i) {
-            if (verbosity_)
-                log << "[config] adding input file: " << config.inputFiles[i];
+            log("[config] adding input file: " + config.inputFiles[i]);
             inputFiles.push_back(config.inputFiles[i]);
         }
     }
 
     if (inputFiles.empty()) {
+        log("[config] no input files");
         return;
     }
 
@@ -173,8 +175,7 @@ void pSourceManager::configure(const pConfig& config, std::ostream &log) {
             addSourceFile(inputFiles[i]);
         }
         else {
-            if (verbosity_)
-                log << "[config] skipping unknown path: " << inputFiles[i];
+            log("[config] skipping unknown path: " + inputFiles[i]);
         }
 
     }
@@ -193,9 +194,7 @@ void pSourceManager::addSourceFile(pStringRef name) {
         return;
     }
 
-    if (verbosity_ > 2) {
-        std::cerr << "adding source file: " << name.str() << std::endl;
-    }
+    log("adding source file: " + name.str());
 
     pSourceModule* unit(new pSourceModule(this, rp));
     moduleList_[rp] = unit;
@@ -247,7 +246,7 @@ void pSourceManager::runPasses(pPassManager *pm) {
             // catch parse errors
             // this is idempotent
             if (verbosity_ > 1 && i->second->getAST()) {
-                std::cerr << "parsing: " << i->second->fileName() << std::endl;
+                log("parsing: " + i->second->fileName());
             }
             i->second->parse(debugParse_);
         }
@@ -348,9 +347,7 @@ void pSourceManager::addIncludeDir(pStringRef name, pStringRef exts) {
         try {
             // catch parse errors
             // this is idempotent
-            if (verbosity_ > 1) {
-                std::cerr << "parsing include file: " << (*i)->fileName() << std::endl;
-            }
+            log("parsing include file: " + (*i)->fileName());
             (*i)->parse(debugParse_);
         }
         catch (std::exception& e) {
@@ -409,8 +406,7 @@ void pSourceManager::openModel() {
 
     // try to load an existing db, if we are using one
     if (!dbName_.empty()) {
-        if (verbosity_ > 1)
-            std::cerr << "using model db at: " << dbName_ << std::endl;
+        log("using model db at: " + dbName_);
         // we ignore a failure here if it doesn't exist yet
         loadOrSaveDb(db_, dbName_.c_str(), 0);
     }

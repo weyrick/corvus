@@ -24,6 +24,7 @@ struct pConfig {
     StringListType includePaths;
     StringListType inputFiles;
     StringListType diagFiles;
+    std::string rootDir;
     std::string dbName;
     std::string exts;
     int verbosity;

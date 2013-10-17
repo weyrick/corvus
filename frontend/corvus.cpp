@@ -130,13 +130,13 @@ bool willRenderFor(pStringRef cwd, const pConfig &config, pStringRef fname) {
 int main( int argc, char* argv[] )
 {
 
-    int opt, idx, verbosity(0);
+    int opt, idx;
     bool printToks(false), printAST(false);
     std::string graphFileName;
 
     std::vector<std::string> inputFiles;
 
-    pSourceManager sm;
+    pSourceManager sm(&std::cout);
     pConfig config;
 
     // try to read home directory config file
@@ -195,12 +195,12 @@ int main( int argc, char* argv[] )
             sm.setModelDBName(optarg);
             break;
         case 'v':
-            verbosity++;
+            config.verbosity++;
             break;
         }
     }
 
-    sm.configure(config, std::cout);
+    sm.configure(config);
 
     if (optind < argc) {
         // if we have files on the command line, but there were already files
@@ -217,7 +217,8 @@ int main( int argc, char* argv[] )
         }
     }
 
-    if (inputFiles.empty()) {
+    if (inputFiles.empty() && config.inputFiles.empty()) {
+        std::cerr << "no input files" << std::endl;
         corvusVersion();
         exit(1);
     }
@@ -261,7 +262,7 @@ int main( int argc, char* argv[] )
         }
     }
 
-    if (verbosity)
+    if (config.verbosity)
         std::cerr << "analyzation complete" << std::endl;
 
     return 0;

@@ -45,24 +45,32 @@ private:
     sqlite3 *db_;
     pModel *model_;
     std::string dbName_;
+    std::ostream *logStream_;
+
+    void log(llvm::Twine msg, int verbosity = 1) {
+        if (logStream_ && verbosity_ >= verbosity) {
+            *logStream_ << msg.str() << std::endl;
+        }
+    }
 
     void runPasses(pPassManager *pm);
     void openModel();
 
 public:
 
-    pSourceManager(): debugParse_(false),
+    pSourceManager(std::ostream *logStream = 0): debugParse_(false),
         debugModel_(false),
         debugDiags_(false),
         verbosity_(0),
         db_(NULL),
         model_(NULL),
+        logStream_(logStream),
         dbName_() { }
     ~pSourceManager();
 
     void setModelDBName(pStringRef db)  { dbName_ = db; }
 
-    void configure(const pConfig& config, std::ostream &log = std::cerr);
+    void configure(const pConfig& config);
 
     void printAST();
     void printToks();
