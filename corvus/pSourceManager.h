@@ -68,6 +68,7 @@ public:
         dbName_() { }
     ~pSourceManager();
 
+    void setLogStream(std::ostream *logStream) { logStream_ = logStream; }
     void setModelDBName(pStringRef db)  { dbName_ = db; }
 
     void configure(const pConfig& config);
