@@ -10,6 +10,7 @@
 
 #include "corvus/pSourceFile.h"
 #include "corvus/pParseError.h"
+#include "corvus/pSourceLoc.h"
 
 #include <llvm/Support/system_error.h>
 
@@ -21,7 +22,7 @@ pSourceFile::pSourceFile(pStringRef file):
 {
 
     if (llvm::MemoryBuffer::getFile(file, contents_)) {
-        throw pParseError("couldn't open file [" + file_ + "]");
+        throw pParseError("couldn't open file [" + file_ + "]", pSourceLoc(file, 0, 0));
     }
     
 }

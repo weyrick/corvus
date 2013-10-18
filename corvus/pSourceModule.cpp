@@ -60,8 +60,8 @@ void pSourceModule::setAST(const AST::statementList* list) {
 }
 
 void pSourceModule::applyVisitor(AST::pBaseVisitor* v) {
-    assert(ast_);
-    v->visit(ast_);
+    if (ast_)
+        v->visit(ast_);
 }
 
 bool compareDiagLine(pDiagnostic* lhs, pDiagnostic* rhs) {

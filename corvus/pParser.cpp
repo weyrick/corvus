@@ -56,7 +56,7 @@ std::pair<pSourceCharIterator,pSourceCharIterator> find_heredoc_id(const std::st
     if (lexer.sourceEnd() - match.end < HEREDOC_ID.length()) {
         // the remaining source text is shorter than the heredocid length,
         // which means we're never going to match it
-        context.parseError("dangling HEREDOC");
+        context.parseError("dangling HEREDOC", pSourceRange());
     }
     pSourceCharIterator ms = match.end;
     pSourceCharIterator me = match.end+HEREDOC_ID.length();
@@ -185,7 +185,7 @@ void parseSourceFile(pSourceModule* pMod, bool debug=false) {
                 }
                 else {
                     // unmatched token: error
-                    pMod->context().parseError(NULL);
+                    pMod->context().parseError(curRange, pSourceRange());
                 }
                 break;
             }

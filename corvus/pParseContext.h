@@ -93,8 +93,8 @@ public:
     }
 
     // PARSE ERROR HANDLER
-    void parseError(pSourceRef* r);
-    void parseError(pStringRef msg);
+    void parseError(pSourceRef* r, const pSourceRange& range);
+    void parseError(pStringRef msg, const pSourceRange& range);
 
 };
 

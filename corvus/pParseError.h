@@ -13,27 +13,33 @@
 
 #include <string>
 #include <stdexcept>
+#include "corvus/pSourceLoc.h"
 
 namespace corvus {
 
 class pParseError : public std::runtime_error {
 
+    pSourceLoc loc_;
     std::string msg_;
 
 public:
-    pParseError(const std::string& msg):
+    pParseError(const std::string& msg, const pSourceLoc& loc):
         std::runtime_error(""),
+        loc_(loc),
         msg_(msg) { }
 
-    pParseError(const std::wstring& msg):
+    pParseError(const std::wstring& msg, const pSourceLoc& loc):
         std::runtime_error(""),
+        loc_(loc),
         msg_(msg.begin(), msg.end()) { }
 
     ~pParseError(void) throw() { }
 
+    pSourceLoc loc(void) const { return loc_; }
+
     const char* what() const throw() {
         return msg_.c_str();
-    } 
+    }
 
 };
 

@@ -13,6 +13,7 @@
 #include "corvus/pSourceModule.h"
 #include "corvus/pSourceFile.h"
 #include "corvus/pParseError.h"
+#include "corvus/pSourceLoc.h"
 
 #include <iostream>
 #include <sstream>
@@ -40,20 +41,12 @@ pSourceRange pParseContext::getRange(pSourceRef* r) {
     return rg;
 }
 
-void pParseContext::parseError(pStringRef msg) {
-    std::stringstream errorMsg;
-
-    errorMsg  << std::string(msg)
-              << " in ";
-    errorMsg  << owner_->source()->fileName();
-    errorMsg  << " on line "
-              << currentLineNum_
-              <<  std::endl;
-
-    throw pParseError(errorMsg.str());
+void pParseContext::parseError(pStringRef msg, const pSourceRange& range) {
+    throw pParseError(msg, pSourceLoc(owner_, range));
 }
 
-void pParseContext::parseError(pSourceRef* r) {
+void pParseContext::parseError(pSourceRef* r, const pSourceRange& range) {
+
 
     // show the line the error occured on
     // if it was a lex error, we show 1 character. if it was a parse error,
@@ -102,13 +95,11 @@ void pParseContext::parseError(pSourceRef* r) {
         errorLine.append(eLineStart, eLineStop);
 
     // message
-    errorMsg  << owner_->source()->fileName()
-              << ":" << currentLineNum_
-              << ": parse error: unexpected '"
+    errorMsg  << "parse error: unexpected '"
               << problem
-              << "'"
-              <<  std::endl;
+              << "'";
 
+    /*
     // error line with arrow
     if (!errorLine.empty() && !endOfSource) {
         // convert tabs to spaces so arrow lines up
@@ -120,7 +111,9 @@ void pParseContext::parseError(pSourceRef* r) {
         errorMsg << std::string((lastToken_->end()+1)-(lastNewline_+1)-1,' ') << "^" << std::endl;
     }
 
-    throw pParseError(errorMsg.str());
+    throw pParseError(errorMsg.str(), pSourceLoc(owner_, range));
+    */
+    parseError(errorMsg.str(), range);
 
 }
 

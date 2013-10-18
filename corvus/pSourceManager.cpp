@@ -15,6 +15,8 @@
 #include "corvus/pPassManager.h"
 #include "corvus/pModel.h"
 #include "corvus/pFullModelChecker.h"
+#include "corvus/pParseError.h"
+#include "corvus/pDiagnostic.h"
 
 #include "corvus/passes/PrintAST.h"
 #include "corvus/passes/DumpStats.h"
@@ -243,15 +245,19 @@ void pSourceManager::runPasses(pPassManager *pm) {
          i++) {
 
         try {
-            // catch parse errors
-            // this is idempotent
             if (verbosity_ > 1 && i->second->getAST()) {
                 log("parsing: " + i->second->fileName());
             }
+            // this is idempotent
             i->second->parse(debugParse_);
         }
+        catch (pParseError& p) {
+            // diag the parse error
+            i->second->addDiagnostic(new pDiagnostic(p.loc(), p.what()));
+            continue;
+        }
         catch (std::exception& e) {
-            std::cerr << e.what() << std::endl;
+            log("[error]: " + pStringRef(e.what()));
             continue;
         }
 
@@ -345,13 +351,17 @@ void pSourceManager::addIncludeDir(pStringRef name, pStringRef exts) {
          i++) {
 
         try {
-            // catch parse errors
             // this is idempotent
             log("parsing include file: " + (*i)->fileName());
             (*i)->parse(debugParse_);
         }
+        catch (pParseError& p) {
+            // diag the parse error
+            (*i)->addDiagnostic(new pDiagnostic(p.loc(), p.what()));
+            continue;
+        }
         catch (std::exception& e) {
-            std::cerr << e.what() << std::endl;
+            log("[error]: " + pStringRef(e.what()));
             continue;
         }
 

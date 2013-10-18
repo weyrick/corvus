@@ -182,8 +182,8 @@ AST::literalExpr* extractLiteralString(pSourceRef* B, pSourceModule* pMod, bool 
 %type T_DQ_ESCAPE  {int}
 
 %syntax_error {  
-  CTXT.parseError(TOKEN);
-}   
+  CTXT.parseError(TOKEN, TOKEN_RANGE(TOKEN));
+}
 %stack_size 500
 %stack_overflow {  
   std::cerr << "Parser stack overflow" << std::endl;
@@ -1012,9 +1012,11 @@ classVarFlags(A) ::= T_VAR.
 }
 classVarFlags(A) ::= nonEmptyMemberFlags(F).
 {
+/*
     if (*F & AST::memberFlags::ABSTRACT) {
         CTXT.parseError("Cannot declare class variables abstract");
     }
+*/
     A = F;
 }
 
