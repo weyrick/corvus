@@ -12,8 +12,6 @@
 
 #include <iostream>
 
-#include <llvm/ADT/OwningPtr.h>
-
 #if (LLVM_VERSION >= 3003000)
 #include <llvm/IR/Value.h> // isa
 #else
@@ -23,8 +21,9 @@
 #include <llvm/Support/SourceMgr.h>
 #include <llvm/Support/YAMLParser.h>
 #include <llvm/Support/MemoryBuffer.h>
-#include <llvm/Support/system_error.h>
 #include <llvm/ADT/APInt.h>
+
+#include <system_error>                 // for error_code
 
 namespace corvus { 
 
@@ -33,8 +32,8 @@ bool pConfigMgr::read(const llvm::Twine &file, pConfig &c) {
     llvm::SmallString<128> path_storage;
     llvm::StringRef fName = file.toStringRef(path_storage);
 
-    llvm::OwningPtr<llvm::MemoryBuffer> contents;
-    if (llvm::MemoryBuffer::getFile(fName, contents)) {
+    std::unique_ptr<llvm::MemoryBuffer> contents;
+    if (llvm::MemoryBuffer::getFile(fName)) {
         return false;
     }
 

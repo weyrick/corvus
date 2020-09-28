@@ -58,9 +58,9 @@ public:
     void *allocate(size_t size, size_t align = 8) {
         return allocator_.Allocate(size, align);
     }
-    void deallocate(void* Ptr) {
+    void deallocate(void* Ptr, size_t Size = 4096) {
         // note this is a NOOP for bumpptr
-        allocator_.Deallocate(Ptr);
+        allocator_.Deallocate(Ptr, Size);
     }
 
     llvm::StringPool& idPool(void) { return idPool_; }

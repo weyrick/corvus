@@ -149,7 +149,7 @@ void parseSourceFile(pSourceModule* pMod, bool debug=false) {
                 countNewlines(context, match, lastNL);
                 break;
             }
-            case ~0: // npos
+            case std::numeric_limits<int>::max(): // npos
             {
                 // if state is HTML, collect characters for INLINE HTML token
                 if (match.state == 0) {

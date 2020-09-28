@@ -63,7 +63,7 @@ struct basic_re_tokeniser_state
         assign (rhs_);
     }
 
-    void assign (const basic_re_tokeniser_state &rhs_)
+    auto assign (const basic_re_tokeniser_state &rhs_)
     {
         _start = rhs_._start;
         _end = rhs_._end;

@@ -25,15 +25,15 @@
 #include "corvus/passes/ModelChecker.h"
 #include "corvus/passes/TypeAnalysis.h"
 
-#include <llvm/Support/PathV2.h>
+#include <llvm/Support/Path.h>
 #include <llvm/Support/FileSystem.h>
-#include <llvm/Support/system_error.h>
 #include <llvm/ADT/SmallVector.h>
 
 #include <sqlite3.h>
 
 #include <stdlib.h>
 #include <assert.h>
+#include <system_error>                 // for error_code
 
 namespace corvus { 
 
@@ -219,7 +219,7 @@ void pSourceManager::addSourceDir(pStringRef name, pStringRef exts) {
     llvm::SmallVector<pStringRef, 8> extList;
     exts.split(extList, ",");
 
-    llvm::error_code ec;
+    std::error_code ec;
     for (llvm::sys::fs::recursive_directory_iterator dir(name, ec), dirEnd;
          dir != dirEnd && !ec; dir.increment(ec)) {
 
@@ -326,7 +326,7 @@ void pSourceManager::addIncludeDir(pStringRef name, pStringRef exts) {
     llvm::SmallVector<pStringRef, 8> extList;
     exts.split(extList, ",", 8);
 
-    llvm::error_code ec;
+    std::error_code ec;
     for (llvm::sys::fs::recursive_directory_iterator dir(name, ec), dirEnd;
          dir != dirEnd && !ec; dir.increment(ec)) {
 

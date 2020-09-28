@@ -14,8 +14,10 @@
 #include "corvus/pTypes.h"
 
 #include <string>
-#include <llvm/ADT/OwningPtr.h>
+#include <llvm/Support/ErrorOr.h>
 #include <llvm/Support/MemoryBuffer.h>
+
+using llvm::MemoryBuffer;
 
 namespace corvus {
 
@@ -23,7 +25,7 @@ class pSourceFile {
 
 private:
     std::string file_;
-    llvm::OwningPtr<llvm::MemoryBuffer> contents_;
+    std::unique_ptr<MemoryBuffer> contents_;
 
 public:
 
@@ -32,7 +34,7 @@ public:
     const std::string& fileName(void) const {
         return file_;
     }
-    const llvm::MemoryBuffer* contents(void) const { return contents_.get(); }
+    const MemoryBuffer* contents(void) const { return contents_.get(); }
 
 };
 

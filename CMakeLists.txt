@@ -29,9 +29,13 @@ MESSAGE( STATUS "CMAKE_SYSTEM_PROCESSOR: " ${CMAKE_SYSTEM_PROCESSOR} )
 
 Find_Package(Boost REQUIRED)
 
-IF( Boost_VERSION LESS ${BOOST_MIN_VERSION} )
-  MESSAGE(FATAL_ERROR "Boost version ${Boost_VERSION} too old, please install ${BOOST_MIN_VERSION_TEXT} or greater!")
-ENDIF( Boost_VERSION LESS ${BOOST_MIN_VERSION} )
+#IF( Boost_VERSION LESS ${BOOST_MIN_VERSION} )
+#  MESSAGE(FATAL_ERROR "Boost version ${Boost_VERSION} too old, please install ${BOOST_MIN_VERSION_TEXT} or greater!")
+#ENDIF( Boost_VERSION LESS ${BOOST_MIN_VERSION} )
+
+set(NEEDED_Boost_VERSION 1.69.0)
+find_package(Boost ${NEEDED_Boost_VERSION} REQUIRED COMPONENTS mpi serialization system filesystem)
+set(Boost_LIBS ${Boost_LIBRARIES})
 
 Find_Package(LLVM REQUIRED)
 Find_Package(Sqlite3 REQUIRED)
